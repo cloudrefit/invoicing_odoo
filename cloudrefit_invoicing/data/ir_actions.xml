@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Standalone action record — no field references, no view validation.
+        Safe to load during normal 'data' phase even under base_import_module.
+        This must be loaded BEFORE ir_actions_todo.xml.
+    -->
+    <record id="action_zatca_config_settings" model="ir.actions.act_window">
+        <field name="name">ZATCA Settings</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="context">{'module': 'cloudrefit_invoicing'}</field>
+    </record>
+
+    <!-- Top Menu (Localized via PO) -->
+    <menuitem id="menu_zatca_root"
+              name="CloudRefit ZATCA"
+              web_icon="cloudrefit_invoicing,static/description/icon.png"
+              sequence="50"/>
+
+    <menuitem id="menu_zatca_config"
+              name="Settings"
+              parent="menu_zatca_root"
+              sequence="10"/>
+
+    <menuitem id="menu_zatca_settings"
+              name="Gateway Settings"
+              parent="menu_zatca_config"
+              action="action_zatca_config_settings"
+              sequence="1"/>
+
+</odoo>

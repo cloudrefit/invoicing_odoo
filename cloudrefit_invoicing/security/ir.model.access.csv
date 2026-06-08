@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+"acl_comment","The cloudrefit.zatca.api.client is an abstract model (no database table). account.move and res.config.settings inherit their parent models' ACLs. No additional access rules needed.","cloudrefit_invoicing.model_cloudrefit_zatca_api_client",,0,0,0,0
+access_cloudrefit_zatca_sandbox_test,cloudrefit.zatca.sandbox.test,model_cloudrefit_zatca_sandbox_test,account.group_account_manager,1,1,1,1

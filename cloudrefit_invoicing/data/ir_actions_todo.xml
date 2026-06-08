@@ -1,0 +1,16 @@
+<odoo>
+    <data noupdate="1">
+        <!--
+            Post-Installation Todo: Opens CloudRefit ZATCA Settings page.
+            noupdate="1" ensures this record is only created on fresh install.
+            On upgrades it is NOT reset to 'open', preventing redirect loops.
+            load_deferred_views_if_needed() marks it 'done' automatically
+            after the deferred views are successfully loaded.
+        -->
+        <record id="action_zatca_setup_todo" model="ir.actions.todo">
+            <field name="action_id" ref="action_zatca_config_settings"/>
+            <field name="state">open</field>
+            <field name="name">Configure CloudRefit ZATCA Invoicing settings for each company</field>
+        </record>
+    </data>
+</odoo>

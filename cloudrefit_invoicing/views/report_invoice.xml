@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- RTL: Verified for Arabic locale compatibility -->
+    <template id="report_invoice_document_zatca" inherit_id="account.report_invoice_document">
+        <!-- Move QR code to the bottom, after the totals section -->
+        <xpath expr="//div[@id='total']" position="after">
+            <!-- Fetch from context for sandbox, otherwise from invoice model -->
+            <t t-set="render_qr" t-value="env.context.get('sandbox_qr_code') or o.zatca_qr_code"/>
+            <t t-set="render_hash" t-value="env.context.get('sandbox_hash') or o.zatca_hash"/>
+            
+            <div t-if="render_qr" class="row mt-4 pt-3" id="zatca_qr_footer" style="border-top: 1px solid #eee;">
+                <div class="col-3">
+                    <!-- The backend gateway returns a pre-generated Base64 PNG image, not raw TLV text. -->
+                    <img t-attf-src="data:image/png;base64,{{ render_qr }}" style="width: 100px; height: 100px;"/>
+                </div>
+                <div class="col-9 pt-2">
+                    <p class="small text-muted mb-1" style="font-size: 9px;">
+                        <strong>ZATCA Compliance:</strong> This invoice is signed and reported to the ZATCA Fatoora platform.
+                        <t t-if="env.context.get('sandbox_qr_code')">
+                            <strong class="text-warning ml-2">(SANDBOX TEST)</strong>
+                        </t>
+                    </p>
+                    <p class="small text-muted" style="font-size: 7px; word-break: break-all; opacity: 0.7;">
+                        <strong>Digital Hash:</strong> <t t-esc="render_hash"/>
+                    </p>
+                </div>
+            </div>
+        </xpath>
+    </template>
+</odoo>

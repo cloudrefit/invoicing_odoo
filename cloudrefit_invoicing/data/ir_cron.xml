@@ -1,0 +1,13 @@
+<odoo>
+    <data noupdate="1">
+        <record id="ir_cron_zatca_retry" model="ir.cron">
+            <field name="name">CloudRefit ZATCA: Retry Failed Invoices</field>
+            <field name="model_id" ref="account.model_account_move"/>
+            <field name="code">model._zatca_retry_failed()</field>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">30</field>
+            <field name="interval_type">minutes</field>
+            <field name="active">True</field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,20 @@
+<odoo>
+    <!-- RTL: Verified for Arabic locale compatibility -->
+    <record id="view_partner_form_zatca" model="ir.ui.view">
+        <field name="name">res.partner.form.zatca</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="ZATCA Compliance" name="zatca_compliance">
+                    <group>
+                        <group string="Configuration">
+                            <field name="zatca_invoice_type"/>
+                            <field name="zatca_vat"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

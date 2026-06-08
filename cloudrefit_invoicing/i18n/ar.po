@@ -1,0 +1,922 @@
+# CloudRefit ZATCA Arabic Translation Catalog
+# This file is critical for the Odoo plugin's Arabic interface.
+# Version: 19.0.1.1.14
+
+msgid ""
+msgstr ""
+"Project-Id-Version: CloudRefit ZATCA 19.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-25 15:35+0000\n"
+"PO-Revision-Date: 2026-04-25 15:35+0000\n"
+"Last-Translator: CloudRefit AI\n"
+"Language-Team: Arabic\n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n"
+
+#. module: cloudrefit_invoicing
+msgid "CloudRefit ZATCA Gateway"
+msgstr "بوابة كلاود ريفيت ZATCA"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.menu,name:cloudrefit_invoicing.menu_zatca_root
+msgid "CloudRefit ZATCA"
+msgstr "كلاود ريفيت ZATCA"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.menu,name:cloudrefit_invoicing.menu_zatca_config
+msgid "Settings"
+msgstr "الإعدادات"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.menu,name:cloudrefit_invoicing.menu_zatca_settings
+msgid "Gateway Settings"
+msgstr "إعدادات البوابة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_config_settings__cloudrefit_gateway_url
+msgid "Gateway URL"
+msgstr "رابط البوابة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_config_settings__cloudrefit_api_key
+msgid "API Key"
+msgstr "مفتاح API"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_config_settings__cloudrefit_default_invoice_type
+msgid "Default Invoice Type"
+msgstr "نوع الفاتورة الافتراضي"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_config_settings__cloudrefit_auto_sign_on_post
+msgid "Auto-sign on Invoice Confirmation"
+msgstr "توقيع تلقائي عند اعتماد الفاتورة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_config_settings__cloudrefit_mode
+msgid "Mode"
+msgstr "الوضع"
+
+# --- Selection Values ---
+
+#. module: cloudrefit_invoicing
+msgid "Not Signed"
+msgstr "غير موقع"
+
+#. module: cloudrefit_invoicing
+msgid "Signed"
+msgstr "موقع"
+
+#. module: cloudrefit_invoicing
+msgid "Reported"
+msgstr "تم الإبلاغ"
+
+#. module: cloudrefit_invoicing
+msgid "Cleared"
+msgstr "تم التخليص"
+
+#. module: cloudrefit_invoicing
+msgid "Failed"
+msgstr "فشل"
+
+#. module: cloudrefit_invoicing
+msgid "Auto-detect (B2B if customer has VAT)"
+msgstr "اكتشاف تلقائي (B2B إذا كان للعميل رقم ضريبي)"
+
+#. module: cloudrefit_invoicing
+msgid "Always Simplified (B2C)"
+msgstr "مبسطة دائماً (B2C)"
+
+#. module: cloudrefit_invoicing
+msgid "Always Standard (B2B)"
+msgstr "قياسية دائماً (B2B)"
+
+#. module: cloudrefit_invoicing
+msgid "Sandbox (Testing)"
+msgstr "وضع التجربة (التطوير)"
+
+#. module: cloudrefit_invoicing
+msgid "Live"
+msgstr "وضع الإنتاج"
+
+#. module: cloudrefit_invoicing
+msgid "Auto (use company default)"
+msgstr "تلقائي (استخدام إعدادات الشركة)"
+
+#. module: cloudrefit_invoicing
+msgid "Simplified (B2C)"
+msgstr "مبسطة (B2C)"
+
+#. module: cloudrefit_invoicing
+msgid "Standard (B2B)"
+msgstr "قياسية (B2B)"
+
+#. module: cloudrefit_invoicing
+msgid "Pending"
+msgstr "معلق"
+
+# --- Account Move Fields ---
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_account_move__zatca_status
+msgid "ZATCA Status"
+msgstr "حالة ZATCA"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_account_move__zatca_hash
+msgid "ZATCA Invoice Hash"
+msgstr "رمز الفاتورة ZATCA"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_account_move__zatca_qr_code
+msgid "ZATCA QR Code"
+msgstr "رمز QR للفاتورة ZATCA"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_account_move__zatca_signed_xml
+msgid "ZATCA Signed XML"
+msgstr "XML الموقع ZATCA"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_account_move__zatca_error
+msgid "ZATCA Error"
+msgstr "خطأ ZATCA"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_account_move__zatca_retry_count
+msgid "ZATCA Retry Count"
+msgstr "عدد محاولات إعادة ZATCA"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_account_move__zatca_invoice_type
+msgid "ZATCA Invoice Type Used"
+msgstr "نوع الفاتورة ZATCA المستخدم"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_account_move__zatca_uuid
+msgid "ZATCA UUID"
+msgstr "ZATCA UUID"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_account_move__zatca_invoice_type_override
+msgid "Force ZATCA Type"
+msgstr "فرض نوع ZATCA"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_account_move__mode_override
+msgid "Target Mode"
+msgstr "الوضع المستهدف"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_account_move__zatca_exec_mode
+msgid "ZATCA Target Used"
+msgstr "الوضع المستخدم ZATCA"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_account_move__is_zatca_push_allowed
+msgid "Is ZATCA Push Allowed"
+msgstr "السماح بالدفع ZATCA"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_account_move__zatca_show_sandbox
+msgid "Show Sandbox Tab"
+msgstr "إظهار علامة وضع التجربة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_account_move__zatca_status_sandbox
+msgid "Sandbox Status"
+msgstr "حالة وضع التجربة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_account_move__zatca_hash_sandbox
+msgid "Sandbox Hash"
+msgstr "رمز وضع التجربة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_account_move__zatca_qr_sandbox
+msgid "Sandbox QR Code"
+msgstr "رمز QR لوضع التجربة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_account_move__zatca_error_sandbox
+msgid "Sandbox Error"
+msgstr "خطأ وضع التجربة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_account_move__zatca_status_live
+msgid "Live Status"
+msgstr "حالة البث المباشر"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_account_move__zatca_hash_live
+msgid "Live Hash"
+msgstr "رمز البث المباشر"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_account_move__zatca_qr_live
+msgid "Live QR Code"
+msgstr "رمز QR للبث المباشر"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_account_move__zatca_error_live
+msgid "Live Error"
+msgstr "خطأ البث المباشر"
+
+# --- Res Config Settings Fields ---
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_config_settings__cloudrefit_business_id
+msgid "Business ID"
+msgstr "معرف النشاط التجاري"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_config_settings__cloudrefit_signing_secret
+msgid "Signing Secret"
+msgstr "رمز التوقيع السري"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_config_settings__cloudrefit_unit_id
+msgid "Technical Unit ID"
+msgstr "معرف الوحدة الفنية"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_config_settings__cloudrefit_is_sandbox_active
+msgid "Is Sandbox Active"
+msgstr "وضع التجربة نشط"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_config_settings__cloudrefit_is_live_active
+msgid "Is Live Active"
+msgstr "وضع الإنتاج نشط"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_config_settings__settings_header
+msgid "CloudRefit ZATCA Gateway Settings"
+msgstr "إعدادات بوابة كلاود ريفيت ZATCA"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_config_settings__gateway_connection_title
+msgid "Gateway Connection"
+msgstr "اتصال البوابة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_config_settings__invoice_behaviour_title
+msgid "Invoice Behaviour"
+msgstr "سلوك الفاتورة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_config_settings__help_gateway_url
+msgid "URL of your self-hosted CloudRefit Gateway (e.g. https://zatca.example.com)"
+msgstr "رابط بوابة كلاود ريفيت المستضافة ذاتياً (مثال: https://zatca.example.com)"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_config_settings__help_api_key
+msgid "Your unique CloudRefit API Key (Keep secret)"
+msgstr "مفتاح API الخاص بك (يجب حفظه بسرية)"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_config_settings__help_invoice_type
+msgid "Select the default ZATCA invoice type for this company"
+msgstr "اختيار نوع فاتورة ZATCA الافتراضي لهذه الشركة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_config_settings__help_auto_sign
+msgid "Automatically sign invoices when they are confirmed/posted"
+msgstr "توقيع الفواتير تلقائياً عند اعتمادها/ترحيلها"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_config_settings__help_mode
+msgid "Target ZATCA Sandbox or Live mode"
+msgstr "الوضع المستهدف (تجربة أو إنتاج) لنظام ZATCA"
+
+# --- Res Partner Fields ---
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_partner__zatca_invoice_type
+msgid "ZATCA Invoice Type"
+msgstr "نوع فاتورة ZATCA"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_partner__zatca_vat
+msgid "ZATCA VAT Override"
+msgstr "تجاوز الرقم الضريبي ZATCA"
+
+# --- Selection Values (Additional) ---
+
+#. module: cloudrefit_invoicing
+msgid "Auto-Detect (Based on VAT)"
+msgstr "اكتشاف تلقائي (بناءً على الرقم الضريبي)"
+
+#. module: cloudrefit_invoicing
+msgid "Use Global Setting"
+msgstr "استخدام الإعداد العام"
+
+# --- View UI Strings ---
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_move_form_zatca
+msgid "Push to ZATCA"
+msgstr "دفع إلى ZATCA"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_move_form_zatca
+msgid "ZATCA Details"
+msgstr "تفاصيل ZATCA"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_move_form_zatca
+msgid "Sandbox"
+msgstr "وضع التجربة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_move_form_zatca
+msgid "Live"
+msgstr "وضع الإنتاج"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_move_form_zatca
+msgid "Global Config"
+msgstr "الإعدادات العامة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_move_form_zatca
+msgid "Overrides"
+msgstr "تجاوزات"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_move_form_zatca
+msgid "Sandbox Info"
+msgstr "معلومات وضع التجربة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_move_form_zatca
+msgid "Sandbox QR"
+msgstr "رمز QR لوضع التجربة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_move_form_zatca
+msgid "Live Info"
+msgstr "معلومات وضع الإنتاج"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_move_form_zatca
+msgid "Live QR"
+msgstr "رمز QR لوضع الإنتاج"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,help:cloudrefit_invoicing.field_res_config_settings__cloudrefit_gateway_url
+msgid "URL of the CloudRefit ZATCA gateway (e.g. https://api.invoicing.cloudrefit.com)"
+msgstr "رابط بوابة كلاود ريفيت ZATCA (مثال: https://api.invoicing.cloudrefit.com)"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,help:cloudrefit_invoicing.field_res_config_settings__cloudrefit_business_id
+msgid "Your CloudRefit Business ID"
+msgstr "معرف النشاط التجاري في كلاود ريفيت"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,help:cloudrefit_invoicing.field_res_config_settings__cloudrefit_signing_secret
+msgid "Webhook signing secret for outgoing payloads."
+msgstr "سر التوقيع للـ webhook للبيانات الصادرة."
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,help:cloudrefit_invoicing.field_res_config_settings__cloudrefit_unit_id
+msgid "Target technical unit/device ID registered in CloudRefit."
+msgstr "معرف الوحدة/الجهاز الفني المستهدف المسجل في كلاود ريفيت."
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.res_config_settings_view_form_zatca
+msgid "Connected Business ID"
+msgstr "معرف النشاط التجاري المتصل"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.res_config_settings_view_form_zatca
+msgid "Webhook signing secret."
+msgstr "سر التوقيع للـ webhook."
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.res_config_settings_view_form_zatca
+msgid "Target Technical Unit ID."
+msgstr "معرف الوحدة الفنية المستهدفة."
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.res_config_settings_view_form_zatca
+msgid "Enable Sandbox Mode"
+msgstr "تفعيل وضع التجربة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.res_config_settings_view_form_zatca
+msgid "Show sandbox tabs and allow sandbox testing on invoices."
+msgstr "إظهار علامات وضع التجربة والسماح بالاختبار على الفواتير."
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.res_config_settings_view_form_zatca
+msgid "Sandbox Technical Unit Status"
+msgstr "حالة الوحدة الفنية لوضع التجربة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.res_config_settings_view_form_zatca
+msgid "Live Status"
+msgstr "حالة الإنتاج"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.res_config_settings_view_form_zatca
+msgid "Live Technical Unit Status"
+msgstr "حالة الوحدة الفنية للإنتاج"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.res_config_settings_view_form_zatca
+msgid "Mode Management"
+msgstr "إدارة الوضع"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.res_config_settings_view_form_zatca
+msgid "Auto-sign"
+msgstr "توقيع تلقائي"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.res_config_settings_view_form_zatca
+msgid "Save"
+msgstr "حفظ"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.res_config_settings_view_form_zatca
+msgid "Cancel"
+msgstr "إلغاء"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.res_config_settings_view_form_zatca
+msgid "Active"
+msgstr "نشط"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.res_config_settings_view_form_zatca
+msgid "Inactive"
+msgstr "غير نشط"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_partner_form_zatca
+msgid "ZATCA Compliance"
+msgstr "امتثال ZATCA"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_partner_form_zatca
+msgid "Configuration"
+msgstr "الإعدادات"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_move_form_zatca
+msgid "Technical"
+msgstr "فني"
+
+# --- Sandbox Testing Wizard (Sprint 2 — Section 3.11) ---
+
+#. module: cloudrefit_invoicing
+#: model:ir.model,name:cloudrefit_invoicing.model_cloudrefit_zatca_sandbox_test
+msgid "ZATCA Sandbox Testing Wizard"
+msgstr "معالج اختبار ZATCA لوضع التجربة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_cloudrefit_zatca_sandbox_test__invoice_id
+msgid "Invoice"
+msgstr "الفاتورة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_cloudrefit_zatca_sandbox_test__mode
+msgid "Mode"
+msgstr "الوضع"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_cloudrefit_zatca_sandbox_test__state
+msgid "State"
+msgstr "الحالة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,selection:cloudrefit_invoicing.field_cloudrefit_zatca_sandbox_test__state
+msgid "Select Invoice"
+msgstr "اختيار الفاتورة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,selection:cloudrefit_invoicing.field_cloudrefit_zatca_sandbox_test__state
+msgid "Testing..."
+msgstr "جاري الاختبار..."
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,selection:cloudrefit_invoicing.field_cloudrefit_zatca_sandbox_test__state
+msgid "Done"
+msgstr "تم"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_cloudrefit_zatca_sandbox_test__zatca_status
+msgid "ZATCA Status"
+msgstr "حالة ZATCA"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_cloudrefit_zatca_sandbox_test__zatca_hash
+msgid "ZATCA Hash"
+msgstr "رمز ZATCA"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_cloudrefit_zatca_sandbox_test__zatca_qr_code
+msgid "ZATCA QR Code"
+msgstr "رمز QR للفاتورة ZATCA"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_cloudrefit_zatca_sandbox_test__zatca_signed_xml
+msgid "ZATCA Signed XML"
+msgstr "XML الموقع ZATCA"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_cloudrefit_zatca_sandbox_test__zatca_error
+msgid "ZATCA Error"
+msgstr "خطأ ZATCA"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_cloudrefit_zatca_sandbox_test__xml_preview
+msgid "XML Preview"
+msgstr "معاينة XML"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_cloudrefit_zatca_sandbox_test__response_raw
+msgid "Raw API Response"
+msgstr "استجابة API الخام"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_cloudrefit_zatca_sandbox_test_form
+msgid "Select Invoice"
+msgstr "اختيار الفاتورة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_cloudrefit_zatca_sandbox_test_form
+msgid "Build XML Preview"
+msgstr "بناء معاينة XML"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_cloudrefit_zatca_sandbox_test_form
+msgid "Test with ZATCA Sandbox"
+msgstr "اختبار مع ZATCA وضع التجربة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_cloudrefit_zatca_sandbox_test_form
+msgid "Testing..."
+msgstr "جاري الاختبار..."
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_cloudrefit_zatca_sandbox_test_form
+msgid "Submitting to ZATCA Sandbox..."
+msgstr "جارٍ الإرسال إلى ZATCA وضع التجربة..."
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_cloudrefit_zatca_sandbox_test_form
+msgid "Please wait while the invoice is being tested."
+msgstr "يرجى الانتظار أثناء اختبار الفاتورة."
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_cloudrefit_zatca_sandbox_test_form
+msgid "Sandbox Test Results"
+msgstr "نتائج اختبار وضع التجربة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_cloudrefit_zatca_sandbox_test_form
+msgid "Signed XML"
+msgstr "XML موقع"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_cloudrefit_zatca_sandbox_test_form
+msgid "Raw API Response"
+msgstr "استجابة API الخام"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_cloudrefit_zatca_sandbox_test_form
+msgid "Test Again"
+msgstr "اختبار مرة أخرى"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_cloudrefit_zatca_sandbox_test_form
+msgid "Fetch Latest Result from API"
+msgstr "جلب أحدث نتيجة من API"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_cloudrefit_zatca_sandbox_test_form
+msgid "Close"
+msgstr "إغلاق"
+
+#. module: cloudrefit_invoicing
+#: model:ir.actions.act_window,name:cloudrefit_invoicing.action_cloudrefit_zatca_sandbox_test
+msgid "ZATCA Sandbox Test"
+msgstr "اختبار ZATCA لوضع التجربة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_move_form_zatca
+msgid "Test in Sandbox"
+msgstr "اختبار في وضع التجربة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_move_form_zatca
+msgid "Technical"
+msgstr "فني"
+
+# --- Sprint 3 — Field Help Translations ---
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,help:cloudrefit_invoicing.field_account_move__zatca_status
+msgid "Status of the last ZATCA submission for this invoice"
+msgstr "حالة آخر إرسال ZATCA لهذه الفاتورة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,help:cloudrefit_invoicing.field_account_move__zatca_hash
+msgid "Digital hash returned by ZATCA after successful signing"
+msgstr "رمز التجزئة الرقمي الذي أعادته ZATCA بعد التوقيع الناجح"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,help:cloudrefit_invoicing.field_account_move__zatca_qr_code
+msgid "Base64-encoded QR code from ZATCA, embedded in the PDF report"
+msgstr "رمز QR مشفر بـ Base64 من ZATCA، مضمن في تقرير PDF"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,help:cloudrefit_invoicing.field_account_move__zatca_signed_xml
+msgid "Full signed XML returned by ZATCA. Embedded in PDF when printing."
+msgstr "XML الموقع الكامل الذي أعادته ZATCA. يتم تضمينه في PDF عند الطباعة."
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,help:cloudrefit_invoicing.field_account_move__zatca_uuid
+msgid "Unique identifier (UUID v4) assigned to this invoice for ZATCA compliance"
+msgstr "معرف فريد (UUID v4) مخصص لهذه الفاتورة للامتثال لـ ZATCA"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,help:cloudrefit_invoicing.field_account_move__zatca_retry_count
+msgid "Number of times this invoice has been retried for ZATCA submission"
+msgstr "عدد مرات إعادة محاولة إرسال هذه الفاتورة لـ ZATCA"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,help:cloudrefit_invoicing.field_account_move__zatca_exec_mode
+msgid "The execution mode used for the last ZATCA signing attempt"
+msgstr "وضع التنفيذ المستخدم في آخر محاولة توقيع ZATCA"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,help:cloudrefit_invoicing.field_account_move__zatca_job_uuid
+msgid "UUID of the asynchronous ZATCA signing job. Used to poll for completion."
+msgstr "UUID لوظيفة توقيع ZATCA غير المتزامنة. يُستخدم للاستعلام عن الاكتمال."
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,help:cloudrefit_invoicing.field_account_move__zatca_job_status
+msgid "Current status of the asynchronous ZATCA signing job"
+msgstr "الحالة الحالية لوظيفة توقيع ZATCA غير المتزامنة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,help:cloudrefit_invoicing.field_account_move__is_zatca_push_allowed
+msgid "Whether this invoice meets all conditions to be pushed to ZATCA"
+msgstr "ما إذا كانت هذه الفاتورة تستوفي جميع الشروط للدفع إلى ZATCA"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_account_move__zatca_show_quick_push
+msgid "Show Quick Push"
+msgstr "إظهار الدفع السريع"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,help:cloudrefit_invoicing.field_account_move__zatca_show_quick_push
+msgid "Technical field to control visibility of quick-push buttons"
+msgstr "حقل فني للتحكم في ظهور أزرار الدفع السريع"
+
+# --- Res Config Settings Help Translations ---
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,help:cloudrefit_invoicing.field_res_config_settings__cloudrefit_gateway_url
+msgid "Base URL of the CloudRefit Gateway API"
+msgstr "رابط قاعدة API بوابة كلاود ريفيت"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,help:cloudrefit_invoicing.field_res_config_settings__cloudrefit_api_key_live
+msgid "Live API key from your CloudRefit dashboard"
+msgstr "مفتاح API المباشر من لوحة تحكم كلاود ريفيت"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,help:cloudrefit_invoicing.field_res_config_settings__cloudrefit_api_key_sandbox
+msgid "Sandbox API key from your CloudRefit dashboard. Used only for sandbox testing wizard."
+msgstr "مفتاح API لوضع التجربة من لوحة تحكم كلاود ريفيت. يُستخدم فقط لمعالج اختبار وضع التجربة."
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,help:cloudrefit_invoicing.field_res_config_settings__cloudrefit_signing_secret_live
+msgid "Live signing secret from your CloudRefit dashboard"
+msgstr "رمز التوقيع السري المباشر من لوحة تحكم كلاود ريفيت"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,help:cloudrefit_invoicing.field_res_config_settings__cloudrefit_signing_secret_sandbox
+msgid "Sandbox signing secret from your CloudRefit dashboard. Used only for sandbox testing wizard."
+msgstr "رمز التوقيع السري لوضع التجربة من لوحة تحكم كلاود ريفيت. يُستخدم فقط لمعالج اختبار وضع التجربة."
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,help:cloudrefit_invoicing.field_res_config_settings__cloudrefit_unit_id_live
+msgid "Live unit/device ID from your CloudRefit dashboard"
+msgstr "معرف الوحدة/الجهاز المباشر من لوحة تحكم كلاود ريفيت"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,help:cloudrefit_invoicing.field_res_config_settings__cloudrefit_unit_id_sandbox
+msgid "Sandbox unit/device ID from your CloudRefit dashboard. Used only for sandbox testing wizard."
+msgstr "معرف الوحدة/الجهاز لوضع التجربة من لوحة تحكم كلاود ريفيت. يُستخدم فقط لمعالج اختبار وضع التجربة."
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,help:cloudrefit_invoicing.field_res_config_settings__cloudrefit_business_id
+msgid "Your business identifier in CloudRefit"
+msgstr "معرف نشاطك التجاري في كلاود ريفيت"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,help:cloudrefit_invoicing.field_res_config_settings__cloudrefit_auto_sign_on_post
+msgid "When enabled, invoices are automatically sent to ZATCA after validation/posting"
+msgstr "عند التفعيل، يتم إرسال الفواتير تلقائياً إلى ZATCA بعد التحقق/الترحيل"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,help:cloudrefit_invoicing.field_res_config_settings__cloudrefit_default_invoice_type
+msgid "Default ZATCA invoice type for new invoices"
+msgstr "نوع فاتورة ZATCA الافتراضي للفواتير الجديدة"
+
+# --- Sprint 3 — Progress Indicator / UI Strings ---
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_move_form_zatca
+msgid "ZATCA Info"
+msgstr "معلومات ZATCA"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_move_form_zatca
+msgid "ZATCA Error:"
+msgstr "خطأ ZATCA:"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_move_form_zatca
+msgid "View Troubleshooting Guide"
+msgstr "عرض دليل استكشاف الأخطاء"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_move_form_zatca
+msgid "ZATCA job is"
+msgstr "وظيفة ZATCA هي"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_invoice_tree_zatca_push
+msgid "Push"
+msgstr "دفع"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_move_form_zatca
+msgid "This invoice is officially reported to ZATCA Live."
+msgstr "هذه الفاتورة مبلغة رسمياً لـ ZATCA المباشر."
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_move_form_zatca
+msgid "Push to ZATCA"
+msgstr "دفع إلى ZATCA"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_move_form_zatca
+msgid "Async Job Tracking"
+msgstr "تتبع الوظائف غير المتزامنة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_move_form_zatca
+msgid "Processing"
+msgstr "قيد المعالجة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_move_form_zatca
+msgid "Completed"
+msgstr "مكتمل"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_invoice_tree_zatca_batch
+msgid "Send to ZATCA"
+msgstr "إرسال إلى ZATCA"
+
+# --- Gateway URL Split & Business ID Auto-Population (Sprint) ---
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_config_settings__cloudrefit_gateway_url_live
+msgid "Live Gateway URL"
+msgstr "رابط البوابة المباشر"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_config_settings__cloudrefit_gateway_url_sandbox
+msgid "Sandbox Gateway URL"
+msgstr "رابط بوابة وضع التجربة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,help:cloudrefit_invoicing.field_res_config_settings__cloudrefit_gateway_url_live
+msgid "Base URL of the CloudRefit Gateway for live/production operations"
+msgstr "رابط قاعدة API بوابة كلاود ريفيت لعمليات الإنتاج المباشر"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,help:cloudrefit_invoicing.field_res_config_settings__cloudrefit_gateway_url_sandbox
+msgid "Base URL of the CloudRefit Gateway for sandbox/testing operations"
+msgstr "رابط قاعدة API بوابة كلاود ريفيت لعمليات الاختبار والتجربة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,help:cloudrefit_invoicing.field_res_config_settings__cloudrefit_business_id
+msgid "Auto-populated from gateway after a successful connection test. Identifies your business in CloudRefit."
+msgstr "يتم تعبئته تلقائياً من البوابة بعد اختبار اتصال ناجح. يحدد نشاطك التجاري في كلاود ريفيت."
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_config_settings__gateway_health_status_live
+msgid "Live Gateway Health Status"
+msgstr "حالة صحة البوابة المباشرة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_config_settings__gateway_health_last_check_live
+msgid "Live Last Health Check"
+msgstr "آخر فحص صحة مباشر"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_config_settings__gateway_health_message_live
+msgid "Live Health Check Message"
+msgstr "رسالة فحص الصحة المباشر"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_config_settings__gateway_health_status_sandbox
+msgid "Sandbox Gateway Health Status"
+msgstr "حالة صحة بوابة وضع التجربة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_config_settings__gateway_health_last_check_sandbox
+msgid "Sandbox Last Health Check"
+msgstr "آخر فحص صحة لوضع التجربة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_config_settings__gateway_health_message_sandbox
+msgid "Sandbox Health Check Message"
+msgstr "رسالة فحص الصحة لوضع التجربة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.res_config_settings_view_form_zatca
+msgid "Connection Health"
+msgstr "صحة الاتصال"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.res_config_settings_view_form_zatca
+msgid "Live Gateway"
+msgstr "البوابة المباشرة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.res_config_settings_view_form_zatca
+msgid "Sandbox Gateway"
+msgstr "بوابة وضع التجربة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.res_config_settings_view_form_zatca
+msgid "Test Connection (Live)"
+msgstr "اختبار الاتصال (مباشر)"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.res_config_settings_view_form_zatca
+msgid "Test Connection (Sandbox)"
+msgstr "اختبار الاتصال (وضع التجربة)"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.res_config_settings_view_form_zatca
+msgid "Live Settings"
+msgstr "إعدادات البث المباشر"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.res_config_settings_view_form_zatca
+msgid "Sandbox Settings"
+msgstr "إعدادات وضع التجربة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.res_config_settings_view_form_zatca
+msgid "Business Info"
+msgstr "معلومات النشاط التجاري"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.res_config_settings_view_form_zatca
+msgid "URL of your CloudRefit Gateway for live/production operations"
+msgstr "رابط بوابة كلاود ريفيت لعمليات الإنتاج المباشر"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.res_config_settings_view_form_zatca
+msgid "URL of your CloudRefit Gateway for sandbox/testing operations"
+msgstr "رابط بوابة كلاود ريفيت لعمليات الاختبار والتجربة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.res_config_settings_view_form_zatca
+msgid "Auto-populated from gateway after a successful connection test. Identifies your business in CloudRefit."
+msgstr "يتم تعبئته تلقائياً من البوابة بعد اختبار اتصال ناجح. يحدد نشاطك التجاري في كلاود ريفيت."
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.res_config_settings_view_form_zatca
+msgid "Not yet connected — configure Live credentials below and click \"Test Connection (Live)\""
+msgstr "غير متصل بعد — قم بتكوين بيانات الاعتماد المباشرة أدناه وانقر \"اختبار الاتصال (مباشر)\""
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.res_config_settings_view_form_zatca
+msgid "Not yet connected — configure Sandbox credentials below and click \"Test Connection (Sandbox)\""
+msgstr "غير متصل بعد — قم بتكوين بيانات اعتماد وضع التجربة أدناه وانقر \"اختبار الاتصال (وضع التجربة)\""
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_move_form_zatca
+msgid "Sandbox Testing"
+msgstr "اختبار وضع التجربة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_move_form_zatca
+msgid "Test this invoice against ZATCA Sandbox without affecting its live status."
+msgstr "اختبر هذه الفاتورة مع ZATCA وضع التجربة دون التأثير على حالتها المباشرة."
