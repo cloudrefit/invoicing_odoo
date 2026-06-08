@@ -178,7 +178,7 @@ MockZatcaApiClient.register_response(
 
 # Job polling — completed
 MockZatcaApiClient.register_response(
-    'GET', '/api/v1/jobs/job_test_001',
+    'GET', '/api/v1/invoices/99/status/job_test_001',
     200,
     {
         'status': 'completed',
@@ -192,7 +192,7 @@ MockZatcaApiClient.register_response(
 
 # Job polling — still processing
 MockZatcaApiClient.register_response(
-    'GET', '/api/v1/jobs/job_test_001',
+    'GET', '/api/v1/invoices/99/status/job_test_001',
     200,
     {
         'status': 'processing',

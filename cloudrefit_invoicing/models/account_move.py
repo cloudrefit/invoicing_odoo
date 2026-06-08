@@ -641,7 +641,7 @@ class AccountMove(models.Model):
                     continue
 
                 poll_response = api_client.call_gateway(
-                    endpoint=f"/api/v1/invoices/{business_id}/jobs/{move.zatca_job_uuid}",
+                    endpoint=f"/api/v1/invoices/{business_id}/status/{move.zatca_job_uuid}",
                     method='GET',
                     action='verify',
                     mode=move_with_ctx._resolve_mode(),

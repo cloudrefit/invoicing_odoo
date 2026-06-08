@@ -166,7 +166,7 @@ class CloudrefitZatcaSandboxTest(models.TransientModel):
             time.sleep(_SANDBOX_POLLING_INTERVAL)
 
             poll_response = api_client.call_gateway(
-                endpoint=f"/api/v1/invoices/{business_id}/jobs/{job_uuid}",
+                endpoint=f"/api/v1/invoices/{business_id}/status/{job_uuid}",
                 method='GET',
                 action='verify',
                 mode='sandbox',

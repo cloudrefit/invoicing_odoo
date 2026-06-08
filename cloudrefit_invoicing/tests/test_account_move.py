@@ -429,7 +429,7 @@ class TestZatcaInvoiceSigning(TransactionCase):
         )
         # Polling call: completed
         MockZatcaApiClient.register_response(
-            'GET', '/api/v1/jobs/job_test_async_001',
+            'GET', '/api/v1/invoices/99/status/job_test_async_001',
             200,
             {
                 'status': 'completed',
@@ -445,7 +445,7 @@ class TestZatcaInvoiceSigning(TransactionCase):
 
         self.assertEqual(invoice.zatca_status, 'cleared')
         self.assertEqual(invoice.zatca_hash, 'async_hash_789')
-        MockZatcaApiClient.assert_called_with('GET', '/api/v1/jobs/job_test_async_001')
+        MockZatcaApiClient.assert_called_with('GET', '/api/v1/invoices/99/status/job_test_async_001')
 
     def test_sign_async_timeout(self):
         """202 Accepted → job stays processing beyond 60s → UserError raised
@@ -461,7 +461,7 @@ class TestZatcaInvoiceSigning(TransactionCase):
         # Register many 'processing' responses for the polling loop
         for _ in range(20):
             MockZatcaApiClient.register_response(
-                'GET', '/api/v1/jobs/job_test_timeout',
+                'GET', '/api/v1/invoices/99/status/job_test_timeout',
                 200,
                 {'status': 'processing'},
             )
