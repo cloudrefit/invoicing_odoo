@@ -1,1 +1,5 @@
-BOM 
+BOM
+
+# Prevent accidental documentation commits — plans live in invoicing_platform
+docs/*
+plans/*
