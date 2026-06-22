@@ -213,6 +213,43 @@ class ResConfigSettings(models.TransientModel):
         store=False,
     )
 
+    def set_values(self):
+        """Override set_values to detect credential changes and reset connection status."""
+        old_live = {
+            'url': self._cr_get_param('cloudrefit_invoicing.gateway_url_live', ''),
+            'api': self._cr_get_param('cloudrefit_invoicing.api_key_live', ''),
+            'secret': self._cr_get_param('cloudrefit_invoicing.signing_secret_live', ''),
+            'unit': self._cr_get_param('cloudrefit_invoicing.unit_id_live', ''),
+        }
+        old_sandbox = {
+            'url': self._cr_get_param('cloudrefit_invoicing.gateway_url_sandbox', ''),
+            'api': self._cr_get_param('cloudrefit_invoicing.api_key_sandbox', ''),
+            'secret': self._cr_get_param('cloudrefit_invoicing.signing_secret_sandbox', ''),
+            'unit': self._cr_get_param('cloudrefit_invoicing.unit_id_sandbox', ''),
+        }
+
+        super(ResConfigSettings, self).set_values()
+
+        live_changed = (
+            (self.cloudrefit_gateway_url_live or '') != old_live['url'] or
+            (self.cloudrefit_api_key_live or '') != old_live['api'] or
+            (self.cloudrefit_signing_secret_live or '') != old_live['secret'] or
+            (self.cloudrefit_unit_id_live or '') != old_live['unit']
+        )
+        if live_changed:
+            self._set_health_status('untested', 'Credentials changed, please test connection', mode='live')
+            self._reset_mode_on_failure(mode='live', error_message='Credentials changed')
+
+        sandbox_changed = (
+            (self.cloudrefit_gateway_url_sandbox or '') != old_sandbox['url'] or
+            (self.cloudrefit_api_key_sandbox or '') != old_sandbox['api'] or
+            (self.cloudrefit_signing_secret_sandbox or '') != old_sandbox['secret'] or
+            (self.cloudrefit_unit_id_sandbox or '') != old_sandbox['unit']
+        )
+        if sandbox_changed:
+            self._set_health_status('untested', 'Credentials changed, please test connection', mode='sandbox')
+            self._reset_mode_on_failure(mode='sandbox', error_message='Credentials changed')
+
     @api.model
     def default_get(self, fields_list):
         """Override to pre-populate health & can_enable fields — TransientModel compute is unreliable."""
