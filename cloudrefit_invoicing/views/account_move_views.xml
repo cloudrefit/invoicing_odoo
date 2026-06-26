@@ -41,7 +41,7 @@
                         <span class="o_stat_value">
                             <field name="zatca_status" widget="badge" 
                                    decoration-success="zatca_status in ('reported', 'cleared') and zatca_exec_mode == 'live'"
-                                   decoration-info="zatca_status == 'signed' and zatca_exec_mode == 'live'"
+                                   decoration-info="zatca_status in ('reported', 'cleared') and zatca_exec_mode == 'sandbox'"
                                    decoration-danger="zatca_status == 'failed'"/>
                         </span>
                     </div>
@@ -67,8 +67,10 @@
             </xpath>
 
             <xpath expr="//div[@name='button_box']" position="after">
-                <widget name="web_ribbon" title="ZATCA REPORTED" bg_color="bg-success" invisible="zatca_status != 'reported'"/>
-                <widget name="web_ribbon" title="ZATCA CLEARED" bg_color="bg-success" invisible="zatca_status != 'cleared'"/>
+                <widget name="web_ribbon" title="REPORTED (LIVE)" bg_color="bg-success" invisible="not (zatca_status == 'reported' and zatca_exec_mode == 'live')"/>
+                <widget name="web_ribbon" title="CLEARED (LIVE)" bg_color="bg-success" invisible="not (zatca_status == 'cleared' and zatca_exec_mode == 'live')"/>
+                <widget name="web_ribbon" title="REPORTED (SANDBOX)" bg_color="bg-info" invisible="not (zatca_status == 'reported' and zatca_exec_mode == 'sandbox')"/>
+                <widget name="web_ribbon" title="CLEARED (SANDBOX)" bg_color="bg-info" invisible="not (zatca_status == 'cleared' and zatca_exec_mode == 'sandbox')"/>
             </xpath>
 
             <!-- Consolidated ZATCA Settings in Other Info -->

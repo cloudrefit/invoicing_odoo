@@ -230,20 +230,11 @@ class AccountMove(models.Model):
     #  SANDBOX ZATCA SUBMISSION
     # -----------------------------------------------------------
     def action_push_to_sandbox_zatca(self):
-        """Submit invoice to ZATCA Sandbox for testing.
-        
-        Opens the ephemeral sandbox wizard to run the test and display results
-        without persisting data to the database.
-        """
+        """Submit invoice to ZATCA Sandbox directly and persist results."""
         self.ensure_one()
-        return {
-            'type': 'ir.actions.act_window',
-            'name': 'ZATCA Sandbox Test',
-            'res_model': 'cloudrefit.zatca.sandbox.test',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': dict(self.env.context, default_invoice_id=self.id),
-        }
+        if self.zatca_status in ('reported', 'cleared') and self.zatca_exec_mode == 'sandbox':
+            raise UserError('This invoice is already reported to ZATCA Sandbox.')
+        self._zatca_sign_invoice(force_mode='sandbox')
 
     def action_post(self):
         result = super().action_post()
@@ -411,7 +402,9 @@ class AccountMove(models.Model):
                 namespace = py_uuid.uuid5(py_uuid.NAMESPACE_OID, self.env.cr.dbname)
                 origin_move.zatca_uuid = str(py_uuid.uuid5(namespace, str(origin_move.id)))
                 
-            payload['invoice']['origin_number'] = origin_move.zatca_uuid
+            payload['invoice']['origin_number'] = origin_move.name
+            payload['invoice']['origin_uuid'] = origin_move.zatca_uuid
+            payload['invoice']['adjustment_reason'] = self.ref or 'Returned/Adjusted items'
 
         return payload
 

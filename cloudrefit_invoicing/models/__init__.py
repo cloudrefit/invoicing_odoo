@@ -10,4 +10,3 @@ from . import res_partner
 from . import account_move
 from . import zatca_api_client
 from . import ir_actions_report
-from . import cloudrefit_zatca_sandbox_test
