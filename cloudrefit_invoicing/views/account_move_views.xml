@@ -29,7 +29,7 @@
                         type="object"
                         class="btn-secondary"
                         icon="fa-flask"
-                        invisible="not is_zatca_sandbox_allowed or move_type not in ('out_invoice', 'out_refund') or state != 'posted'"/>
+                        invisible="not is_zatca_sandbox_allowed or move_type not in ('out_invoice', 'out_refund') or state != 'posted' or (zatca_exec_mode == 'live' and zatca_status in ('reported', 'cleared'))"/>
                 
             </xpath>
             

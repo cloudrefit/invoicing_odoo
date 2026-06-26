@@ -232,6 +232,8 @@ class AccountMove(models.Model):
     def action_push_to_sandbox_zatca(self):
         """Submit invoice to ZATCA Sandbox directly and persist results."""
         self.ensure_one()
+        if self.zatca_status in ('reported', 'cleared') and self.zatca_exec_mode == 'live':
+            raise UserError('This invoice is already reported to ZATCA Live and cannot be pushed to Sandbox.')
         if self.zatca_status in ('reported', 'cleared') and self.zatca_exec_mode == 'sandbox':
             raise UserError('This invoice is already reported to ZATCA Sandbox.')
         self._zatca_sign_invoice(force_mode='sandbox')
