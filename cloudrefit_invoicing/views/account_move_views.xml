@@ -25,7 +25,7 @@
 
                 <!-- Sandbox Test Button -->
                 <button name="action_push_to_sandbox_zatca"
-                        string="Test in Sandbox"
+                        string="Push to ZATCA Sandbox"
                         type="object"
                         class="btn-secondary"
                         icon="fa-flask"
