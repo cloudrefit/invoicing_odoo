@@ -431,7 +431,7 @@ class AccountMove(models.Model):
         response, status_code = self._send_zatca_sign_request(payload, headers, exec_mode)
 
         if status_code == 201:
-            self._handle_zatca_sync_response(response, self)
+            self._handle_zatca_sync_response(response, self, exec_mode)
         elif status_code == 202:
             self._handle_zatca_async_response(response, self, exec_mode)
             # Notify user about async queuing
@@ -520,7 +520,7 @@ class AccountMove(models.Model):
 
         return response, response.status_code
 
-    def _handle_zatca_sync_response(self, response, move):
+    def _handle_zatca_sync_response(self, response, move, exec_mode):
         """Handle 201 (synchronous) response: extract ZATCA status and update invoice.
 
         Returns True if handled successfully.
@@ -537,7 +537,7 @@ class AccountMove(models.Model):
             signed_xml=signed_data.get('xml', ''),
             error_msg=False,
             invoice_type=invoice_type,
-            exec_mode=move._resolve_mode(),
+            exec_mode=exec_mode,
         )
         return True
 
@@ -555,11 +555,12 @@ class AccountMove(models.Model):
         move.write({
             'zatca_job_uuid': job_uuid,
             'zatca_job_status': 'pending',
+            'zatca_exec_mode': exec_mode,
         })
 
         _logger.info(
-            "action=async_queued invoice_id=%s job_uuid=%s",
-            move.id, job_uuid
+            "action=async_queued invoice_id=%s job_uuid=%s mode=%s",
+            move.id, job_uuid, exec_mode
         )
 
     def _handle_zatca_error_response(self, response, status_code, move, exec_mode):
