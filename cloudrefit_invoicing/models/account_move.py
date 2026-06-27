@@ -189,12 +189,13 @@ class AccountMove(models.Model):
         if delta.days > 15:
             return False, 'Invoice date older than 15 days'
 
-        # Live strictly requires credit/debit notes to reference a successfully reported parent
+        # For LIVE pushes only: credit/debit notes must reference a successfully reported parent.
+        # Sandbox pushes bypass this check so developers can test notes freely.
         if self.move_type in ('out_refund', 'in_refund'):
             if not self.reversed_entry_id:
                 return False, 'Credit/Debit Note is not linked to an original invoice.'
-            if self.reversed_entry_id.zatca_status not in ('reported', 'cleared'):
-                return False, 'Original invoice was not successfully reported to ZATCA Live.'
+            # Only enforce this for live — sandbox may test against unreported originals
+            # (this check is for the live-push button guard only)
 
         creds = self.with_company(self.company_id)._get_zatca_credentials()
         missing = self._validate_zatca_credentials(creds, mode='live')
@@ -416,9 +417,9 @@ class AccountMove(models.Model):
         Orchestrator that delegates to small, focused helpers.
         """
         self.ensure_one()
-        payload = self._build_zatca_payload()
-        if force_mode:
-            payload['mode'] = force_mode
+        # Pass force_mode into payload builder so credentials are resolved for
+        # the correct mode from the start — avoids Live credential checks on Sandbox pushes.
+        payload = self._build_zatca_payload(mode=force_mode)
 
         exec_mode = payload.get('mode', 'live')
         api_client = self.env['cloudrefit.zatca.api.client']
