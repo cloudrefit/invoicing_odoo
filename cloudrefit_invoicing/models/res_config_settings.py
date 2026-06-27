@@ -497,7 +497,7 @@ class ResConfigSettings(models.TransientModel):
             mode, list(response_data.keys()) if response_data else None,
         )
         bid = response_data.get('business_id')
-        bname = response_data.get('business_name')
+        bname = response_data.get('business_name', '')
         units = response_data.get('technical_units', [])
         
         ICP = self.env['ir.config_parameter'].sudo()
@@ -513,15 +513,25 @@ class ResConfigSettings(models.TransientModel):
             ICP.set_param(param_key, str(bid))
             self[f'cloudrefit_business_id_{mode}'] = str(bid)
 
-            if bname:
-                self._cr_set_param(name_key, str(bname))
-                ICP.set_param(name_key, str(bname))
-                self[f'cloudrefit_business_name_{mode}'] = str(bname)
+            self._cr_set_param(name_key, str(bname))
+            ICP.set_param(name_key, str(bname))
+            self[f'cloudrefit_business_name_{mode}'] = str(bname)
                 
-            if units:
-                units_json = json.dumps(units)
-                self._cr_set_param(units_key, units_json)
-                ICP.set_param(units_key, units_json)
+            # Always update units, even if empty
+            units_json = json.dumps(units)
+            self._cr_set_param(units_key, units_json)
+            ICP.set_param(units_key, units_json)
+            
+            # Check if current selected unit is still valid
+            current_unit = self._cr_get_param(f'cloudrefit_invoicing.unit_id_{mode}')
+            if current_unit:
+                valid_units = [str(u['id']) for u in units if str(u.get('mode', '')).upper() == mode.upper()]
+                if current_unit not in valid_units:
+                    # Clear it because it's no longer in the fetched list
+                    self._cr_set_param(f'cloudrefit_invoicing.unit_id_{mode}', '')
+                    ICP.set_param(f'cloudrefit_invoicing.unit_id_{mode}', '')
+                    self[f'cloudrefit_unit_id_{mode}'] = False
+                    _logger.info("Cleared stale unit_id_%s because it was not in the fetched units list", mode)
         else:
             _logger.info(
                 "action=auto_save_business_id mode=%s no business_id in response", mode,
