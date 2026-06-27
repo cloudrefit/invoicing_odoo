@@ -230,6 +230,21 @@ class ResConfigSettings(models.TransientModel):
 
         super(ResConfigSettings, self).set_values()
 
+        ICP = self.env['ir.config_parameter'].sudo()
+        company = self.env.company
+        
+        # When saving credentials via the UI, they write to the base config_parameter keys.
+        # If there are stale company-suffixed keys from an older version, they will shadow 
+        # the new credentials. We must delete the suffixed keys to ensure the new ones take effect.
+        if company:
+            for key in ['gateway_url_live', 'api_key_live', 'signing_secret_live', 'unit_id_live',
+                        'gateway_url_sandbox', 'api_key_sandbox', 'signing_secret_sandbox', 'unit_id_sandbox']:
+                # Read the new value from the base key
+                new_val = ICP.get_param(f'cloudrefit_invoicing.{key}')
+                # Write it to the company-suffixed key to ensure consistency
+                if new_val is not False:
+                    ICP.set_param(f'cloudrefit_invoicing.{key}_{company.id}', new_val)
+
         live_changed = (
             (self.cloudrefit_gateway_url_live or '') != old_live['url'] or
             (self.cloudrefit_api_key_live or '') != old_live['api'] or
