@@ -696,8 +696,10 @@ class AccountMove(models.Model):
         exec_mode = self.zatca_exec_mode or self._resolve_mode()
         business_id = creds.get(f'business_id_{exec_mode}')
         
+        reload_action = {'type': 'ir.actions.client', 'tag': 'reload'}
+
         if not business_id:
-            return self.env['cloudrefit.notification.helper']._cr_notify('danger', 'ZATCA Business ID not configured.')
+            return self.env['cloudrefit.notification.helper']._cr_notify('danger', 'ZATCA Business ID not configured.', next_action=reload_action)
 
         try:
             poll_response = api_client.call_gateway(
@@ -724,7 +726,7 @@ class AccountMove(models.Model):
                         exec_mode=exec_mode,
                     )
                     self.write({'zatca_job_status': 'completed'})
-                    return self.env['cloudrefit.notification.helper']._cr_notify('success', 'ZATCA processing completed.')
+                    return self.env['cloudrefit.notification.helper']._cr_notify('success', 'ZATCA processing completed.', next_action=reload_action)
                 elif status == 'failed':
                     error_detail = poll_data.get('error', 'Background signing job failed.')
                     self.write({
@@ -732,14 +734,14 @@ class AccountMove(models.Model):
                         'zatca_status': 'failed',
                         'zatca_error': error_detail,
                     })
-                    return self.env['cloudrefit.notification.helper']._cr_notify('danger', f'ZATCA processing failed: {error_detail}')
+                    return self.env['cloudrefit.notification.helper']._cr_notify('danger', f'ZATCA processing failed: {error_detail}', next_action=reload_action)
                 else:
                     self.write({'zatca_job_status': 'processing'})
-                    return self.env['cloudrefit.notification.helper']._cr_notify('info', 'ZATCA job is still processing. Please try again in a few seconds.')
+                    return self.env['cloudrefit.notification.helper']._cr_notify('info', 'ZATCA job is still processing. Please try again in a few seconds.', next_action=reload_action)
             else:
-                return self.env['cloudrefit.notification.helper']._cr_notify('danger', f'Failed to fetch status: HTTP {poll_response.status_code}')
+                return self.env['cloudrefit.notification.helper']._cr_notify('danger', f'Failed to fetch status: HTTP {poll_response.status_code}', next_action=reload_action)
         except Exception as e:
-            return self.env['cloudrefit.notification.helper']._cr_notify('danger', f'Error fetching status: {str(e)}')
+            return self.env['cloudrefit.notification.helper']._cr_notify('danger', f'Error fetching status: {str(e)}', next_action=reload_action)
 
         # --- Part 2: Retry failed invoices (existing logic) ---
         failed_moves = self.search([
