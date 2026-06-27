@@ -629,7 +629,7 @@ class AccountMove(models.Model):
                 # Switch to the invoice's company context for credential resolution
                 move_with_ctx = move.with_company(move.company_id)
                 creds = move_with_ctx._get_zatca_credentials()
-                exec_mode = move_with_ctx._resolve_mode()
+                exec_mode = move_with_ctx.zatca_exec_mode or move_with_ctx._resolve_mode()
                 business_id = creds.get(f'business_id_{exec_mode}')
                 if not business_id:
                     _logger.error("action=retry_poll invoice_id=%s company=%s mode=%s error=business_id_missing",
@@ -640,7 +640,7 @@ class AccountMove(models.Model):
                     endpoint=f"/api/v1/invoices/{business_id}/status/{move.zatca_job_uuid}",
                     method='GET',
                     action='verify',
-                    mode=move_with_ctx._resolve_mode(),
+                    mode=exec_mode,
                 )
                 if poll_response.status_code == 200:
                     poll_data = poll_response.json()
@@ -657,7 +657,7 @@ class AccountMove(models.Model):
                             signed_xml=signed_data.get('xml', ''),
                             error_msg=False,
                             invoice_type=invoice_type,
-                            exec_mode=move_with_ctx._resolve_mode(),
+                            exec_mode=exec_mode,
                         )
                         move.write({'zatca_job_status': 'completed'})
                         _logger.info(
@@ -692,7 +692,7 @@ class AccountMove(models.Model):
 
         api_client = self.env['cloudrefit.zatca.api.client']
         creds = self._get_zatca_credentials()
-        exec_mode = self._resolve_mode()
+        exec_mode = self.zatca_exec_mode or self._resolve_mode()
         business_id = creds.get(f'business_id_{exec_mode}')
         
         if not business_id:
