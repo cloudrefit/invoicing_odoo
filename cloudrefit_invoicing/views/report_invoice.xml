@@ -15,7 +15,7 @@
                 </div>
                 <div class="col-9 pt-2">
                     <p class="small text-muted mb-1" style="font-size: 9px;">
-                        <strong>ZATCA Compliance:</strong> This invoice is signed and reported to the ZATCA Fatoora platform.
+                        <strong>ZATCA Electronic Invoice</strong>
                         <t t-if="env.context.get('sandbox_qr_code')">
                             <strong class="text-warning ml-2">(SANDBOX TEST)</strong>
                         </t>

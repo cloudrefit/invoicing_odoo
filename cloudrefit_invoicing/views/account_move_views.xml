@@ -86,6 +86,7 @@
                         <field name="mode_override" readonly="zatca_status in ('reported', 'cleared') and zatca_exec_mode == 'live'"/>
                         <field name="zatca_invoice_type_override" readonly="zatca_status in ('reported', 'cleared') and zatca_exec_mode == 'live'"/>
                         <field name="zatca_hash" invisible="not zatca_hash"/>
+                        <field name="zatca_qr_code" widget="image" invisible="not zatca_qr_code" class="mt-2" options="{'size': [150, 150]}"/>
                     </group>
                 </group>
             </xpath>
