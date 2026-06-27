@@ -678,19 +678,67 @@ class AccountMove(models.Model):
                     elif status in ('pending', 'processing'):
                         move.write({'zatca_job_status': 'processing'})
                         _logger.debug(
-                            "action=async_polling invoice_id=%s job_uuid=%s status=%s",
-                            move.id, move.zatca_job_uuid, status
+                            "action=async_processing invoice_id=%s job_uuid=%s",
+                            move.id, move.zatca_job_uuid
                         )
-                else:
-                    _logger.warning(
-                        "action=async_poll_error invoice_id=%s job_uuid=%s http_status=%s",
-                        move.id, move.zatca_job_uuid, poll_response.status_code
-                    )
             except Exception as e:
-                _logger.error(
-                    "action=async_poll_exception invoice_id=%s job_uuid=%s error=%s",
-                    move.id, move.zatca_job_uuid, str(e)
-                )
+                _logger.error("action=retry_poll_error invoice_id=%s error=%s", move.id, str(e))
+
+    def action_zatca_refresh_status(self):
+        """Manually poll the gateway for the status of a pending invoice job."""
+        self.ensure_one()
+        if self.zatca_job_status not in ('pending', 'processing') or not self.zatca_job_uuid:
+            return
+
+        api_client = self.env['cloudrefit.zatca.api.client']
+        creds = self._get_zatca_credentials()
+        exec_mode = self._resolve_mode()
+        business_id = creds.get(f'business_id_{exec_mode}')
+        
+        if not business_id:
+            return self.env['cloudrefit.notification.helper']._cr_notify('danger', 'ZATCA Business ID not configured.')
+
+        try:
+            poll_response = api_client.call_gateway(
+                endpoint=f"/api/v1/invoices/{business_id}/status/{self.zatca_job_uuid}",
+                method='GET',
+                action='verify',
+                mode=exec_mode,
+            )
+            if poll_response.status_code == 200:
+                poll_data = poll_response.json()
+                status = poll_data.get('status')
+                if status == 'completed':
+                    signed_data = poll_data.get('signedData', {})
+                    invoice_type = self._resolve_invoice_type()
+                    zatca_status = 'cleared' if invoice_type == 'standard' else 'reported'
+                    self._update_invoice_after_zatca_sign(
+                        self,
+                        status=zatca_status,
+                        zatca_hash=signed_data.get('hash', ''),
+                        qr_code=signed_data.get('qrImage', ''),
+                        signed_xml=signed_data.get('xml', ''),
+                        error_msg=False,
+                        invoice_type=invoice_type,
+                        exec_mode=exec_mode,
+                    )
+                    self.write({'zatca_job_status': 'completed'})
+                    return self.env['cloudrefit.notification.helper']._cr_notify('success', 'ZATCA processing completed.')
+                elif status == 'failed':
+                    error_detail = poll_data.get('error', 'Background signing job failed.')
+                    self.write({
+                        'zatca_job_status': 'failed',
+                        'zatca_status': 'failed',
+                        'zatca_error': error_detail,
+                    })
+                    return self.env['cloudrefit.notification.helper']._cr_notify('danger', f'ZATCA processing failed: {error_detail}')
+                else:
+                    self.write({'zatca_job_status': 'processing'})
+                    return self.env['cloudrefit.notification.helper']._cr_notify('info', 'ZATCA job is still processing. Please try again in a few seconds.')
+            else:
+                return self.env['cloudrefit.notification.helper']._cr_notify('danger', f'Failed to fetch status: HTTP {poll_response.status_code}')
+        except Exception as e:
+            return self.env['cloudrefit.notification.helper']._cr_notify('danger', f'Error fetching status: {str(e)}')
 
         # --- Part 2: Retry failed invoices (existing logic) ---
         failed_moves = self.search([
