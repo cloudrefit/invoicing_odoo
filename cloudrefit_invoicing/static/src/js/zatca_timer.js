@@ -45,4 +45,9 @@ ZatcaTimerWidget.props = {
     ...standardFieldProps,
 };
 
-registry.category("fields").add("zatca_timer", ZatcaTimerWidget);
+export const zatcaTimerField = {
+    component: ZatcaTimerWidget,
+    supportedTypes: ["datetime"],
+};
+
+registry.category("fields").add("zatca_timer", zatcaTimerField);
