@@ -32,6 +32,16 @@ class AccountMove(models.Model):
     zatca_error = fields.Text(string='ZATCA Error', readonly=True, copy=False)
     zatca_signed_xml = fields.Text(string='ZATCA Signed XML', readonly=True, copy=False,
                                    help='Full signed XML returned by ZATCA. Embedded in PDF when printing.')
+    
+    zatca_signed_xml_file = fields.Binary(
+        string='Download Signed XML',
+        compute='_compute_zatca_signed_xml_file',
+        readonly=True
+    )
+    zatca_signed_xml_filename = fields.Char(
+        string='XML Filename',
+        compute='_compute_zatca_signed_xml_file',
+    )
 
     zatca_invoice_type = fields.Selection([
         ('standard', 'Standard (B2B)'),
@@ -130,6 +140,17 @@ class AccountMove(models.Model):
                 move.zatca_15_days_warning = delta.days > 15
             else:
                 move.zatca_15_days_warning = False
+
+    @api.depends('zatca_signed_xml', 'name')
+    def _compute_zatca_signed_xml_file(self):
+        for move in self:
+            if move.zatca_signed_xml:
+                move.zatca_signed_xml_file = base64.b64encode(move.zatca_signed_xml.encode('utf-8'))
+                safe_name = (move.name or 'invoice').replace('/', '_')
+                move.zatca_signed_xml_filename = f"{safe_name}_ZATCA.xml"
+            else:
+                move.zatca_signed_xml_file = False
+                move.zatca_signed_xml_filename = False
 
     # -----------------------------------------------------------
     #  SANDBOX ZATCA SUBMISSION

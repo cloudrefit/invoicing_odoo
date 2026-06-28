@@ -89,6 +89,8 @@
                         <field name="zatca_invoice_type_override" readonly="zatca_status in ('reported', 'cleared') and zatca_exec_mode == 'live'"/>
                         <field name="zatca_hash" invisible="not zatca_hash"/>
                         <field name="zatca_qr_code" widget="image" invisible="not zatca_qr_code" class="mt-2" options="{'size': [150, 150]}"/>
+                        <field name="zatca_signed_xml_filename" invisible="1"/>
+                        <field name="zatca_signed_xml_file" filename="zatca_signed_xml_filename" widget="binary" invisible="not zatca_signed_xml"/>
                     </group>
                 </group>
             </xpath>
