@@ -70,7 +70,7 @@
                 </div>
             </xpath>
 
-            <xpath expr="//div[@name='button_box']" position="after">
+            <xpath expr="//widget[@name='web_ribbon'][last()]" position="after">
                 <widget name="web_ribbon" title="REPORTED (LIVE)" bg_color="bg-success" invisible="not (zatca_status == 'reported' and zatca_exec_mode == 'live')"/>
                 <widget name="web_ribbon" title="CLEARED (LIVE)" bg_color="bg-success" invisible="not (zatca_status == 'cleared' and zatca_exec_mode == 'live')"/>
                 <widget name="web_ribbon" title="REPORTED (SANDBOX)" bg_color="bg-info" invisible="not (zatca_status == 'reported' and zatca_exec_mode == 'sandbox')"/>
