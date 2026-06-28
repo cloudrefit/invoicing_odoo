@@ -207,4 +207,22 @@
             </xpath>
         </field>
     </record>
+
+    <!-- Action to open CloudRefit Settings from Invoicing App -->
+    <record id="action_cloudrefit_zatca_config_settings" model="ir.actions.act_window">
+        <field name="name">CloudRefit ZATCA Settings</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+        <field name="context">{'module' : 'cloudrefit_invoicing', 'bin_size': False}</field>
+    </record>
+
+    <!-- Menu Item in Invoicing > Configuration -->
+    <menuitem id="menu_cloudrefit_zatca_settings"
+        name="CloudRefit ZATCA Settings"
+        parent="account.menu_finance_configuration"
+        action="action_cloudrefit_zatca_config_settings"
+        sequence="105"/>
+
 </odoo>
