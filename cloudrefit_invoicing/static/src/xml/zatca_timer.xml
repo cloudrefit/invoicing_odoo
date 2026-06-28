@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
     <t t-name="cloudrefit_invoicing.ZatcaTimer" owl="1">
-        <span t-if="!state.hidden" class="ms-1 font-monospace">
-            (Auto-hiding in <t t-esc="state.text"/>)
+        <span t-if="!state.hidden" class="ms-1 font-monospace small text-muted">
+            (Auto-refreshing in <t t-esc="state.text"/>)
         </span>
     </t>
 </templates>

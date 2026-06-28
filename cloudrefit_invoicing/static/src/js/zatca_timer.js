@@ -2,12 +2,15 @@
 
 import { registry } from "@web/core/registry";
 import { standardFieldProps } from "@web/views/fields/standard_field_props";
+import { useService } from "@web/core/utils/hooks";
 import { Component, useState, onWillStart, onWillDestroy } from "@odoo/owl";
 
 export class ZatcaTimerWidget extends Component {
     setup() {
+        this.action = useService("action");
         this.state = useState({ remaining: 120, hidden: false, text: "" });
         this.timer = null;
+        this.reloaded = false;
         
         onWillStart(() => {
             this.updateTimer();
@@ -30,6 +33,10 @@ export class ZatcaTimerWidget extends Component {
         const diff = luxon.DateTime.now().diff(pushed_at, 'seconds').seconds;
         if (diff >= 120) {
             this.state.hidden = true;
+            if (!this.reloaded) {
+                this.reloaded = true;
+                this.action.doAction({ type: "ir.actions.client", tag: "reload" });
+            }
         } else {
             const rem = Math.floor(120 - diff);
             const m = Math.floor(rem / 60);
