@@ -64,19 +64,30 @@
                     </div>
                     <button name="action_zatca_refresh_status" type="object" string="Refresh Status" class="btn btn-sm btn-info" icon="fa-refresh"/>
                 </div>
+                
+                <!-- ZATCA Status Alerts (Replaces Ribbons to prevent hiding the Paid ribbon) -->
+                <div class="alert alert-success mb-0 d-flex justify-content-between align-items-center" role="alert" invisible="not (zatca_status == 'reported' and zatca_exec_mode == 'live')">
+                    <div><strong><i class="fa fa-check-circle"/> ZATCA LIVE:</strong> Successfully Reported.</div>
+                </div>
+                <div class="alert alert-success mb-0 d-flex justify-content-between align-items-center" role="alert" invisible="not (zatca_status == 'cleared' and zatca_exec_mode == 'live')">
+                    <div><strong><i class="fa fa-check-circle"/> ZATCA LIVE:</strong> Successfully Cleared.</div>
+                </div>
+                <div class="alert alert-info mb-0 d-flex justify-content-between align-items-center" role="alert" invisible="not (zatca_status == 'reported' and zatca_exec_mode == 'sandbox')">
+                    <div><strong><i class="fa fa-info-circle"/> ZATCA SANDBOX:</strong> Successfully Reported.</div>
+                </div>
+                <div class="alert alert-info mb-0 d-flex justify-content-between align-items-center" role="alert" invisible="not (zatca_status == 'cleared' and zatca_exec_mode == 'sandbox')">
+                    <div><strong><i class="fa fa-info-circle"/> ZATCA SANDBOX:</strong> Successfully Cleared.</div>
+                </div>
+                <div class="alert alert-danger mb-0 d-flex justify-content-between align-items-center" role="alert" invisible="zatca_status != 'failed'">
+                    <div><strong><i class="fa fa-exclamation-triangle"/> ZATCA FAILED:</strong> <field name="zatca_error" readonly="1"/></div>
+                </div>
                 <div class="alert alert-warning mb-0" role="alert" invisible="not zatca_config_warning">
                     <strong><i class="fa fa-cog"/> Configuration Required: </strong>
                     <span class="ml-2"><field name="zatca_config_warning"/></span>
                 </div>
             </xpath>
 
-            <xpath expr="//widget[@name='web_ribbon'][last()]" position="after">
-                <widget name="web_ribbon" title="REPORTED (LIVE)" bg_color="bg-success" invisible="not (zatca_status == 'reported' and zatca_exec_mode == 'live')"/>
-                <widget name="web_ribbon" title="CLEARED (LIVE)" bg_color="bg-success" invisible="not (zatca_status == 'cleared' and zatca_exec_mode == 'live')"/>
-                <widget name="web_ribbon" title="REPORTED (SANDBOX)" bg_color="bg-info" invisible="not (zatca_status == 'reported' and zatca_exec_mode == 'sandbox')"/>
-                <widget name="web_ribbon" title="CLEARED (SANDBOX)" bg_color="bg-info" invisible="not (zatca_status == 'cleared' and zatca_exec_mode == 'sandbox')"/>
-                <widget name="web_ribbon" title="ZATCA FAILED" bg_color="bg-danger" invisible="zatca_status != 'failed'"/>
-            </xpath>
+            <!-- Removed ZATCA web_ribbons to allow native Odoo Paid ribbon to be visible -->
 
             <!-- Consolidated ZATCA Settings in Other Info -->
             <xpath expr="//page[@name='other_info']" position="inside">
