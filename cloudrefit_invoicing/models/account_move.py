@@ -60,6 +60,11 @@ class AccountMove(models.Model):
     ], string='ZATCA Job Status', readonly=True, copy=False,
        help='Current status of the asynchronous ZATCA signing job')
 
+    zatca_pushed_at = fields.Datetime(
+        string='ZATCA Pushed At', readonly=True, copy=False,
+        help='Timestamp when the invoice was sent to ZATCA for processing.'
+    )
+
     mode_override = fields.Selection([
         ('auto', 'Use Global Setting'),
         ('sandbox', 'Sandbox'),
@@ -556,6 +561,7 @@ class AccountMove(models.Model):
             'zatca_job_uuid': job_uuid,
             'zatca_job_status': 'pending',
             'zatca_exec_mode': exec_mode,
+            'zatca_pushed_at': fields.Datetime.now(),
         })
 
         _logger.info(
