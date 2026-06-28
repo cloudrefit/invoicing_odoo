@@ -399,6 +399,17 @@ class AccountMove(models.Model):
         if formatted_uuid and len(formatted_uuid) == 32 and '-' not in formatted_uuid:
             formatted_uuid = str(py_uuid.UUID(formatted_uuid))
 
+        is_credit = self.move_type in ('out_refund', 'in_refund')
+        is_debit = hasattr(self, 'debit_origin_id') and getattr(self, 'debit_origin_id')
+        
+        # Format the type exactly as the Gateway expects: e.g. STANDARD_CREDIT_NOTE
+        if is_credit:
+            zatca_type_code = f"{invoice_type}_credit_note".upper()
+        elif is_debit:
+            zatca_type_code = f"{invoice_type}_debit_note".upper()
+        else:
+            zatca_type_code = invoice_type.upper()
+
         payload = {
             'mode': mode,
             'unit_id': unit_id,
@@ -406,7 +417,7 @@ class AccountMove(models.Model):
                 'number': self.name,
                 'date': str(self.invoice_date) + ' 12:00:00',
                 'uuid': formatted_uuid,
-                'type': invoice_type,
+                'type': zatca_type_code,
                 'amount_untaxed': float(self.amount_untaxed),
                 'tax_total': float(self.amount_tax),
                 'amount_total': float(self.amount_total),
@@ -420,11 +431,11 @@ class AccountMove(models.Model):
             },
         }
 
-        # Credit Note Handling
-        if self.move_type in ('out_refund', 'in_refund'):
-            origin_move = self.reversed_entry_id
+        # Credit/Debit Note Handling
+        if is_credit or is_debit:
+            origin_move = self.reversed_entry_id if is_credit else getattr(self, 'debit_origin_id')
             if not origin_move:
-                raise UserError('Credit Note must be linked to an original invoice (reversed_entry_id).')
+                raise UserError('Credit/Debit Note must be linked to an original invoice.')
             
             # Ensure origin move has a UUID deterministically
             if not origin_move.zatca_uuid:
@@ -433,7 +444,7 @@ class AccountMove(models.Model):
                 
             payload['invoice']['origin_number'] = origin_move.name
             payload['invoice']['origin_uuid'] = origin_move.zatca_uuid
-            payload['invoice']['adjustment_reason'] = self.ref or 'Returned/Adjusted items'
+            payload['invoice']['adjustment_reason'] = self.ref or self.name or 'Correction of previous invoice'
 
         return payload
 
