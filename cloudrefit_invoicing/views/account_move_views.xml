@@ -70,36 +70,21 @@
                     <strong><i class="fa fa-cog"/> Configuration Required: </strong>
                     <span class="ml-2"><field name="zatca_config_warning"/></span>
                 </div>
-            </xpath>
-
-            <!-- ZATCA Top-Left Ribbons (Allows native Paid ribbon to stay on the right) -->
-            <xpath expr="//sheet" position="inside">
-                <style>
-                    .ribbon-top-left {
-                        right: auto !important;
-                        left: 0 !important;
-                        text-align: left !important;
-                    }
-                    .ribbon-top-left span {
-                        transform: rotate(-45deg) !important;
-                        right: auto !important;
-                        left: -50px !important;
-                    }
-                </style>
-                <div class="ribbon ribbon-top-left" invisible="not (zatca_status == 'reported' and zatca_exec_mode == 'live')">
-                    <span class="bg-success">REPORTED (LIVE)</span>
+                <!-- ZATCA Status Alerts (Replaces Ribbons to prevent hiding the Paid ribbon) -->
+                <div class="alert alert-success mb-0 d-flex justify-content-between align-items-center" role="alert" invisible="not (zatca_status == 'reported' and zatca_exec_mode == 'live')">
+                    <div><strong><i class="fa fa-check-circle"/> ZATCA LIVE:</strong> Successfully Reported.</div>
                 </div>
-                <div class="ribbon ribbon-top-left" invisible="not (zatca_status == 'cleared' and zatca_exec_mode == 'live')">
-                    <span class="bg-success">CLEARED (LIVE)</span>
+                <div class="alert alert-success mb-0 d-flex justify-content-between align-items-center" role="alert" invisible="not (zatca_status == 'cleared' and zatca_exec_mode == 'live')">
+                    <div><strong><i class="fa fa-check-circle"/> ZATCA LIVE:</strong> Successfully Cleared.</div>
                 </div>
-                <div class="ribbon ribbon-top-left" invisible="not (zatca_status == 'reported' and zatca_exec_mode == 'sandbox')">
-                    <span class="bg-info">REPORTED (SANDBOX)</span>
+                <div class="alert alert-info mb-0 d-flex justify-content-between align-items-center" role="alert" invisible="not (zatca_status == 'reported' and zatca_exec_mode == 'sandbox')">
+                    <div><strong><i class="fa fa-info-circle"/> ZATCA SANDBOX:</strong> Successfully Reported.</div>
                 </div>
-                <div class="ribbon ribbon-top-left" invisible="not (zatca_status == 'cleared' and zatca_exec_mode == 'sandbox')">
-                    <span class="bg-info">CLEARED (SANDBOX)</span>
+                <div class="alert alert-info mb-0 d-flex justify-content-between align-items-center" role="alert" invisible="not (zatca_status == 'cleared' and zatca_exec_mode == 'sandbox')">
+                    <div><strong><i class="fa fa-info-circle"/> ZATCA SANDBOX:</strong> Successfully Cleared.</div>
                 </div>
-                <div class="ribbon ribbon-top-left" invisible="zatca_status != 'failed'">
-                    <span class="bg-danger">ZATCA FAILED</span>
+                <div class="alert alert-danger mb-0 d-flex justify-content-between align-items-center" role="alert" invisible="zatca_status != 'failed'">
+                    <div><strong><i class="fa fa-exclamation-triangle"/> ZATCA FAILED:</strong> <field name="zatca_error" readonly="1"/></div>
                 </div>
             </xpath>
 
