@@ -185,6 +185,10 @@
                             <field name="cloudrefit_mode"/>
                             <div class="text-muted">Target ZATCA environment for this company</div>
                         </setting>
+                        <setting title="Download Signed XMLs">
+                            <field name="cloudrefit_zatca_download_xml"/>
+                            <div class="text-muted">Download Signed XMLs (May incur additional fees — turn off if CloudRefit hosts your data)</div>
+                        </setting>
 
                     </block>
 

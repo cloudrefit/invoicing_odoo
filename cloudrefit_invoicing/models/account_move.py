@@ -637,8 +637,12 @@ class AccountMove(models.Model):
                                   move.id, creds['company_name'], exec_mode)
                     continue
 
+                endpoint_url = f"/api/v1/invoices/{business_id}/status/{move.zatca_job_uuid}"
+                if creds.get('zatca_download_xml', True):
+                    endpoint_url += "?return_signed_zatcaxml=true"
+                    
                 poll_response = api_client.call_gateway(
-                    endpoint=f"/api/v1/invoices/{business_id}/status/{move.zatca_job_uuid}",
+                    endpoint=endpoint_url,
                     method='GET',
                     action='verify',
                     mode=exec_mode,
@@ -702,8 +706,12 @@ class AccountMove(models.Model):
             return self.env['cloudrefit.notification.helper']._cr_notify('danger', 'ZATCA Business ID not configured.', next_action=reload_action)
 
         try:
+            endpoint_url = f"/api/v1/invoices/{business_id}/status/{self.zatca_job_uuid}"
+            if creds.get('zatca_download_xml', True):
+                endpoint_url += "?return_signed_zatcaxml=true"
+                
             poll_response = api_client.call_gateway(
-                endpoint=f"/api/v1/invoices/{business_id}/status/{self.zatca_job_uuid}",
+                endpoint=endpoint_url,
                 method='GET',
                 action='verify',
                 mode=exec_mode,

@@ -74,6 +74,7 @@
                 <widget name="web_ribbon" title="CLEARED (LIVE)" bg_color="bg-success" invisible="not (zatca_status == 'cleared' and zatca_exec_mode == 'live')"/>
                 <widget name="web_ribbon" title="REPORTED (SANDBOX)" bg_color="bg-info" invisible="not (zatca_status == 'reported' and zatca_exec_mode == 'sandbox')"/>
                 <widget name="web_ribbon" title="CLEARED (SANDBOX)" bg_color="bg-info" invisible="not (zatca_status == 'cleared' and zatca_exec_mode == 'sandbox')"/>
+                <widget name="web_ribbon" title="ZATCA FAILED" bg_color="bg-danger" invisible="zatca_status != 'failed'"/>
             </xpath>
 
             <!-- Consolidated ZATCA Settings in Other Info -->

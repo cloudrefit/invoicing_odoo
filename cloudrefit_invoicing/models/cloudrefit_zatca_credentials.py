@@ -40,6 +40,7 @@ _ZATCA_PARAM_REGISTRY = {
     'cloudrefit_invoicing.api_key_sandbox':         ('', str),
     'cloudrefit_invoicing.signing_secret_sandbox':  ('', str),
     'cloudrefit_invoicing.unit_id_sandbox':         ('', str),
+    'cloudrefit_invoicing.zatca_download_xml':      ('True', lambda v: str(v) != 'False'),
 }
 
 #: Human-readable labels for error messages (short_key -> label)
@@ -56,6 +57,7 @@ _ZATCA_PARAM_LABELS = {
     'unit_id_sandbox':        'Sandbox Technical Unit ID',
     'sandbox_enabled':        'Sandbox Enabled',
     'live_enabled':           'Enable Live',
+    'zatca_download_xml':     'Download Signed XMLs',
 }
 
 #: Which credential short-keys are required per execution mode
