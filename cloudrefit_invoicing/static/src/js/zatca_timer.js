@@ -8,9 +8,10 @@ import { Component, useState, onWillStart, onWillDestroy } from "@odoo/owl";
 export class ZatcaTimerWidget extends Component {
     setup() {
         this.action = useService("action");
+        this.orm = useService("orm");
         this.state = useState({ remaining: 120, hidden: false, text: "" });
         this.timer = null;
-        this.reloaded = false;
+        this.synced = false;
         
         onWillStart(() => {
             this.updateTimer();
@@ -33,9 +34,19 @@ export class ZatcaTimerWidget extends Component {
         const diff = luxon.DateTime.now().diff(pushed_at, 'seconds').seconds;
         if (diff >= 120) {
             this.state.hidden = true;
-            if (!this.reloaded) {
-                this.reloaded = true;
-                this.action.doAction({ type: "ir.actions.client", tag: "reload" });
+            if (!this.synced) {
+                this.synced = true;
+                this.orm.call(
+                    this.props.record.resModel,
+                    "action_zatca_refresh_status",
+                    [[this.props.record.resId]]
+                ).then((result) => {
+                    if (result) {
+                        this.action.doAction(result);
+                    } else {
+                        this.action.doAction({ type: "ir.actions.client", tag: "reload" });
+                    }
+                });
             }
         } else {
             const rem = Math.floor(120 - diff);
