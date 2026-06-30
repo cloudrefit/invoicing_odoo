@@ -1,7 +1,7 @@
 {
-  "version": "19.0.0.73",
+  "version": "19.0.0.76",
   "release_date": "2026-06-30",
-  "severity": "critical",
-  "title": "Critical ZATCA Update",
-  "message": "This is a test critical update. You must upgrade to version 19.0.0.73."
+  "severity": "urgent",
+  "title": "Urgent ZATCA Compliance Update",
+  "message": "This is a test urgent update. ZATCA endpoints will change tonight. You must update before pushing."
 }
