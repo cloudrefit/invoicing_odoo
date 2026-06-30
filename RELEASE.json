@@ -1,7 +1,7 @@
 {
-  "version": "19.0.0.81",
+  "version": "19.0.0.82",
   "release_date": "2026-06-30",
   "severity": "blocked",
   "title": "ZATCA Gateway Hard Block",
-  "message": "This is a test blocked update. Submissions are disabled until you upgrade to 19.0.0.81."
+  "message": "This is a test blocked update. Submissions are disabled until you upgrade to 19.0.0.82."
 }
