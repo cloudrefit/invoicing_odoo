@@ -208,7 +208,17 @@ class ResConfigSettings(models.TransientModel):
 
     def action_check_now(self):
         self.env['cloudrefit.version.checker'].check_for_updates()
-        return {'type': 'ir.actions.client', 'tag': 'reload'}
+        self._compute_cloudrefit_update_fields()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Update Check',
+                'message': 'Checked for the latest updates from CloudRefit.',
+                'type': 'success',
+                'sticky': False,
+            }
+        }
 
     # === Connection Health Indicator Fields (Live) ===
     gateway_health_status_live = fields.Char(
