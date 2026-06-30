@@ -1,7 +1,11 @@
 {
-  "version": "19.0.0.82",
+  "version": "19.0.0.83",
   "release_date": "2026-06-30",
-  "severity": "blocked",
-  "title": "ZATCA Gateway Hard Block",
-  "message": "This is a test blocked update. Submissions are disabled until you upgrade to 19.0.0.82."
+  "severity": "minor",
+  "title": "Minor UI updates",
+  "message": "Small bug fixes.",
+  "latest_blocked_version": "19.0.0.82",
+  "latest_urgent_version": "19.0.0.76",
+  "latest_critical_version": "19.0.0.77",
+  "latest_major_version": "19.0.0.70"
 }

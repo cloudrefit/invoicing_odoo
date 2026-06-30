@@ -32,8 +32,17 @@ class CloudRefitVersionChecker(models.TransientModel):
             self._store("cloudrefit_invoicing.update_severity", "none")
             return
 
-        # Determine effective severity with escalation
+        # Determine effective severity with historical escalation
         severity = data.get("severity", "info")
+
+        # Apply worst (hardest) matching historical match
+        for sev in ["blocked", "urgent", "critical", "major"]:
+            hist_ver = data.get(f"latest_{sev}_version")
+            if hist_ver and self._version_tuple(installed_version) < self._version_tuple(hist_ver):
+                severity = sev
+                break
+
+        # Apply deadline and compat escalation on top of the determined severity
         severity = self._apply_deadline_escalation(severity, data.get("deadline"))
         severity = self._apply_compat_escalation(severity, installed_version, data.get("min_compatible_version"))
 

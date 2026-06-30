@@ -8,11 +8,12 @@
    - Update `release_date` to today's date
    - Set `severity` based on the nature of changes:
      - Bug fixes only → `minor`
-     - Important fixes / new features → `major`
-     - Security or compliance issues → `critical`
-     - Imminent ZATCA deadline → `urgent`
-     - Breaking API change → `blocked` + set `min_compatible_version`
+     - Important fixes / new features → `major` (Also update `latest_major_version`)
+     - Security or compliance issues → `critical` (Also update `latest_critical_version`)
+     - Imminent ZATCA deadline → `urgent` (Also update `latest_urgent_version`)
+     - Breaking API change → `blocked` (Also update `latest_blocked_version` and `min_compatible_version`)
    - Update `title` and `message` to describe the changes clearly
+   - NEVER clear out older historical versions (e.g., if releasing `minor`, leave `latest_blocked_version` untouched).
 3. If manifest version did NOT change — `RELEASE.json` does not need updating.
 
 > Never push a `__manifest__.py` version bump without a corresponding `RELEASE.json` update.
