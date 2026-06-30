@@ -1,7 +1,7 @@
 {
-  "version": "19.0.0.77",
+  "version": "19.0.0.81",
   "release_date": "2026-06-30",
-  "severity": "critical",
-  "title": "Critical ZATCA Update",
-  "message": "This is a test critical update. You must upgrade to version 19.0.0.77."
+  "severity": "blocked",
+  "title": "ZATCA Gateway Hard Block",
+  "message": "This is a test blocked update. Submissions are disabled until you upgrade to 19.0.0.81."
 }
