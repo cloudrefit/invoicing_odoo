@@ -1,7 +1,7 @@
 {
-  "version": "19.0.0.70",
+  "version": "19.0.0.73",
   "release_date": "2026-06-30",
-  "severity": "info",
-  "title": "Initial Release Version Config",
-  "message": "Baseline version configuration for the CloudRefit ZATCA Gateway Odoo plugin."
+  "severity": "critical",
+  "title": "Critical ZATCA Update",
+  "message": "This is a test critical update. You must upgrade to version 19.0.0.73."
 }
