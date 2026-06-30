@@ -1,6 +1,6 @@
 {
     'name': 'CloudRefit ZATCA Gateway',
-    'version': '19.0.0.85',
+    'version': '19.0.0.86',
     'category': 'Accounting',
     'summary': 'بوابة كلاود ريفيت ZATCA',
     'description': """
