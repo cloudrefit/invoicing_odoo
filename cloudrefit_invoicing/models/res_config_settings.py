@@ -207,18 +207,14 @@ class ResConfigSettings(models.TransientModel):
             rec.cloudrefit_changelog_url = ICP.get_param('cloudrefit_invoicing.changelog_url', '')
 
     def action_check_now(self):
+        # Auto-save any pending settings changes
+        self.execute()
+        
+        # Check for updates
         self.env['cloudrefit.version.checker'].check_for_updates()
-        self._compute_cloudrefit_update_fields()
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': 'Update Check',
-                'message': 'Checked for the latest updates from CloudRefit.',
-                'type': 'success',
-                'sticky': False,
-            }
-        }
+        
+        # Reload the page to exit "dirty" state and show the new data
+        return {'type': 'ir.actions.client', 'tag': 'reload'}
 
     # === Connection Health Indicator Fields (Live) ===
     gateway_health_status_live = fields.Char(
