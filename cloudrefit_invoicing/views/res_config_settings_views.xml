@@ -195,11 +195,44 @@
                     <!-- === About Plugin === -->
                     <div class="row mt-3" name="about_plugin">
                         <div class="col-12">
-                            <div class="oe_blue_box">
+                            <div class="oe_blue_box" style="padding: 16px;">
                                 <h3>About CloudRefit ZATCA Gateway</h3>
-                                <table class="table table-sm table-borderless">
-                                    <tr><td><strong>Version:</strong></td><td><field name="cloudrefit_plugin_version" readonly="1"/></td></tr>
+                                <field name="cloudrefit_update_severity" invisible="1"/>
+                                <field name="cloudrefit_changelog_url" invisible="1"/>
+                                
+                                <table class="table table-sm table-borderless" style="margin-bottom: 0;">
+                                    <tr>
+                                        <td style="width: 150px;"><strong>Installed Version:</strong></td>
+                                        <td><field name="cloudrefit_plugin_version"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Latest Version:</strong></td>
+                                        <td>
+                                            <field name="cloudrefit_latest_version"/>
+                                            <span class="badge badge-info ml-2" invisible="cloudrefit_update_severity != 'info'">Update Available</span>
+                                            <span class="badge badge-warning ml-2" invisible="cloudrefit_update_severity not in ('minor', 'major')">Update Recommended</span>
+                                            <span class="badge badge-danger ml-2" invisible="cloudrefit_update_severity not in ('critical', 'urgent', 'blocked')">Critical Update Required</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Last Checked:</strong></td>
+                                        <td>
+                                            <field name="cloudrefit_update_checked_at"/>
+                                            <button name="action_check_now" type="object" string="Check Now" class="btn btn-link btn-sm ml-2 p-0" icon="fa-refresh"/>
+                                        </td>
+                                    </tr>
                                 </table>
+
+                                <!-- Update Message Block -->
+                                <div invisible="cloudrefit_update_severity == 'none'" class="mt-3 p-3 bg-light rounded border">
+                                    <h4 class="mb-1"><field name="cloudrefit_update_title" readonly="1" force_save="1"/></h4>
+                                    <p class="mb-2 text-muted"><field name="cloudrefit_update_message" readonly="1" force_save="1"/></p>
+                                    <div>
+                                        <a t-att-href="cloudrefit_changelog_url" target="_blank" invisible="not cloudrefit_changelog_url" class="btn btn-sm btn-outline-primary">
+                                            <i class="fa fa-external-link mr-1"/> View Changelog
+                                        </a>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

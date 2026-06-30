@@ -1,0 +1,7 @@
+{
+  "version": "19.0.0.70",
+  "release_date": "2026-06-30",
+  "severity": "info",
+  "title": "Initial Release Version Config",
+  "message": "Baseline version configuration for the CloudRefit ZATCA Gateway Odoo plugin."
+}

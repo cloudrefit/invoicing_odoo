@@ -10,3 +10,4 @@ from . import res_partner
 from . import account_move
 from . import zatca_api_client
 from . import ir_actions_report
+from . import version_checker

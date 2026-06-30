@@ -180,6 +180,36 @@ class ResConfigSettings(models.TransientModel):
         help="Current version of the CloudRefit ZATCA Gateway plugin",
     )
 
+    # === Version Checker Fields ===
+    cloudrefit_update_severity = fields.Selection([
+        ('none', 'None'),
+        ('info', 'Info'),
+        ('minor', 'Minor'),
+        ('major', 'Major'),
+        ('critical', 'Critical'),
+        ('urgent', 'Urgent'),
+        ('blocked', 'Blocked')
+    ], string='Update Severity', compute='_compute_cloudrefit_update_fields')
+    cloudrefit_update_title = fields.Char(string='Update Title', compute='_compute_cloudrefit_update_fields')
+    cloudrefit_update_message = fields.Char(string='Update Message', compute='_compute_cloudrefit_update_fields')
+    cloudrefit_latest_version = fields.Char(string='Latest Version', compute='_compute_cloudrefit_update_fields')
+    cloudrefit_update_checked_at = fields.Char(string='Last Checked At', compute='_compute_cloudrefit_update_fields')
+    cloudrefit_changelog_url = fields.Char(string='Changelog URL', compute='_compute_cloudrefit_update_fields')
+
+    def _compute_cloudrefit_update_fields(self):
+        ICP = self.env['ir.config_parameter'].sudo()
+        for rec in self:
+            rec.cloudrefit_update_severity = ICP.get_param('cloudrefit_invoicing.update_severity', 'none')
+            rec.cloudrefit_update_title = ICP.get_param('cloudrefit_invoicing.update_title', '')
+            rec.cloudrefit_update_message = ICP.get_param('cloudrefit_invoicing.update_message', '')
+            rec.cloudrefit_latest_version = ICP.get_param('cloudrefit_invoicing.latest_version', '')
+            rec.cloudrefit_update_checked_at = ICP.get_param('cloudrefit_invoicing.update_checked_at', '')
+            rec.cloudrefit_changelog_url = ICP.get_param('cloudrefit_invoicing.changelog_url', '')
+
+    def action_check_now(self):
+        self.env['cloudrefit.version.checker'].check_for_updates()
+        return {'type': 'ir.actions.client', 'tag': 'reload'}
+
     # === Connection Health Indicator Fields (Live) ===
     gateway_health_status_live = fields.Char(
         string='Live Gateway Health Status',

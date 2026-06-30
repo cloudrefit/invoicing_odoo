@@ -115,6 +115,50 @@ class AccountMove(models.Model):
         help="Dynamically displays missing ZATCA configuration warnings"
     )
 
+    # === Update Banner Fields ===
+    cloudrefit_effective_severity = fields.Selection([
+        ('none', 'None'),
+        ('info', 'Info'),
+        ('minor', 'Minor'),
+        ('major', 'Major'),
+        ('critical', 'Critical'),
+        ('urgent', 'Urgent'),
+        ('blocked', 'Blocked')
+    ], string='Effective Update Severity', compute='_compute_cloudrefit_update_banner_fields')
+    cloudrefit_update_title = fields.Char(string='Update Title', compute='_compute_cloudrefit_update_banner_fields')
+    cloudrefit_show_banner = fields.Boolean(compute='_compute_cloudrefit_update_banner_fields')
+    cloudrefit_banner_dismissible = fields.Boolean(compute='_compute_cloudrefit_update_banner_fields')
+    cloudrefit_show_push_modal = fields.Boolean(compute='_compute_cloudrefit_update_banner_fields')
+    cloudrefit_push_blocked = fields.Boolean(compute='_compute_cloudrefit_update_banner_fields')
+
+    def _compute_cloudrefit_update_banner_fields(self):
+        ICP = self.env['ir.config_parameter'].sudo()
+        severity = ICP.get_param('cloudrefit_invoicing.update_severity', 'none')
+        title = ICP.get_param('cloudrefit_invoicing.update_title', '')
+        latest_version = ICP.get_param('cloudrefit_invoicing.latest_version', '')
+        dismissed_version = ICP.get_param('cloudrefit_invoicing.dismissed_version', '')
+        
+        # Check if the current major/minor version has been dismissed
+        is_dismissed = False
+        if severity in ('minor', 'major') and dismissed_version == latest_version:
+            is_dismissed = True
+
+        for rec in self:
+            rec.cloudrefit_update_title = title
+            rec.cloudrefit_effective_severity = severity if not is_dismissed else 'none'
+            rec.cloudrefit_show_banner = severity in ('major', 'critical', 'urgent', 'blocked') and not is_dismissed
+            rec.cloudrefit_banner_dismissible = severity == 'major'
+            rec.cloudrefit_show_push_modal = severity == 'urgent'
+            rec.cloudrefit_push_blocked = severity == 'blocked'
+
+    def action_dismiss_update(self):
+        """Dismiss the current update banner."""
+        ICP = self.env['ir.config_parameter'].sudo()
+        latest_version = ICP.get_param('cloudrefit_invoicing.latest_version', '')
+        if latest_version:
+            ICP.set_param('cloudrefit_invoicing.dismissed_version', latest_version)
+        return {'type': 'ir.actions.client', 'tag': 'reload'}
+
     @api.model_create_multi
     def create(self, vals_list):
         moves = super(AccountMove, self).create(vals_list)

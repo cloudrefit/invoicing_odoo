@@ -14,6 +14,12 @@
                 <field name="zatca_job_status" invisible="1"/>
                 <field name="zatca_15_days_warning" invisible="1"/>
                 
+                <field name="cloudrefit_effective_severity" invisible="1"/>
+                <field name="cloudrefit_show_banner" invisible="1"/>
+                <field name="cloudrefit_banner_dismissible" invisible="1"/>
+                <field name="cloudrefit_show_push_modal" invisible="1"/>
+                <field name="cloudrefit_push_blocked" invisible="1"/>
+                
                 <!-- Live Push Button -->
                 <button name="action_zatca_sign"
                         string="Push to ZATCA"
@@ -21,7 +27,16 @@
                         class="oe_highlight"
                         icon="fa-cloud-upload"
                         confirm="This invoice will be permanently reported to ZATCA Live. Continue?"
-                        invisible="not is_zatca_push_allowed or move_type not in ('out_invoice', 'out_refund')"/>
+                        invisible="not is_zatca_push_allowed or move_type not in ('out_invoice', 'out_refund') or cloudrefit_push_blocked or cloudrefit_show_push_modal"/>
+                        
+                <!-- Urgent Push Button -->
+                <button name="action_zatca_sign"
+                        string="Push to ZATCA (Urgent Update)"
+                        type="object"
+                        class="btn-danger"
+                        icon="fa-cloud-upload"
+                        confirm="An urgent compliance update is available. We strongly recommend updating before pushing. Proceed anyway?"
+                        invisible="not is_zatca_push_allowed or move_type not in ('out_invoice', 'out_refund') or not cloudrefit_show_push_modal"/>
 
                 <!-- Sandbox Test Button -->
                 <button name="action_push_to_sandbox_zatca"
@@ -50,6 +65,31 @@
 
             <!-- Status Ribbons and Warning Banners -->
             <xpath expr="//sheet" position="before">
+                <!-- Update Banners -->
+                <!-- major: dismissible info banner -->
+                <div invisible="not cloudrefit_show_banner or cloudrefit_effective_severity != 'major'"
+                     class="alert alert-info d-flex align-items-center mb-0">
+                    <i class="fa fa-info-circle mr-2"/>
+                    <strong class="mr-1">Update Recommended:</strong> <field name="cloudrefit_update_title" readonly="1"/>
+                    <button type="object" name="action_dismiss_update" class="btn btn-sm ml-auto text-dark" invisible="not cloudrefit_banner_dismissible">✕</button>
+                </div>
+
+                <!-- critical: persistent orange warning -->
+                <div invisible="not cloudrefit_show_banner or cloudrefit_effective_severity != 'critical'"
+                     class="alert alert-warning mb-0">
+                    <i class="fa fa-exclamation-triangle mr-2"/>
+                    <strong class="mr-1">Critical Update Available:</strong> <field name="cloudrefit_update_title" readonly="1"/>
+                </div>
+
+                <!-- urgent / blocked: persistent red danger -->
+                <div invisible="not cloudrefit_show_banner or cloudrefit_effective_severity not in ('urgent', 'blocked')"
+                     class="alert alert-danger mb-0">
+                    <i class="fa fa-ban mr-2"/>
+                    <strong class="mr-1">Urgent Update Required:</strong> <field name="cloudrefit_update_title" readonly="1"/>
+                    <span invisible="cloudrefit_effective_severity != 'blocked'" class="ml-1">
+                        — ZATCA submissions are disabled until you upgrade.
+                    </span>
+                </div>
                 <div class="alert alert-warning mb-0" role="alert" invisible="not zatca_15_days_warning">
                     <strong><i class="fa fa-clock-o"/> ZATCA Warning:</strong> This invoice is older than 15 days and cannot be pushed to ZATCA Live.
                 </div>
@@ -132,10 +172,17 @@
         <field name="arch" type="xml">
             <xpath expr="//list" position="inside">
                 <field name="zatca_show_quick_push" column_invisible="1"/>
+                <field name="cloudrefit_push_blocked" column_invisible="1"/>
+                <field name="cloudrefit_show_push_modal" column_invisible="1"/>
                 <button name="action_zatca_sign_invoice" type="object"
                         string="Push" class="btn btn-sm btn-primary"
                         icon="fa-cloud-upload"
-                        invisible="not zatca_show_quick_push"/>
+                        invisible="not zatca_show_quick_push or cloudrefit_push_blocked or cloudrefit_show_push_modal"/>
+                <button name="action_zatca_sign_invoice" type="object"
+                        string="Push (Urgent)" class="btn btn-sm btn-danger"
+                        icon="fa-cloud-upload"
+                        confirm="An urgent compliance update is available. We strongly recommend updating before pushing. Proceed anyway?"
+                        invisible="not zatca_show_quick_push or not cloudrefit_show_push_modal"/>
             </xpath>
         </field>
     </record>
