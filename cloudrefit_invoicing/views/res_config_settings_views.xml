@@ -228,9 +228,7 @@
                                     <h4 class="mb-1"><field name="cloudrefit_update_title" readonly="1" force_save="1"/></h4>
                                     <p class="mb-2 text-muted"><field name="cloudrefit_update_message" readonly="1" force_save="1"/></p>
                                     <div>
-                                        <a t-att-href="cloudrefit_changelog_url" target="_blank" invisible="not cloudrefit_changelog_url" class="btn btn-sm btn-outline-primary">
-                                            <i class="fa fa-external-link mr-1"/> View Changelog
-                                        </a>
+                                        <field name="cloudrefit_changelog_url" widget="url" text="View Changelog" invisible="not cloudrefit_changelog_url" class="btn btn-sm btn-outline-primary oe_inline"/>
                                     </div>
                                 </div>
                             </div>
