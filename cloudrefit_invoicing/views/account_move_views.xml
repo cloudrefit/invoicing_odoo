@@ -44,7 +44,16 @@
                         type="object"
                         class="btn-secondary"
                         icon="fa-flask"
-                        invisible="not is_zatca_sandbox_allowed or move_type not in ('out_invoice', 'out_refund') or state != 'posted' or zatca_status in ('reported', 'cleared')"/>
+                        invisible="not is_zatca_sandbox_allowed or move_type not in ('out_invoice', 'out_refund') or state != 'posted' or zatca_status in ('reported', 'cleared') or cloudrefit_push_blocked or cloudrefit_show_push_modal"/>
+                        
+                <!-- Urgent Sandbox Test Button -->
+                <button name="action_push_to_sandbox_zatca"
+                        string="Push to ZATCA Sandbox (Urgent Update)"
+                        type="object"
+                        class="btn-outline-danger"
+                        icon="fa-flask"
+                        confirm="An urgent compliance update is available. We strongly recommend updating before testing. Proceed anyway?"
+                        invisible="not is_zatca_sandbox_allowed or move_type not in ('out_invoice', 'out_refund') or state != 'posted' or zatca_status in ('reported', 'cleared') or not cloudrefit_show_push_modal"/>
                 
             </xpath>
             
