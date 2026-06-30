@@ -139,25 +139,21 @@ class ResConfigSettings(models.TransientModel):
     )
     cloudrefit_live_enabled = fields.Boolean(
         string="Enable Live",
-        config_parameter='cloudrefit_invoicing.live_enabled',
         default=False,
         help="Show the Live ZATCA tab and allow pushing invoices to live ZATCA",
     )
     cloudrefit_zatca_download_xml = fields.Boolean(
         string="Download Signed XMLs",
-        config_parameter='cloudrefit_invoicing.zatca_download_xml',
         default=True,
         help="Download Signed XMLs (May incur additional fees — turn off if CloudRefit hosts your data)",
     )
     cloudrefit_sandbox_enabled = fields.Boolean(
         string='Enable Sandbox',
-        config_parameter='cloudrefit_invoicing.sandbox_enabled',
         default=False,
         help="Enable the 'Test in Sandbox' button on invoices.",
     )
     cloudrefit_show_sandbox_settings = fields.Boolean(
         string='Show Sandbox Settings',
-        config_parameter='cloudrefit_invoicing.show_sandbox_settings',
         default=False,
         help="Toggle visibility of the sandbox configuration block to declutter the settings page."
     )
@@ -252,6 +248,18 @@ class ResConfigSettings(models.TransientModel):
         store=False,
     )
 
+    @api.model
+    def get_values(self):
+        res = super(ResConfigSettings, self).get_values()
+        ICP = self.env['ir.config_parameter'].sudo()
+        res.update(
+            cloudrefit_zatca_download_xml=ICP.get_param('cloudrefit_invoicing.zatca_download_xml', 'True') == 'True',
+            cloudrefit_live_enabled=ICP.get_param('cloudrefit_invoicing.live_enabled', 'False') == 'True',
+            cloudrefit_sandbox_enabled=ICP.get_param('cloudrefit_invoicing.sandbox_enabled', 'False') == 'True',
+            cloudrefit_show_sandbox_settings=ICP.get_param('cloudrefit_invoicing.show_sandbox_settings', 'False') == 'True',
+        )
+        return res
+
     def set_values(self):
         """Override set_values to detect credential changes and reset connection status."""
         old_live = {
@@ -283,6 +291,12 @@ class ResConfigSettings(models.TransientModel):
                 # Write it to the company-suffixed key to ensure consistency
                 if new_val is not False:
                     ICP.set_param(f'cloudrefit_invoicing.{key}_{company.id}', new_val)
+
+        # Manually save booleans
+        ICP.set_param('cloudrefit_invoicing.zatca_download_xml', str(self.cloudrefit_zatca_download_xml))
+        ICP.set_param('cloudrefit_invoicing.live_enabled', str(self.cloudrefit_live_enabled))
+        ICP.set_param('cloudrefit_invoicing.sandbox_enabled', str(self.cloudrefit_sandbox_enabled))
+        ICP.set_param('cloudrefit_invoicing.show_sandbox_settings', str(self.cloudrefit_show_sandbox_settings))
 
         live_changed = (
             (self.cloudrefit_gateway_url_live or '') != old_live['url'] or
