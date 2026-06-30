@@ -1,10 +1,10 @@
 {
-  "version": "19.0.0.83",
+  "version": "19.0.0.85",
   "release_date": "2026-06-30",
   "severity": "minor",
-  "title": "Minor UI updates",
-  "message": "Small bug fixes.",
-  "latest_blocked_version": "19.0.0.82",
+  "title": "Minor Update",
+  "message": "This is a minor update, but you missed a blocked update at .84!",
+  "latest_blocked_version": "19.0.0.84",
   "latest_urgent_version": "19.0.0.76",
   "latest_critical_version": "19.0.0.77",
   "latest_major_version": "19.0.0.70"
