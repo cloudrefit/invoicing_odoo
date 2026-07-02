@@ -435,8 +435,11 @@ class AccountMove(models.Model):
             raise UserError('Invoice number is missing. Cannot sign with ZATCA.')
         if not self.invoice_date:
             raise UserError('Invoice date is missing. Cannot sign with ZATCA.')
-        if invoice_type == 'standard' and not (partner.zatca_vat or partner.vat):
-            raise UserError('Customer VAT number is missing for standard (B2B) invoice. Cannot sign with ZATCA.')
+        if invoice_type == 'standard':
+            has_vat = bool(partner.zatca_vat or partner.vat)
+            has_other_id = bool(partner.zatca_id_type and partner.zatca_id_value)
+            if not has_vat and not has_other_id:
+                raise UserError('For Standard (B2B) invoices, the customer must have either a VAT number or an Other ID (Type + Value). Cannot sign with ZATCA.')
 
         # Ensure UUID has dashes for Gateway validation
         formatted_uuid = self.zatca_uuid

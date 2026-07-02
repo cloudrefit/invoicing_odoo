@@ -22,3 +22,60 @@ class ResPartner(models.Model):
              'Leave empty to use the standard VAT field.',
     )
 
+    # ZATCA Specific Address Fields
+    building_no = fields.Char(string='Building Number')
+    district = fields.Char(string='District')
+
+    # ZATCA Other ID Fields
+    zatca_id_type = fields.Selection([
+        ('CRN', 'Commercial Registration (CRN)'),
+        ('MOM', 'MOMRAH (MOM)'),
+        ('MLS', 'MHRSD (MLS)'),
+        ('SAG', 'MISA (SAG)'),
+        ('OTH', 'Other (OTH)'),
+        ('700', '700 Number (700)'),
+    ], string='Other ID Type')
+    zatca_id_value = fields.Char(string='Other ID Value')
+
+    @api.constrains('vat', 'zatca_id_type', 'zatca_id_value', 'country_id', 'building_no', 'district', 'zip')
+    def _check_zatca_identity_and_address(self):
+        from odoo.exceptions import ValidationError
+        import re
+
+        for partner in self:
+            if not partner.is_company:
+                continue
+
+            # OR Logic: Must have a valid VAT (15 digits starting/ending with 3) OR a valid Other ID.
+            has_vat = False
+            if partner.vat:
+                vat_val = partner.vat.strip()
+                if re.match(r'^3\d{13}3$', vat_val):
+                    has_vat = True
+
+            has_other_id = False
+            if partner.zatca_id_type and partner.zatca_id_value:
+                has_other_id = True
+
+            if not has_vat and not has_other_id:
+                raise ValidationError(
+                    "For B2B customers, you must provide either a valid ZATCA VAT (15 digits, starts and ends with 3) "
+                    "OR an Other ID (Type + Value)."
+                )
+
+            # Saudi Address check
+            if partner.country_id and partner.country_id.code == 'SA':
+                missing_fields = []
+                if not partner.building_no:
+                    missing_fields.append("Building Number")
+                if not partner.district:
+                    missing_fields.append("District")
+                if not partner.zip:
+                    missing_fields.append("Postal Code/Zip")
+                
+                if missing_fields:
+                    raise ValidationError(
+                        f"Saudi B2B customers require the following address fields: {', '.join(missing_fields)}"
+                    )
+
+
