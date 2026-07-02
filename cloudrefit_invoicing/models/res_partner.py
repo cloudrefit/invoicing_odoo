@@ -29,11 +29,16 @@ class ResPartner(models.Model):
     # ZATCA Other ID Fields
     zatca_id_type = fields.Selection([
         ('CRN', 'Commercial Registration (CRN)'),
+        ('TIN', 'Tax Identification Number (TIN)'),
+        ('NAT', 'National ID (NAT)'),
+        ('PAS', 'Passport ID (PAS)'),
+        ('GCC', 'GCC ID (GCC)'),
+        ('IQA', 'Iqama (IQA)'),
         ('MOM', 'MOMRAH (MOM)'),
         ('MLS', 'MHRSD (MLS)'),
         ('SAG', 'MISA (SAG)'),
-        ('OTH', 'Other (OTH)'),
         ('700', '700 Number (700)'),
+        ('OTH', 'Other (OTH)'),
     ], string='Other ID Type')
     zatca_id_value = fields.Char(string='Other ID Value')
 
@@ -46,12 +51,15 @@ class ResPartner(models.Model):
             if not partner.is_company:
                 continue
 
-            # OR Logic: Must have a valid VAT (15 digits starting/ending with 3) OR a valid Other ID.
+            # OR Logic: Must have a valid VAT OR a valid Other ID.
             has_vat = False
             if partner.vat:
                 vat_val = partner.vat.strip()
-                if re.match(r'^3\d{13}3$', vat_val):
-                    has_vat = True
+                if not partner.country_id or partner.country_id.code == 'SA':
+                    if re.match(r'^3\d{13}3$', vat_val):
+                        has_vat = True
+                else:
+                    has_vat = True # Foreign VAT
 
             has_other_id = False
             if partner.zatca_id_type and partner.zatca_id_value:
@@ -59,7 +67,7 @@ class ResPartner(models.Model):
 
             if not has_vat and not has_other_id:
                 raise ValidationError(
-                    "For B2B customers, you must provide either a valid ZATCA VAT (15 digits, starts and ends with 3) "
+                    "For B2B customers, you must provide either a valid ZATCA VAT (Saudi VAT must be 15 digits starting/ending with 3) "
                     "OR an Other ID (Type + Value)."
                 )
 
