@@ -1,9 +1,9 @@
 {
-  "version": "19.0.0.102",
+  "version": "19.0.0.103",
   "release_date": "2026-07-03",
   "severity": "minor",
-  "title": "CloudRefit ZATCA Gateway - UI Required Address Fields",
-  "message": "Highlighted all mandatory base address fields (Street, City, Country, Zip) in red for B2B customers to match the validation rules visually.",
+  "title": "CloudRefit ZATCA Gateway - UI Required ID Fields",
+  "message": "Made VAT and ID Value mutually exclusive visually required fields for B2B customers. Filling one removes the red highlight from the other.",
   "latest_blocked_version": "19.0.0.81",
   "latest_urgent_version": "19.0.0.76",
   "latest_critical_version": "19.0.0.77",

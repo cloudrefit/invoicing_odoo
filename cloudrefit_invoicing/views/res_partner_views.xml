@@ -26,12 +26,15 @@
             </xpath>
             
             <!-- 2. Inject ZATCA Identity Fields after VAT -->
+            <xpath expr="//field[@name='vat']" position="attributes">
+                <attribute name="required">is_company and not zatca_id_value</attribute>
+            </xpath>
             <xpath expr="//field[@name='vat']" position="after">
                 <div invisible="not zatca_vat_warning or not is_company" colspan="2" class="text-warning">
                     <i class="fa fa-exclamation-triangle mr-2"/> <field name="zatca_vat_warning" nolabel="1" class="d-inline"/>
                 </div>
                 <field name="zatca_id_type" invisible="not is_company"/>
-                <field name="zatca_id_value" invisible="not is_company"/>
+                <field name="zatca_id_value" invisible="not is_company" required="is_company and not vat"/>
                 <div invisible="not zatca_id_warning or not is_company" colspan="2" class="text-warning">
                     <i class="fa fa-exclamation-triangle mr-2"/> <field name="zatca_id_warning" nolabel="1" class="d-inline"/>
                 </div>
