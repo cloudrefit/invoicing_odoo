@@ -1,9 +1,9 @@
 {
-  "version": "19.0.0.107",
+  "version": "19.0.0.108",
   "release_date": "2026-07-03",
   "severity": "minor",
-  "title": "CloudRefit ZATCA Gateway - XML Fix",
-  "message": "Remove faulty mobile xpath injection. Mobile is still strictly required for B2C via Python ValidationError.",
+  "title": "CloudRefit ZATCA Gateway - Logic Revert",
+  "message": "Revert company_type checks back to is_company to match Odoo's internal boolean state representation reliably, and fix indentation of global address check.",
   "latest_blocked_version": "19.0.0.81",
   "latest_urgent_version": "19.0.0.76",
   "latest_critical_version": "19.0.0.77",

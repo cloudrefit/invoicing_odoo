@@ -60,7 +60,7 @@ class ResPartner(models.Model):
                 vat_val = partner.vat.strip()
                 if not re.match(r'^3\d{13}3$', vat_val):
                     warning = "Warning: ZATCA VAT must be 15 digits starting and ending with 3."
-            elif partner.company_type == 'company' and not partner.vat and not partner.zatca_id_value:
+            elif partner.is_company and not partner.vat and not partner.zatca_id_value:
                 warning = "Warning: B2B customers require either a VAT number or an ID Value."
             partner.zatca_vat_warning = warning
 
@@ -78,7 +78,7 @@ class ResPartner(models.Model):
                         raise ValidationError("ZATCA VAT (Saudi Arabia) must be exactly 15 digits, starting and ending with '3'.")
 
             # 2. B2B Specific Validations
-            if partner.company_type == 'company':
+            if partner.is_company:
                 has_vat = bool(partner.vat)
                 has_other_id = bool(partner.zatca_id_type and partner.zatca_id_value)
 
@@ -88,21 +88,21 @@ class ResPartner(models.Model):
                         "OR an ID (Type + Value)."
                     )
 
-            # Global B2B Address check
-            missing_global = []
-            if not partner.street:
-                missing_global.append("Street")
-            if not partner.city:
-                missing_global.append("City")
-            if not partner.country_id:
-                missing_global.append("Country")
-            if missing_global:
-                raise ValidationError(
-                    f"B2B customers require the following address fields: {', '.join(missing_global)}"
-                )
+                # Global B2B Address check
+                missing_global = []
+                if not partner.street:
+                    missing_global.append("Street")
+                if not partner.city:
+                    missing_global.append("City")
+                if not partner.country_id:
+                    missing_global.append("Country")
+                if missing_global:
+                    raise ValidationError(
+                        f"B2B customers require the following address fields: {', '.join(missing_global)}"
+                    )
 
             # Saudi Address check
-            if partner.company_type == 'company' and partner.country_id and partner.country_id.code == 'SA':
+            if partner.is_company and partner.country_id and partner.country_id.code == 'SA':
                 missing_fields = []
                 if not partner.building_no:
                     missing_fields.append("Building Number")
@@ -117,7 +117,7 @@ class ResPartner(models.Model):
                     )
 
             # 3. B2C (Person) Specific Validations
-            if partner.company_type == 'person':
+            if not partner.is_company:
                 if not partner.mobile and not partner.phone:
                     raise ValidationError(
                         "For B2C (Individual) customers, you must provide a Mobile or Phone number."
