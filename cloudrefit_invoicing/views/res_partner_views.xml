@@ -24,9 +24,6 @@
             <xpath expr="//field[@name='zip']" position="attributes">
                 <attribute name="required">company_type == 'company' and country_code == 'SA'</attribute>
             </xpath>
-            <xpath expr="//field[@name='mobile'][1]" position="attributes">
-                <attribute name="required">company_type == 'person'</attribute>
-            </xpath>
             
             <!-- 2. Inject ZATCA Identity Fields after VAT -->
             <xpath expr="//field[@name='vat']" position="attributes">
