@@ -64,34 +64,31 @@ class ResPartner(models.Model):
                 warning = "Warning: B2B customers require either a VAT number or an ID Value."
             partner.zatca_vat_warning = warning
 
-    @api.constrains('vat', 'zatca_id_type', 'zatca_id_value', 'country_id', 'building_no', 'district', 'zip', 'street', 'city')
+    @api.constrains('vat', 'zatca_id_type', 'zatca_id_value', 'country_id', 'building_no', 'district', 'zip', 'street', 'city', 'mobile', 'phone')
     def _check_zatca_identity_and_address(self):
         from odoo.exceptions import ValidationError
         import re
 
         for partner in self:
-            if partner.company_type != 'company':
-                continue
-
-            # OR Logic: Must have a valid VAT OR a valid Other ID.
-            has_vat = False
+            # 1. VAT Format Validation (Global for both B2B and B2C if provided)
             if partner.vat:
                 vat_val = partner.vat.strip()
                 if not partner.country_id or partner.country_id.code == 'SA':
-                    if re.match(r'^3\d{13}3$', vat_val):
-                        has_vat = True
-                else:
-                    has_vat = True # Foreign VAT
+                    if not re.match(r'^3\d{13}3$', vat_val):
+                        raise ValidationError("ZATCA VAT (Saudi Arabia) must be exactly 15 digits, starting and ending with '3'.")
 
-            has_other_id = False
-            if partner.zatca_id_type and partner.zatca_id_value:
-                has_other_id = True
+            # 2. B2B Specific Validations
+            if partner.company_type == 'company':
 
-            if not has_vat and not has_other_id:
-                raise ValidationError(
-                    "For B2B customers, you must provide either a valid ZATCA VAT (Saudi VAT must be 15 digits starting/ending with 3) "
-                    "OR an ID (Type + Value)."
-                )
+            if partner.company_type == 'company':
+                has_vat = bool(partner.vat)
+                has_other_id = bool(partner.zatca_id_type and partner.zatca_id_value)
+
+                if not has_vat and not has_other_id:
+                    raise ValidationError(
+                        "For B2B (Company) customers, you must provide either a valid ZATCA VAT "
+                        "OR an ID (Type + Value)."
+                    )
 
             # Global B2B Address check
             missing_global = []
@@ -107,7 +104,7 @@ class ResPartner(models.Model):
                 )
 
             # Saudi Address check
-            if partner.country_id and partner.country_id.code == 'SA':
+            if partner.company_type == 'company' and partner.country_id and partner.country_id.code == 'SA':
                 missing_fields = []
                 if not partner.building_no:
                     missing_fields.append("Building Number")
@@ -118,7 +115,15 @@ class ResPartner(models.Model):
                 
                 if missing_fields:
                     raise ValidationError(
-                        f"Saudi B2B customers require the following address fields: {', '.join(missing_fields)}"
+                        f"Saudi B2B (Company) customers require the following address fields: {', '.join(missing_fields)}"
                     )
+
+            # 3. B2C (Person) Specific Validations
+            if partner.company_type == 'person':
+                if not partner.mobile and not partner.phone:
+                    raise ValidationError(
+                        "For B2C (Individual) customers, you must provide a Mobile or Phone number."
+                    )
+
 
 
