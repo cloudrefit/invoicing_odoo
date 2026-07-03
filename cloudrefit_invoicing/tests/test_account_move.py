@@ -224,13 +224,7 @@ class TestZatcaInvoiceSigning(TransactionCase):
         self.assertEqual(payload['invoice']['type'], 'simplified')
         self.assertEqual(payload['customer']['vat'], '300000000000003')
 
-    def test_build_payload_b2b_with_zatca_vat_override(self):
-        """Partner with zatca_vat must use the override instead of standard
-        VAT."""
-        self.partner_b2b.write({'zatca_vat': 'SA199999999902'})
-        invoice = self._create_invoice(partner=self.partner_b2b)
-        payload = invoice._build_zatca_payload()
-        self.assertEqual(payload['customer']['vat'], 'SA199999999902')
+
 
     def test_build_payload_uuid_generated(self):
         """An invoice without a zatca_uuid must have one generated during
@@ -572,12 +566,7 @@ class TestZatcaInvoiceSigning(TransactionCase):
         invoice = self._create_invoice(partner=self.partner_b2c)
         self.assertEqual(invoice._resolve_invoice_type(), 'simplified')
 
-    def test_resolve_invoice_type_partner_override(self):
-        """Partner-level zatca_invoice_type='simplified' should override auto-
-        detect even if partner has VAT."""
-        self.partner_b2b.write({'zatca_invoice_type': 'simplified'})
-        invoice = self._create_invoice(partner=self.partner_b2b)
-        self.assertEqual(invoice._resolve_invoice_type(), 'simplified')
+
 
     def test_resolve_invoice_type_invoice_override(self):
         """Invoice-level zatca_invoice_type_override should take precedence."""

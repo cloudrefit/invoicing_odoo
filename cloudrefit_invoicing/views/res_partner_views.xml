@@ -13,8 +13,6 @@
             
             <!-- 2. Inject ZATCA Identity Fields after VAT -->
             <xpath expr="//field[@name='vat']" position="after">
-                <field name="zatca_invoice_type" invisible="not is_company"/>
-                <field name="zatca_vat" invisible="not is_company"/>
                 <div invisible="not zatca_vat_warning or not is_company" colspan="2" class="text-warning">
                     <i class="fa fa-exclamation-triangle mr-2"/> <field name="zatca_vat_warning" nolabel="1" class="d-inline"/>
                 </div>

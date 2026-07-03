@@ -325,31 +325,26 @@ class AccountMove(models.Model):
 
     def _resolve_invoice_type(self):
         """
-        Resolve invoice type with 4-layer config:
-        1. Per-partner override (zatca_invoice_type on res.partner)
-        2. Global default from res.config.settings
-        3. Invoice-level override
-        4. Auto-detect: B2B if customer has VAT, else B2C
+        Resolve invoice type with 3-layer config:
+        1. Global default from res.config.settings
+        2. Invoice-level override
+        3. Auto-detect: B2B if customer is Company, else B2C
         """
         self.ensure_one()
         partner = self.partner_id
 
-        # Layer 1: per-partner override
-        if partner.zatca_invoice_type and partner.zatca_invoice_type != 'auto':
-            return partner.zatca_invoice_type
-
-        # Layer 2: global default
+        # Layer 1: global default
         creds = self.with_company(self.company_id)._get_zatca_credentials()
         global_default = creds.get('default_invoice_type', 'auto')
         if global_default != 'auto':
             return global_default
 
-        # Layer 3: Invoice-level override
+        # Layer 2: Invoice-level override
         if self.zatca_invoice_type_override and self.zatca_invoice_type_override != 'auto':
             return self.zatca_invoice_type_override
 
-        # Layer 4: auto-detect
-        return 'standard' if partner.vat else 'simplified'
+        # Layer 3: auto-detect
+        return 'standard' if partner.is_company else 'simplified'
 
     def _resolve_mode(self):
         """Resolve target mode (sandbox vs live) — defaults to 'live'."""
@@ -436,10 +431,10 @@ class AccountMove(models.Model):
         if not self.invoice_date:
             raise UserError('Invoice date is missing. Cannot sign with ZATCA.')
         if invoice_type == 'standard':
-            has_vat = bool(partner.zatca_vat or partner.vat)
+            has_vat = bool(partner.vat)
             has_id_value = bool(partner.zatca_id_type and partner.zatca_id_value)
             if not has_vat and not has_id_value:
-                raise UserError('For Standard (B2B) invoices, the customer must have either a VAT number or an Other ID (Type + Value). Cannot sign with ZATCA.')
+                raise UserError('For Standard (B2B) invoices, the customer must have either a VAT number or an ID (Type + Value). Cannot sign with ZATCA.')
 
         # Ensure UUID has dashes for Gateway validation
         formatted_uuid = self.zatca_uuid
@@ -472,7 +467,7 @@ class AccountMove(models.Model):
             'lines': lines,
             'customer': {
                 'name': partner.name,
-                'vat': partner.zatca_vat or partner.vat or '300000000000003',
+                'vat': partner.vat or '300000000000003',
                 'address': partner.street or '',
                 'city': partner.city or 'Riyadh',
             },

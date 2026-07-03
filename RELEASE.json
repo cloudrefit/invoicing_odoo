@@ -1,9 +1,9 @@
 {
-  "version": "19.0.0.95",
+  "version": "19.0.0.96",
   "release_date": "2026-07-03",
   "severity": "minor",
-  "title": "CloudRefit ZATCA Gateway - UI Overhaul Fix",
-  "message": "Removed invalid mobile field xpath that caused Odoo upgrade to crash.",
+  "title": "CloudRefit ZATCA Gateway - Redundant Fields Removal",
+  "message": "Removed redundant ZATCA VAT override and Invoice Type manual selections; logic now maps natively from Odoo B2B/B2C.",
   "latest_blocked_version": "19.0.0.81",
   "latest_urgent_version": "19.0.0.76",
   "latest_critical_version": "19.0.0.77",
