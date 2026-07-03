@@ -7,35 +7,35 @@
         <field name="arch" type="xml">
             <!-- 1. Inject ZATCA Address Fields into Standard Address Block -->
             <xpath expr="//field[@name='street2']" position="after">
-                <field name="building_no" placeholder="Building Number..." class="o_address_street" invisible="not is_company or country_code != 'SA'" required="is_company and country_code == 'SA'"/>
-                <field name="district" placeholder="District..." class="o_address_street" invisible="not is_company or country_code != 'SA'" required="is_company and country_code == 'SA'"/>
+                <field name="building_no" placeholder="Building Number..." class="o_address_street" invisible="company_type != 'company' or country_code != 'SA'" required="company_type == 'company' and country_code == 'SA'"/>
+                <field name="district" placeholder="District..." class="o_address_street" invisible="company_type != 'company' or country_code != 'SA'" required="company_type == 'company' and country_code == 'SA'"/>
             </xpath>
 
             <!-- 1.5 Mark base address fields as required visually for B2B -->
             <xpath expr="//field[@name='street']" position="attributes">
-                <attribute name="required">is_company</attribute>
+                <attribute name="required">company_type == 'company'</attribute>
             </xpath>
             <xpath expr="//field[@name='city']" position="attributes">
-                <attribute name="required">is_company</attribute>
+                <attribute name="required">company_type == 'company'</attribute>
             </xpath>
             <xpath expr="//field[@name='country_id']" position="attributes">
-                <attribute name="required">is_company</attribute>
+                <attribute name="required">company_type == 'company'</attribute>
             </xpath>
             <xpath expr="//field[@name='zip']" position="attributes">
-                <attribute name="required">is_company and country_code == 'SA'</attribute>
+                <attribute name="required">company_type == 'company' and country_code == 'SA'</attribute>
             </xpath>
             
             <!-- 2. Inject ZATCA Identity Fields after VAT -->
             <xpath expr="//field[@name='vat']" position="attributes">
-                <attribute name="required">is_company and not zatca_id_value</attribute>
+                <attribute name="required">company_type == 'company' and not zatca_id_value</attribute>
             </xpath>
             <xpath expr="//field[@name='vat']" position="after">
-                <div invisible="not zatca_vat_warning or not is_company" colspan="2" class="text-warning">
+                <div invisible="not zatca_vat_warning or company_type != 'company'" colspan="2" class="text-warning">
                     <i class="fa fa-exclamation-triangle mr-2"/> <field name="zatca_vat_warning" nolabel="1" class="d-inline"/>
                 </div>
-                <field name="zatca_id_type" invisible="not is_company"/>
-                <field name="zatca_id_value" invisible="not is_company" required="is_company and not vat"/>
-                <div invisible="not zatca_id_warning or not is_company" colspan="2" class="text-warning">
+                <field name="zatca_id_type" invisible="company_type != 'company'"/>
+                <field name="zatca_id_value" invisible="company_type != 'company'" required="company_type == 'company' and not vat"/>
+                <div invisible="not zatca_id_warning or company_type != 'company'" colspan="2" class="text-warning">
                     <i class="fa fa-exclamation-triangle mr-2"/> <field name="zatca_id_warning" nolabel="1" class="d-inline"/>
                 </div>
             </xpath>
