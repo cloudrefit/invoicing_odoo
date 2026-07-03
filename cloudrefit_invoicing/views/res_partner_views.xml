@@ -5,19 +5,29 @@
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//notebook" position="inside">
-                <page string="ZATCA Compliance" name="zatca_compliance">
-                    <group>
-                        <group string="Configuration">
-                            <field name="zatca_invoice_type"/>
-                            <field name="zatca_vat"/>
-                            <field name="zatca_id_type"/>
-                            <field name="zatca_id_value"/>
-                            <field name="building_no"/>
-                            <field name="district"/>
-                        </group>
-                    </group>
-                </page>
+            <!-- 1. Inject ZATCA Address Fields into Standard Address Block -->
+            <xpath expr="//field[@name='street2']" position="after">
+                <field name="building_no" placeholder="Building Number..." class="o_address_street" invisible="not is_company or country_code != 'SA'" required="is_company and country_code == 'SA'"/>
+                <field name="district" placeholder="District..." class="o_address_street" invisible="not is_company or country_code != 'SA'" required="is_company and country_code == 'SA'"/>
+            </xpath>
+            
+            <!-- 2. Inject ZATCA Identity Fields after VAT -->
+            <xpath expr="//field[@name='vat']" position="after">
+                <field name="zatca_invoice_type" invisible="not is_company"/>
+                <field name="zatca_vat" invisible="not is_company"/>
+                <div invisible="not zatca_vat_warning or not is_company" colspan="2" class="text-warning">
+                    <i class="fa fa-exclamation-triangle mr-2"/> <field name="zatca_vat_warning" nolabel="1" class="d-inline"/>
+                </div>
+                <field name="zatca_id_type" invisible="not is_company"/>
+                <field name="zatca_id_value" invisible="not is_company"/>
+                <div invisible="not zatca_id_warning or not is_company" colspan="2" class="text-warning">
+                    <i class="fa fa-exclamation-triangle mr-2"/> <field name="zatca_id_warning" nolabel="1" class="d-inline"/>
+                </div>
+            </xpath>
+
+            <!-- 3. Enforce Mobile requirement for B2C Individuals -->
+            <xpath expr="//field[@name='mobile']" position="attributes">
+                <attribute name="required">not is_company</attribute>
             </xpath>
         </field>
     </record>

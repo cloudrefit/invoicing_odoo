@@ -920,3 +920,43 @@ msgstr "اختبار وضع التجربة"
 #: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_move_form_zatca
 msgid "Test this invoice against ZATCA Sandbox without affecting its live status."
 msgstr "اختبر هذه الفاتورة مع ZATCA وضع التجربة دون التأثير على حالتها المباشرة."
+
+# --- Sprint 4 — ZATCA UI Redesign ---
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_partner__building_no
+msgid "Building Number"
+msgstr "رقم المبنى"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_partner__district
+msgid "District"
+msgstr "الحي"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_partner__zatca_id_type
+msgid "ID Type"
+msgstr "نوع المعرف"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_partner__zatca_id_value
+msgid "ID Value"
+msgstr "قيمة المعرف"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_partner__zatca_id_warning
+msgid "ID Warning"
+msgstr "تحذير المعرف"
+
+#. module: cloudrefit_invoicing
+#: model:ir.model.fields,field_description:cloudrefit_invoicing.field_res_partner__zatca_vat_warning
+msgid "VAT Warning"
+msgstr "تحذير الرقم الضريبي"
+
+#. module: cloudrefit_invoicing
+msgid "Warning: NAT must be 10 digits starting with 1."
+msgstr "تحذير: يجب أن يكون رقم الهوية الوطنية 10 أرقام ويبدأ بـ 1."
+
+#. module: cloudrefit_invoicing
+msgid "Warning: ZATCA VAT must be 15 digits starting and ending with 3."
+msgstr "تحذير: يجب أن يكون الرقم الضريبي لـ ZATCA مكوناً من 15 رقماً ويبدأ وينتهي بـ 3."

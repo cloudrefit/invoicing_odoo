@@ -1,9 +1,9 @@
 {
-  "version": "19.0.0.92",
+  "version": "19.0.0.94",
   "release_date": "2026-07-03",
   "severity": "minor",
-  "title": "CloudRefit ZATCA Gateway - View Fix",
-  "message": "Fixes missing ZATCA identity fields on the Odoo res.partner view.",
+  "title": "CloudRefit ZATCA Gateway - UI Overhaul",
+  "message": "Redesigned partner ZATCA fields to mimic portal layout with real-time soft warnings and B2C conditional hiding.",
   "latest_blocked_version": "19.0.0.81",
   "latest_urgent_version": "19.0.0.76",
   "latest_critical_version": "19.0.0.77",

@@ -39,8 +39,34 @@ class ResPartner(models.Model):
         ('SAG', 'MISA (SAG)'),
         ('700', '700 Number (700)'),
         ('OTH', 'Other (OTH)'),
-    ], string='Other ID Type')
-    zatca_id_value = fields.Char(string='Other ID Value')
+    ], string='ID Type')
+    zatca_id_value = fields.Char(string='ID Value')
+
+    # Soft Warnings for UI
+    zatca_id_warning = fields.Char(compute='_compute_zatca_id_warning', store=False, readonly=True)
+    zatca_vat_warning = fields.Char(compute='_compute_zatca_vat_warning', store=False, readonly=True)
+
+    @api.depends('zatca_id_type', 'zatca_id_value')
+    def _compute_zatca_id_warning(self):
+        import re
+        for partner in self:
+            warning = ""
+            if partner.zatca_id_type and partner.zatca_id_value:
+                val = partner.zatca_id_value.strip()
+                if partner.zatca_id_type == 'NAT' and (not val.startswith('1') or len(val) != 10):
+                    warning = "Warning: NAT must be 10 digits starting with 1."
+            partner.zatca_id_warning = warning
+
+    @api.depends('vat', 'country_id')
+    def _compute_zatca_vat_warning(self):
+        import re
+        for partner in self:
+            warning = ""
+            if partner.vat and (not partner.country_id or partner.country_id.code == 'SA'):
+                vat_val = partner.vat.strip()
+                if not re.match(r'^3\d{13}3$', vat_val):
+                    warning = "Warning: ZATCA VAT must be 15 digits starting and ending with 3."
+            partner.zatca_vat_warning = warning
 
     @api.constrains('vat', 'zatca_id_type', 'zatca_id_value', 'country_id', 'building_no', 'district', 'zip')
     def _check_zatca_identity_and_address(self):
