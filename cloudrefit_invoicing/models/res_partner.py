@@ -64,7 +64,7 @@ class ResPartner(models.Model):
                 warning = "Warning: B2B customers require either a VAT number or an ID Value."
             partner.zatca_vat_warning = warning
 
-    @api.constrains('vat', 'zatca_id_type', 'zatca_id_value', 'country_id', 'building_no', 'district', 'zip', 'street', 'city', 'mobile', 'phone')
+    @api.constrains('vat', 'zatca_id_type', 'zatca_id_value', 'country_id', 'building_no', 'district', 'zip', 'street', 'city', 'phone')
     def _check_zatca_identity_and_address(self):
         from odoo.exceptions import ValidationError
         import re
