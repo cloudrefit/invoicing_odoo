@@ -24,7 +24,7 @@ class ResPartner(models.Model):
         ('SAG', 'MISA (SAG)'),
         ('700', '700 Number (700)'),
         ('OTH', 'Other (OTH)'),
-    ], string='ID Type')
+    ], string='ID Type', default='CRN')
     zatca_id_value = fields.Char(string='ID Value')
 
     # Soft Warnings for UI
