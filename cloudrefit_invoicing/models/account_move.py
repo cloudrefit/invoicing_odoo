@@ -310,11 +310,6 @@ class AccountMove(models.Model):
         self._zatca_sign_invoice(force_mode='sandbox')
 
     def action_post(self):
-        from odoo.exceptions import UserError
-        for move in self:
-            if move.move_type == 'out_refund' and not move.ref:
-                raise UserError("Reason is required for Credit/Debit Notes (ZATCA BR-KSA-17).")
-                
         result = super().action_post()
         
         # Ensure deterministic UUIDs are generated for invoices/refunds upon posting
@@ -435,11 +430,41 @@ class AccountMove(models.Model):
             raise UserError('Invoice number is missing. Cannot sign with ZATCA.')
         if not self.invoice_date:
             raise UserError('Invoice date is missing. Cannot sign with ZATCA.')
+            
+        # ZATCA Identity and Address Pre-Flight Check
+        missing = []
         if invoice_type == 'standard':
-            has_vat = bool(partner.vat)
-            has_id_value = bool(partner.zatca_id_type and partner.zatca_id_value)
-            if not has_vat and not has_id_value:
-                raise UserError('For Standard (B2B) invoices, the customer must have either a VAT number or an ID (Type + Value). Cannot sign with ZATCA.')
+            if not bool(partner.vat) and not bool(partner.zatca_id_type and partner.zatca_id_value):
+                missing.append("- VAT Number OR an ID (Type + Value)")
+            if partner.country_id.code == 'SA':
+                if not partner.building_no:
+                    missing.append("- Building Number (Required for Saudi B2B)")
+                if not partner.district:
+                    missing.append("- District (Required for Saudi B2B)")
+                if not partner.zip:
+                    missing.append("- Postal Code (Zip) (Required for Saudi B2B)")
+            if not partner.street:
+                missing.append("- Street")
+            if not partner.city:
+                missing.append("- City")
+            if not partner.country_id:
+                missing.append("- Country")
+        elif invoice_type == 'simplified':
+            has_mobile = hasattr(partner, 'mobile') and bool(partner.mobile)
+            has_phone = bool(partner.phone)
+            if not has_mobile and not has_phone:
+                missing.append("- Mobile or Phone Number")
+                
+        if missing:
+            raise UserError(
+                f"Cannot push to ZATCA! The customer '{partner.name}' is missing required fields for a {invoice_type.title()} invoice:\n" +
+                "\n".join(missing) +
+                "\n\nPlease update the customer record before pushing."
+            )
+            
+        # ZATCA Credit Note Reason Pre-Flight Check (BR-KSA-17)
+        if self.move_type in ('out_refund', 'in_refund') and not self.ref:
+            raise UserError("Reason is required for Credit/Debit Notes (ZATCA BR-KSA-17). Please enter a reason in the Reference field.")
 
         # Ensure UUID has dashes for Gateway validation
         formatted_uuid = self.zatca_uuid
