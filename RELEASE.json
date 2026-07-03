@@ -1,9 +1,9 @@
 {
-  "version": "19.0.0.105",
+  "version": "19.0.0.106",
   "release_date": "2026-07-03",
   "severity": "minor",
-  "title": "CloudRefit ZATCA Gateway - B2C Validations",
-  "message": "Enforced Mobile Number for B2C (Individual) customers and made VAT available but optional for B2C across Odoo and Portal.",
+  "title": "CloudRefit ZATCA Gateway - Hotfix",
+  "message": "Fix syntax error in res_partner constraints.",
   "latest_blocked_version": "19.0.0.81",
   "latest_urgent_version": "19.0.0.76",
   "latest_critical_version": "19.0.0.77",

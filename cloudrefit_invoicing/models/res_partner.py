@@ -79,8 +79,6 @@ class ResPartner(models.Model):
 
             # 2. B2B Specific Validations
             if partner.company_type == 'company':
-
-            if partner.company_type == 'company':
                 has_vat = bool(partner.vat)
                 has_other_id = bool(partner.zatca_id_type and partner.zatca_id_value)
 
