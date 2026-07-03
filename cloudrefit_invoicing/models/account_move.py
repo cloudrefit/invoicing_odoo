@@ -310,6 +310,11 @@ class AccountMove(models.Model):
         self._zatca_sign_invoice(force_mode='sandbox')
 
     def action_post(self):
+        from odoo.exceptions import UserError
+        for move in self:
+            if move.move_type == 'out_refund' and not move.ref:
+                raise UserError("Reason is required for Credit/Debit Notes (ZATCA BR-KSA-17).")
+                
         result = super().action_post()
         
         # Ensure deterministic UUIDs are generated for invoices/refunds upon posting
