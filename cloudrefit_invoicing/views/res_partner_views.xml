@@ -25,10 +25,6 @@
                 </div>
             </xpath>
 
-            <!-- 3. Enforce Mobile requirement for B2C Individuals -->
-            <xpath expr="//field[@name='mobile']" position="attributes">
-                <attribute name="required">not is_company</attribute>
-            </xpath>
         </field>
     </record>
 </odoo>
