@@ -46,7 +46,7 @@ class ResPartner(models.Model):
                     warning = "Warning: Saudi CRN must be 10 digits starting with 1 or 7."
             partner.zatca_id_warning = warning
 
-    @api.depends('vat', 'country_id')
+    @api.depends('vat', 'country_id', 'is_company', 'zatca_id_value')
     def _compute_zatca_vat_warning(self):
         import re
         for partner in self:
@@ -55,6 +55,8 @@ class ResPartner(models.Model):
                 vat_val = partner.vat.strip()
                 if not re.match(r'^3\d{13}3$', vat_val):
                     warning = "Warning: ZATCA VAT must be 15 digits starting and ending with 3."
+            elif partner.is_company and not partner.vat and not partner.zatca_id_value:
+                warning = "Warning: B2B customers require either a VAT number or an ID Value."
             partner.zatca_vat_warning = warning
 
     @api.constrains('vat', 'zatca_id_type', 'zatca_id_value', 'country_id', 'building_no', 'district', 'zip')
