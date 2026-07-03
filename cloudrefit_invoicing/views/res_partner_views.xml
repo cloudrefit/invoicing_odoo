@@ -10,6 +10,20 @@
                 <field name="building_no" placeholder="Building Number..." class="o_address_street" invisible="not is_company or country_code != 'SA'" required="is_company and country_code == 'SA'"/>
                 <field name="district" placeholder="District..." class="o_address_street" invisible="not is_company or country_code != 'SA'" required="is_company and country_code == 'SA'"/>
             </xpath>
+
+            <!-- 1.5 Mark base address fields as required visually for B2B -->
+            <xpath expr="//field[@name='street']" position="attributes">
+                <attribute name="required">is_company</attribute>
+            </xpath>
+            <xpath expr="//field[@name='city']" position="attributes">
+                <attribute name="required">is_company</attribute>
+            </xpath>
+            <xpath expr="//field[@name='country_id']" position="attributes">
+                <attribute name="required">is_company</attribute>
+            </xpath>
+            <xpath expr="//field[@name='zip']" position="attributes">
+                <attribute name="required">is_company and country_code == 'SA'</attribute>
+            </xpath>
             
             <!-- 2. Inject ZATCA Identity Fields after VAT -->
             <xpath expr="//field[@name='vat']" position="after">

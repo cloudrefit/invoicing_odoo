@@ -1,9 +1,9 @@
 {
-  "version": "19.0.0.101",
+  "version": "19.0.0.102",
   "release_date": "2026-07-03",
   "severity": "minor",
-  "title": "CloudRefit ZATCA Gateway - Default Country",
-  "message": "Set the default country to Saudi Arabia on the partner form so that relevant address fields are visible by default.",
+  "title": "CloudRefit ZATCA Gateway - UI Required Address Fields",
+  "message": "Highlighted all mandatory base address fields (Street, City, Country, Zip) in red for B2B customers to match the validation rules visually.",
   "latest_blocked_version": "19.0.0.81",
   "latest_urgent_version": "19.0.0.76",
   "latest_critical_version": "19.0.0.77",
