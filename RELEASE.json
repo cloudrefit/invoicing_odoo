@@ -1,9 +1,9 @@
 {
-  "version": "19.0.0.97",
+  "version": "19.0.0.98",
   "release_date": "2026-07-03",
   "severity": "minor",
-  "title": "CloudRefit ZATCA Gateway - Default ID Type",
-  "message": "Set the default ZATCA ID Type to CRN (Commercial Registration) for faster data entry.",
+  "title": "CloudRefit ZATCA Gateway - CRN Validation",
+  "message": "Added real-time soft warning for Saudi CRNs to ensure they are exactly 10 digits and start with 1 or 7, mirroring portal logic.",
   "latest_blocked_version": "19.0.0.81",
   "latest_urgent_version": "19.0.0.76",
   "latest_critical_version": "19.0.0.77",

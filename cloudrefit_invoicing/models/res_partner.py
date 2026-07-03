@@ -31,15 +31,19 @@ class ResPartner(models.Model):
     zatca_id_warning = fields.Char(compute='_compute_zatca_id_warning', store=False, readonly=True)
     zatca_vat_warning = fields.Char(compute='_compute_zatca_vat_warning', store=False, readonly=True)
 
-    @api.depends('zatca_id_type', 'zatca_id_value')
+    @api.depends('zatca_id_type', 'zatca_id_value', 'country_id')
     def _compute_zatca_id_warning(self):
         import re
         for partner in self:
             warning = ""
             if partner.zatca_id_type and partner.zatca_id_value:
                 val = partner.zatca_id_value.strip()
+                country_code = partner.country_id.code if partner.country_id else ''
+                
                 if partner.zatca_id_type == 'NAT' and (not val.startswith('1') or len(val) != 10):
                     warning = "Warning: NAT must be 10 digits starting with 1."
+                elif partner.zatca_id_type == 'CRN' and country_code == 'SA' and not re.match(r'^[17]\d{9}$', val):
+                    warning = "Warning: Saudi CRN must be 10 digits starting with 1 or 7."
             partner.zatca_id_warning = warning
 
     @api.depends('vat', 'country_id')
