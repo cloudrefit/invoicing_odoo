@@ -11,6 +11,10 @@
                         <group string="Configuration">
                             <field name="zatca_invoice_type"/>
                             <field name="zatca_vat"/>
+                            <field name="zatca_id_type"/>
+                            <field name="zatca_id_value"/>
+                            <field name="building_no"/>
+                            <field name="district"/>
                         </group>
                     </group>
                 </page>
