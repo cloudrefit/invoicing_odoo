@@ -64,12 +64,25 @@ class ResPartner(models.Model):
                 warning = "Warning: B2B customers require either a VAT number or an ID Value."
             partner.zatca_vat_warning = warning
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        _logger.info(f">>> CLOUDREFIT DEBUG CREATE VALS: {vals_list}")
+        _logger.info(f">>> CLOUDREFIT DEBUG CONTEXT: {self.env.context}")
+        return super(ResPartner, self).create(vals_list)
+
+    def write(self, vals):
+        _logger.info(f">>> CLOUDREFIT DEBUG WRITE VALS: {vals}")
+        _logger.info(f">>> CLOUDREFIT DEBUG CONTEXT: {self.env.context}")
+        return super(ResPartner, self).write(vals)
+
     @api.constrains('vat', 'zatca_id_type', 'zatca_id_value', 'country_id', 'building_no', 'district', 'zip', 'street', 'city', 'phone')
     def _check_zatca_identity_and_address(self):
         from odoo.exceptions import ValidationError
         import re
 
         for partner in self:
+            _logger.info(f">>> CLOUDREFIT DEBUG CONSTRAINS: is_company={partner.is_company}, company_type={partner.company_type}")
+
             # 1. VAT Format Validation (Global for both B2B and B2C if provided)
             if partner.vat:
                 vat_val = partner.vat.strip()
