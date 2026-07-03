@@ -78,7 +78,7 @@ class ResPartner(models.Model):
                         raise ValidationError("ZATCA VAT (Saudi Arabia) must be exactly 15 digits, starting and ending with '3'.")
 
             # 2. B2B Specific Validations
-            if partner.is_company:
+            if partner.is_company and partner.company_type != 'person':
                 has_vat = bool(partner.vat)
                 has_other_id = bool(partner.zatca_id_type and partner.zatca_id_value)
 
@@ -117,7 +117,7 @@ class ResPartner(models.Model):
                     )
 
             # 3. B2C (Person) Specific Validations
-            if not partner.is_company:
+            if not partner.is_company or partner.company_type == 'person':
                 if not partner.mobile and not partner.phone:
                     raise ValidationError(
                         "For B2C (Individual) customers, you must provide a Mobile or Phone number."
