@@ -133,7 +133,9 @@ class ResPartner(models.Model):
 
             # 3. B2C (Person) Specific Validations
             if not partner.is_company or partner.company_type == 'person':
-                if not partner.mobile and not partner.phone:
+                has_mobile = hasattr(partner, 'mobile') and bool(partner.mobile)
+                has_phone = bool(partner.phone)
+                if not has_mobile and not has_phone:
                     raise ValidationError(
                         "For B2C (Individual) customers, you must provide a Mobile or Phone number."
                     )

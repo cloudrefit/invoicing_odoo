@@ -1,9 +1,9 @@
 {
-  "version": "19.0.0.113",
+  "version": "19.0.0.114",
   "release_date": "2026-07-03",
   "severity": "minor",
-  "title": "CloudRefit ZATCA Gateway - Deep State Sync",
-  "message": "Explicitly override is_company in create/write vals to defeat context poisoning during B2C creation.",
+  "title": "CloudRefit ZATCA Gateway - Hotfix",
+  "message": "Fix AttributeError when sms module is uninstalled.",
   "latest_blocked_version": "19.0.0.81",
   "latest_urgent_version": "19.0.0.76",
   "latest_critical_version": "19.0.0.77",
