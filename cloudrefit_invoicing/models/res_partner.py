@@ -7,6 +7,11 @@ _logger = logging.getLogger(__name__)
 class ResPartner(models.Model):
     _inherit = 'res.partner'
 
+    country_id = fields.Many2one(
+        'res.country',
+        default=lambda self: self.env.ref('base.sa', raise_if_not_found=False)
+    )
+
     # ZATCA Specific Address Fields
     building_no = fields.Char(string='Building Number')
     district = fields.Char(string='District')
