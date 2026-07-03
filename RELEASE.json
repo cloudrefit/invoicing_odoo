@@ -1,9 +1,9 @@
 {
-  "version": "19.0.0.99",
+  "version": "19.0.0.100",
   "release_date": "2026-07-03",
   "severity": "minor",
-  "title": "CloudRefit ZATCA Gateway - B2B Missing VAT Warning",
-  "message": "Added real-time soft warning for B2B customers to enforce having either a VAT number or an ID Value.",
+  "title": "CloudRefit ZATCA Gateway - B2B Address Constraints",
+  "message": "Enforced global B2B address requirements (Street, City, Country) at the Odoo database level to prevent saving incomplete company profiles.",
   "latest_blocked_version": "19.0.0.81",
   "latest_urgent_version": "19.0.0.76",
   "latest_critical_version": "19.0.0.77",

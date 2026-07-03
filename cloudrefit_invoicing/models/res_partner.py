@@ -59,7 +59,7 @@ class ResPartner(models.Model):
                 warning = "Warning: B2B customers require either a VAT number or an ID Value."
             partner.zatca_vat_warning = warning
 
-    @api.constrains('vat', 'zatca_id_type', 'zatca_id_value', 'country_id', 'building_no', 'district', 'zip')
+    @api.constrains('vat', 'zatca_id_type', 'zatca_id_value', 'country_id', 'building_no', 'district', 'zip', 'street', 'city')
     def _check_zatca_identity_and_address(self):
         from odoo.exceptions import ValidationError
         import re
@@ -85,7 +85,20 @@ class ResPartner(models.Model):
             if not has_vat and not has_other_id:
                 raise ValidationError(
                     "For B2B customers, you must provide either a valid ZATCA VAT (Saudi VAT must be 15 digits starting/ending with 3) "
-                    "OR an Other ID (Type + Value)."
+                    "OR an ID (Type + Value)."
+                )
+
+            # Global B2B Address check
+            missing_global = []
+            if not partner.street:
+                missing_global.append("Street")
+            if not partner.city:
+                missing_global.append("City")
+            if not partner.country_id:
+                missing_global.append("Country")
+            if missing_global:
+                raise ValidationError(
+                    f"B2B customers require the following address fields: {', '.join(missing_global)}"
                 )
 
             # Saudi Address check
