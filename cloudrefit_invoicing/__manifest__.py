@@ -1,6 +1,6 @@
 {
     'name': 'CloudRefit ZATCA Gateway',
-    'version': '19.0.0.120',
+    'version': '19.0.0.121',
     'category': 'Accounting',
     'summary': 'بوابة كلاود ريفيت ZATCA',
     'description': """
@@ -28,7 +28,6 @@ Connects Odoo to the CloudRefit ZATCA Gateway for Phase 2 compliance.
     'assets': {
         'web.assets_backend': [
             'cloudrefit_invoicing/static/src/js/zatca_timer.js',
-            'cloudrefit_invoicing/static/src/js/settings_autosave.js',
             'cloudrefit_invoicing/static/src/xml/zatca_timer.xml',
         ],
     },

@@ -877,3 +877,34 @@ class ResConfigSettings(models.TransientModel):
             'target': 'self',
             'context': self.env.context,
         }
+    @api.onchange('cloudrefit_api_key_live', 'cloudrefit_signing_secret_live', 'cloudrefit_unit_id_live', 'cloudrefit_live_enabled',
+                  'cloudrefit_api_key_sandbox', 'cloudrefit_signing_secret_sandbox', 'cloudrefit_unit_id_sandbox', 'cloudrefit_sandbox_enabled')
+    def _onchange_auto_save_cloudrefit_fields(self):
+        """Silently persist critical fields to ir.config_parameter on blur/change without triggering a page reload."""
+        ICP = self.env['ir.config_parameter'].sudo()
+        company = self.env.company
+
+        # Helper to save string fields
+        def _save_param(key, val):
+            if val is not False and val is not None:
+                ICP.set_param(f'cloudrefit_invoicing.{key}', str(val))
+                if company:
+                    ICP.set_param(f'cloudrefit_invoicing.{key}_{company.id}', str(val))
+            else:
+                ICP.set_param(f'cloudrefit_invoicing.{key}', '')
+                if company:
+                    ICP.set_param(f'cloudrefit_invoicing.{key}_{company.id}', '')
+
+        _save_param('api_key_live', self.cloudrefit_api_key_live)
+        _save_param('signing_secret_live', self.cloudrefit_signing_secret_live)
+        _save_param('unit_id_live', self.cloudrefit_unit_id_live)
+        
+        _save_param('api_key_sandbox', self.cloudrefit_api_key_sandbox)
+        _save_param('signing_secret_sandbox', self.cloudrefit_signing_secret_sandbox)
+        _save_param('unit_id_sandbox', self.cloudrefit_unit_id_sandbox)
+
+        # Helper for booleans
+        if self.cloudrefit_live_enabled is not None:
+            ICP.set_param('cloudrefit_invoicing.live_enabled', str(self.cloudrefit_live_enabled))
+        if self.cloudrefit_sandbox_enabled is not None:
+            ICP.set_param('cloudrefit_invoicing.sandbox_enabled', str(self.cloudrefit_sandbox_enabled))
