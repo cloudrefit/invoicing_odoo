@@ -1,9 +1,9 @@
 {
-  "version": "19.0.0.118",
-  "release_date": "2026-07-03",
+  "version": "19.0.0.120",
+  "release_date": "2026-07-05",
   "severity": "minor",
-  "title": "ZATCA Identity & Address Compliance",
-  "message": "Enforce strict ZATCA Phase 2 compliance rules for buyer and seller identity (VAT/CRN) and address completeness (District, Building No).",
+  "title": "Strict Mode Isolation & Settings UX",
+  "message": "Enforced strict Mode Isolation rules for Sandbox/Live connection testing to prevent credential mixups. Improved the settings UI with auto-save for field changes to reduce user friction.",
   "latest_blocked_version": "19.0.0.81",
   "latest_urgent_version": "19.0.0.76",
   "latest_critical_version": "19.0.0.77",

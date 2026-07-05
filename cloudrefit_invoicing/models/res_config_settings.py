@@ -613,6 +613,7 @@ class ResConfigSettings(models.TransientModel):
         On failure: clears business_id, forces enable checkbox to False, sets health to 'failed'.
         """
         self.ensure_one()
+        self.execute()
 
         creds = self._get_zatca_credentials()
         gateway_url = self.cloudrefit_gateway_url_live or creds.get('gateway_url_live')
@@ -632,6 +633,15 @@ class ResConfigSettings(models.TransientModel):
                 next_action=reload_action,
             )
 
+        if not api_key.startswith('live_pk_'):
+            msg = 'Mode isolation error: API Key is for SANDBOX mode, but request targets LIVE mode.'
+            self._reset_mode_on_failure(mode='live', error_message=msg)
+            self._set_health_status('failed', msg, mode='live')
+            self.gateway_health_status_live = 'failed'
+            self.gateway_health_last_check_live = datetime.datetime.now().isoformat()
+            self.gateway_health_message_live = 'Mode isolation error'
+            return self._cr_notify('danger', msg, next_action=reload_action)
+
         try:
             body = json.dumps({'action': 'ping'}, sort_keys=True, separators=(',', ':'), ensure_ascii=False)
             signature = hmac.new(
@@ -646,6 +656,7 @@ class ResConfigSettings(models.TransientModel):
                 'X-Signature': signature,
                 'Content-Type': 'application/json',
                 'X-Integration-Url': odoo_url,
+                'X-Mode': 'LIVE',
             }
 
             url = f"{gateway_url.rstrip('/')}/api/plugin/ping"
@@ -724,6 +735,7 @@ class ResConfigSettings(models.TransientModel):
         On failure: clears business_id, forces enable checkbox to False, sets health to 'failed'.
         """
         self.ensure_one()
+        self.execute()
 
         creds = self._get_zatca_credentials()
         gateway_url = self.cloudrefit_gateway_url_sandbox or creds.get('gateway_url_sandbox')
@@ -743,6 +755,15 @@ class ResConfigSettings(models.TransientModel):
                 next_action=reload_action,
             )
 
+        if not api_key.startswith('test_pk_'):
+            msg = 'Mode isolation error: API Key is for LIVE mode, but request targets SANDBOX mode.'
+            self._reset_mode_on_failure(mode='sandbox', error_message=msg)
+            self._set_health_status('failed', msg, mode='sandbox')
+            self.gateway_health_status_sandbox = 'failed'
+            self.gateway_health_last_check_sandbox = datetime.datetime.now().isoformat()
+            self.gateway_health_message_sandbox = 'Mode isolation error'
+            return self._cr_notify('danger', msg, next_action=reload_action)
+
         try:
             body = json.dumps({'action': 'ping'}, sort_keys=True, separators=(',', ':'), ensure_ascii=False)
             signature = hmac.new(
@@ -757,6 +778,7 @@ class ResConfigSettings(models.TransientModel):
                 'X-Signature': signature,
                 'Content-Type': 'application/json',
                 'X-Integration-Url': odoo_url,
+                'X-Mode': 'SANDBOX',
             }
 
             url = f"{gateway_url.rstrip('/')}/api/plugin/ping"
