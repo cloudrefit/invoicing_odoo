@@ -22,17 +22,12 @@ class AccountPayment(models.Model):
 
     def _push_payment_to_cloudrefit(self, payment, move):
         try:
-            config = self.env['res.company']._cr_get_credentials('live')
-            gateway_url = config.get('url')
-            business_id = config.get('biz_id')
-            api_key = config.get('api')
-
-            if not all([gateway_url, business_id, api_key]):
-                # Fallback to sandbox if live is not configured
-                config = self.env['res.company']._cr_get_credentials('sandbox')
-                gateway_url = config.get('url')
-                business_id = config.get('biz_id')
-                api_key = config.get('api')
+            creds = move.with_company(move.company_id)._get_zatca_credentials()
+            
+            # Since payments apply to an invoice regardless of mode, we try live first, then sandbox
+            gateway_url = creds.get('gateway_url_live') or creds.get('gateway_url_sandbox')
+            business_id = creds.get('business_id_live') or creds.get('business_id_sandbox')
+            api_key = creds.get('api_key_live') or creds.get('api_key_sandbox')
                 
             if not all([gateway_url, business_id, api_key]):
                 _logger.warning("CloudRefit credentials missing, cannot push payment.")
