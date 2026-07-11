@@ -10,10 +10,11 @@ class AccountPaymentRegister(models.TransientModel):
     def _create_payments(self):
         payments = super(AccountPaymentRegister, self)._create_payments()
         for payment in payments:
-            if payment.partner_type == 'customer' and payment.reconciled_invoice_ids:
-                for move in payment.reconciled_invoice_ids:
-                    if move.zatca_uuid:
-                        self.env['account.payment']._push_payment_to_cloudrefit(payment, move)
+            if payment.partner_type == 'customer':
+                # The wizard knows which lines/invoices it is paying via self.line_ids
+                moves = self.line_ids.mapped('move_id').filtered(lambda m: m.zatca_uuid)
+                for move in moves:
+                    self.env['account.payment']._push_payment_to_cloudrefit(payment, move)
         return payments
 
 class AccountPayment(models.Model):

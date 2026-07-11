@@ -1,9 +1,9 @@
 {
-  "version": "19.0.0.130",
+  "version": "19.0.0.131",
   "release_date": "2026-07-11",
   "severity": "minor",
-  "title": "Fix Odoo Manual Payment Sync Attribute Error",
-  "message": "Fixed an AttributeError on `account_payment` interception caused by referencing the incorrect field name (`cloudrefit_uuid` instead of `zatca_uuid`).",
+  "title": "Fix Odoo Manual Payment Empty Invoice IDs",
+  "message": "Fixed silent failure on payment push. Odoo's payment creation wizard does not immediately populate `reconciled_invoice_ids` when `_create_payments` returns. The interception logic now looks directly at the wizard's `line_ids` to find the correct `account.move` being paid.",
   "latest_blocked_version": "19.0.0.81",
   "latest_urgent_version": "19.0.0.76",
   "latest_critical_version": "19.0.0.77",
