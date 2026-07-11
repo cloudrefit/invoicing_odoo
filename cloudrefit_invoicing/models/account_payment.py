@@ -4,17 +4,20 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
-class AccountPayment(models.Model):
-    _inherit = 'account.payment'
+class AccountPaymentRegister(models.TransientModel):
+    _inherit = 'account.payment.register'
 
-    def action_post(self):
-        res = super(AccountPayment, self).action_post()
-        for payment in self:
+    def _create_payments(self):
+        payments = super(AccountPaymentRegister, self)._create_payments()
+        for payment in payments:
             if payment.partner_type == 'customer' and payment.reconciled_invoice_ids:
                 for move in payment.reconciled_invoice_ids:
                     if move.cloudrefit_uuid:
-                        self._push_payment_to_cloudrefit(payment, move)
-        return res
+                        self.env['account.payment']._push_payment_to_cloudrefit(payment, move)
+        return payments
+
+class AccountPayment(models.Model):
+    _inherit = 'account.payment'
 
     def _push_payment_to_cloudrefit(self, payment, move):
         try:

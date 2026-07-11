@@ -1,9 +1,9 @@
 {
-  "version": "19.0.0.128",
+  "version": "19.0.0.129",
   "release_date": "2026-07-11",
   "severity": "minor",
-  "title": "Manual Odoo Payments Sync to Gateway",
-  "message": "Implemented `account.payment` interception. When a payment is recorded manually in Odoo against a CloudRefit-tracked invoice, the payment amount is instantly pushed to the Gateway to keep the Dashboard live-computed totals perfectly synced.",
+  "title": "Fix Odoo Manual Payment Sync Hook",
+  "message": "Shifted the payment interception logic from `account.payment` to `account.payment.register` wizard to correctly capture the reconciled invoice IDs which are empty at the exact moment of initial payment creation in Odoo 16+.",
   "latest_blocked_version": "19.0.0.81",
   "latest_urgent_version": "19.0.0.76",
   "latest_critical_version": "19.0.0.77",
