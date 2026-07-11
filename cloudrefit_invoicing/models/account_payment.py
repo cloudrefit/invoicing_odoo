@@ -12,7 +12,7 @@ class AccountPaymentRegister(models.TransientModel):
         for payment in payments:
             if payment.partner_type == 'customer' and payment.reconciled_invoice_ids:
                 for move in payment.reconciled_invoice_ids:
-                    if move.cloudrefit_uuid:
+                    if move.zatca_uuid:
                         self.env['account.payment']._push_payment_to_cloudrefit(payment, move)
         return payments
 
@@ -42,7 +42,7 @@ class AccountPayment(models.Model):
                 'Authorization': f'Bearer {api_key}'
             }
 
-            url = f"{gateway_url.rstrip('/')}/api/v1/invoices/{business_id}/payments/{move.cloudrefit_uuid}"
+            url = f"{gateway_url.rstrip('/')}/api/v1/invoices/{business_id}/payments/{move.zatca_uuid}"
             payload = {
                 'amount': payment.amount,
                 'source': 'odoo',
