@@ -827,7 +827,7 @@ class AccountMove(models.Model):
         except Exception as e:
             raise UserError(f'Cannot connect to CloudRefit Gateway: {str(e)}')
 
-        if response.status_code == 200:
+        if response.status_code in (200, 201, 202):
             data = response.json()
             payment_url = data.get('payment_url')
             if payment_url:

@@ -1,9 +1,9 @@
 {
-  "version": "19.0.0.125",
+  "version": "19.0.0.126",
   "release_date": "2026-07-11",
   "severity": "minor",
-  "title": "Fix Cron XML Doall Error",
-  "message": "Removed deprecated `doall` field from ir.cron in the XML data file which was blocking the module upgrade on Odoo 16+.",
+  "title": "Fix Gateway Payment Link 201 Response Handling",
+  "message": "Adjusted the payment link generation button to accept 201 Created and 202 Accepted status codes from the Gateway instead of only accepting 200 OK.",
   "latest_blocked_version": "19.0.0.81",
   "latest_urgent_version": "19.0.0.76",
   "latest_critical_version": "19.0.0.77",
