@@ -1,9 +1,9 @@
 {
-  "version": "19.0.0.123",
+  "version": "19.0.0.124",
   "release_date": "2026-07-11",
   "severity": "minor",
-  "title": "Fix Postgres Type Casting Error on Settings",
-  "message": "Renamed settings fields to bypass a transient model JSONB vs Boolean Postgres casting conflict that prevented saving settings.",
+  "title": "Fix Cron XML Numbercall Error",
+  "message": "Removed deprecated `numbercall` field from ir.cron in the XML data file which was blocking the module upgrade on Odoo 16+.",
   "latest_blocked_version": "19.0.0.81",
   "latest_urgent_version": "19.0.0.76",
   "latest_critical_version": "19.0.0.77",
