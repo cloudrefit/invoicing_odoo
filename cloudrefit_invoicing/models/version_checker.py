@@ -27,9 +27,11 @@ class CloudRefitVersionChecker(models.TransientModel):
         latest_version = data.get("version")
         installed_version = self._get_installed_version()
 
-        # If RELEASE.json is stale or same version — silently treat as up-to-date
+        # If RELEASE.json is stale or same version – silently treat as up-to-date
         if not latest_version or self._version_tuple(installed_version) >= self._version_tuple(latest_version):
             self._store("cloudrefit_invoicing.update_severity", "none")
+            self._store("cloudrefit_invoicing.latest_version", latest_version or installed_version)
+            self._store("cloudrefit_invoicing.update_checked_at", fields.Datetime.now())
             return
 
         # Determine effective severity with historical escalation

@@ -1,9 +1,9 @@
 {
-  "version": "19.0.0.126",
+  "version": "19.0.0.127",
   "release_date": "2026-07-11",
   "severity": "minor",
-  "title": "Fix Gateway Payment Link 201 Response Handling",
-  "message": "Adjusted the payment link generation button to accept 201 Created and 202 Accepted status codes from the Gateway instead of only accepting 200 OK.",
+  "title": "Fix Version Checker UI Update",
+  "message": "Fixed a bug where the 'Latest Version' and 'Last Checked' fields in the UI were not visually updated when the plugin successfully checked for updates but found it was already on the latest version.",
   "latest_blocked_version": "19.0.0.81",
   "latest_urgent_version": "19.0.0.76",
   "latest_critical_version": "19.0.0.77",
