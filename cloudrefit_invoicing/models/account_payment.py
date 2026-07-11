@@ -22,20 +22,22 @@ class AccountPayment(models.Model):
 
     def _push_payment_to_cloudrefit(self, payment, move):
         try:
-            creds = move.with_company(move.company_id)._get_zatca_credentials()
+            move_with_ctx = move.with_company(move.company_id)
+            creds = move_with_ctx._get_zatca_credentials()
+            exec_mode = move_with_ctx.zatca_exec_mode or move_with_ctx._resolve_mode()
             
-            # Since payments apply to an invoice regardless of mode, we try live first, then sandbox
-            gateway_url = creds.get('gateway_url_live') or creds.get('gateway_url_sandbox')
-            business_id = creds.get('business_id_live') or creds.get('business_id_sandbox')
-            api_key = creds.get('api_key_live') or creds.get('api_key_sandbox')
+            gateway_url = creds.get(f'gateway_url_{exec_mode}')
+            business_id = creds.get(f'business_id_{exec_mode}')
+            api_key = creds.get(f'api_key_{exec_mode}')
                 
             if not all([gateway_url, business_id, api_key]):
-                _logger.warning("CloudRefit credentials missing, cannot push payment.")
+                _logger.warning(f"CloudRefit {exec_mode} credentials missing, cannot push payment.")
                 return
 
             headers = {
                 'Content-Type': 'application/json',
-                'Authorization': f'Bearer {api_key}'
+                'Authorization': f'Bearer {api_key}',
+                'X-Mode': exec_mode.upper()
             }
 
             url = f"{gateway_url.rstrip('/')}/api/v1/invoices/{business_id}/payments/{move.zatca_uuid}"
