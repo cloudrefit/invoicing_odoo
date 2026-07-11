@@ -137,7 +137,7 @@ class ResConfigSettings(models.TransientModel):
        default='auto',
        help='Default ZATCA invoice type for new invoices',
     )
-    cloudrefit_live_enabled = fields.Boolean(
+    is_cloudrefit_live_enabled = fields.Boolean(
         string="Enable Live",
         default=False,
         help="Show the Live ZATCA tab and allow pushing invoices to live ZATCA",
@@ -147,7 +147,7 @@ class ResConfigSettings(models.TransientModel):
         default=True,
         help="Download Signed XMLs (May incur additional fees — turn off if CloudRefit hosts your data)",
     )
-    cloudrefit_sandbox_enabled = fields.Boolean(
+    is_cloudrefit_sandbox_enabled = fields.Boolean(
         string='Enable Sandbox',
         default=False,
         help="Enable the 'Test in Sandbox' button on invoices.",
@@ -254,8 +254,8 @@ class ResConfigSettings(models.TransientModel):
         ICP = self.env['ir.config_parameter'].sudo()
         res.update(
             cloudrefit_zatca_download_xml=ICP.get_param('cloudrefit_invoicing.zatca_download_xml', 'True') == 'True',
-            cloudrefit_live_enabled=ICP.get_param('cloudrefit_invoicing.live_enabled', 'False') == 'True',
-            cloudrefit_sandbox_enabled=ICP.get_param('cloudrefit_invoicing.sandbox_enabled', 'False') == 'True',
+            is_cloudrefit_live_enabled=ICP.get_param('cloudrefit_invoicing.live_enabled', 'False') == 'True',
+            is_cloudrefit_sandbox_enabled=ICP.get_param('cloudrefit_invoicing.sandbox_enabled', 'False') == 'True',
             cloudrefit_show_sandbox_settings=ICP.get_param('cloudrefit_invoicing.show_sandbox_settings', 'False') == 'True',
         )
         return res
@@ -294,8 +294,8 @@ class ResConfigSettings(models.TransientModel):
 
         # Manually save booleans
         ICP.set_param('cloudrefit_invoicing.zatca_download_xml', str(self.cloudrefit_zatca_download_xml))
-        ICP.set_param('cloudrefit_invoicing.live_enabled', str(self.cloudrefit_live_enabled))
-        ICP.set_param('cloudrefit_invoicing.sandbox_enabled', str(self.cloudrefit_sandbox_enabled))
+        ICP.set_param('cloudrefit_invoicing.live_enabled', str(self.is_cloudrefit_live_enabled))
+        ICP.set_param('cloudrefit_invoicing.sandbox_enabled', str(self.is_cloudrefit_sandbox_enabled))
         ICP.set_param('cloudrefit_invoicing.show_sandbox_settings', str(self.cloudrefit_show_sandbox_settings))
 
         live_changed = (
@@ -365,7 +365,7 @@ class ResConfigSettings(models.TransientModel):
         )
         defaults['can_enable_live'] = bool(live_filled and health_live == 'connected')
         if not defaults['can_enable_live']:
-            defaults['cloudrefit_live_enabled'] = False
+            defaults['is_cloudrefit_live_enabled'] = False
 
         sandbox_filled = (
             biz_id_sandbox
@@ -376,7 +376,7 @@ class ResConfigSettings(models.TransientModel):
         )
         defaults['can_enable_sandbox'] = bool(sandbox_filled and health_sandbox == 'connected')
         if not defaults['can_enable_sandbox']:
-            defaults['cloudrefit_sandbox_enabled'] = False
+            defaults['is_cloudrefit_sandbox_enabled'] = False
 
         return defaults
 
@@ -533,7 +533,7 @@ class ResConfigSettings(models.TransientModel):
             can_enable = bool(all_filled and connected)
             rec.can_enable_live = can_enable
             if not can_enable:
-                rec.cloudrefit_live_enabled = False
+                rec.is_cloudrefit_live_enabled = False
 
     @api.depends('cloudrefit_business_id_sandbox', 'cloudrefit_gateway_url_sandbox',
                  'cloudrefit_api_key_sandbox', 'cloudrefit_signing_secret_sandbox',
@@ -556,7 +556,7 @@ class ResConfigSettings(models.TransientModel):
             can_enable = bool(all_filled and connected)
             rec.can_enable_sandbox = can_enable
             if not can_enable:
-                rec.cloudrefit_sandbox_enabled = False
+                rec.is_cloudrefit_sandbox_enabled = False
 
     def _auto_save_business_id(self, response_data, mode='live'):
         """Extract and persist business_id, name, and units from a successful ping response."""
@@ -877,8 +877,8 @@ class ResConfigSettings(models.TransientModel):
             'target': 'self',
             'context': self.env.context,
         }
-    @api.onchange('cloudrefit_api_key_live', 'cloudrefit_signing_secret_live', 'cloudrefit_unit_id_live', 'cloudrefit_live_enabled',
-                  'cloudrefit_api_key_sandbox', 'cloudrefit_signing_secret_sandbox', 'cloudrefit_unit_id_sandbox', 'cloudrefit_sandbox_enabled')
+    @api.onchange('cloudrefit_api_key_live', 'cloudrefit_signing_secret_live', 'cloudrefit_unit_id_live', 'is_cloudrefit_live_enabled',
+                  'cloudrefit_api_key_sandbox', 'cloudrefit_signing_secret_sandbox', 'cloudrefit_unit_id_sandbox', 'is_cloudrefit_sandbox_enabled')
     def _onchange_auto_save_cloudrefit_fields(self):
         """Silently persist critical fields to ir.config_parameter on blur/change without triggering a page reload."""
         ICP = self.env['ir.config_parameter'].sudo()
@@ -904,7 +904,7 @@ class ResConfigSettings(models.TransientModel):
         _save_param('unit_id_sandbox', self.cloudrefit_unit_id_sandbox)
 
         # Helper for booleans
-        if self.cloudrefit_live_enabled is not None:
-            ICP.set_param('cloudrefit_invoicing.live_enabled', str(self.cloudrefit_live_enabled))
-        if self.cloudrefit_sandbox_enabled is not None:
-            ICP.set_param('cloudrefit_invoicing.sandbox_enabled', str(self.cloudrefit_sandbox_enabled))
+        if self.is_cloudrefit_live_enabled is not None:
+            ICP.set_param('cloudrefit_invoicing.live_enabled', str(self.is_cloudrefit_live_enabled))
+        if self.is_cloudrefit_sandbox_enabled is not None:
+            ICP.set_param('cloudrefit_invoicing.sandbox_enabled', str(self.is_cloudrefit_sandbox_enabled))

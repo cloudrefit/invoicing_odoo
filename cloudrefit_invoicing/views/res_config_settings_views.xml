@@ -60,7 +60,7 @@
                             <div class="text-muted">Business ID auto-populated from gateway.</div>
                         </setting>
                         <setting title="Enable Live">
-                            <field name="cloudrefit_live_enabled" readonly="not can_enable_live"/>
+                            <field name="is_cloudrefit_live_enabled" readonly="not can_enable_live"/>
                             <span class="text-muted">
                                 Show the Live ZATCA tab and allow pushing invoices to live ZATCA.
                                 <t invisible="can_enable_live">
@@ -131,7 +131,7 @@
                             <div class="text-muted">Business ID auto-populated from gateway.</div>
                         </setting>
                         <setting title="Enable Sandbox">
-                            <field name="cloudrefit_sandbox_enabled" readonly="not can_enable_sandbox"/>
+                            <field name="is_cloudrefit_sandbox_enabled" readonly="not can_enable_sandbox"/>
                             <span class="text-muted">
                                 Show the "Test in Sandbox" button on invoices.
                                 <t invisible="can_enable_sandbox">
