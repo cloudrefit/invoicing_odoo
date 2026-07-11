@@ -799,6 +799,50 @@ class AccountMove(models.Model):
             except Exception as e:
                 _logger.error("action=retry_poll_error invoice_id=%s error=%s", move.id, str(e))
 
+    def action_generate_payment_link(self):
+        """Generates a payment link from the CloudRefit Gateway and opens it."""
+        self.ensure_one()
+        payload = self._build_zatca_payload(mode='live')  # Payment links use live mode payload
+        
+        exec_mode = payload.get('mode', 'live')
+        api_client = self.env['cloudrefit.zatca.api.client']
+        headers = api_client._build_headers(payload, exec_mode)
+
+        creds = self.with_company(self.company_id)._get_zatca_credentials()
+        business_id = creds.get(f'business_id_{exec_mode}')
+        gateway_url = creds.get(f'gateway_url_{exec_mode}')
+
+        if not business_id:
+            raise UserError(
+                'CloudRefit ZATCA Business ID is not configured for company '
+                '"%s". Please configure it in Settings \u2192 CloudRefit ZATCA.'
+                % creds['company_name']
+            )
+
+        url = f"{gateway_url.rstrip('/')}/api/v1/invoices/{business_id}/payment-links"
+        
+        _logger.info("action=generate_payment_link invoice_id=%s url=%s", self.id, url)
+        try:
+            response = requests.post(url, json=payload, headers=headers, timeout=30)
+        except Exception as e:
+            raise UserError(f'Cannot connect to CloudRefit Gateway: {str(e)}')
+
+        if response.status_code == 200:
+            data = response.json()
+            payment_url = data.get('payment_url')
+            if payment_url:
+                # Optionally store payment_url on the move if needed, 
+                # but returning action to open URL is sufficient
+                return {
+                    'type': 'ir.actions.act_url',
+                    'url': payment_url,
+                    'target': 'new',
+                }
+            else:
+                raise UserError('Gateway did not return a payment URL.')
+        else:
+            raise UserError(f"Gateway Error ({response.status_code}): {response.text}")
+
     def action_zatca_refresh_status(self):
         """Manually poll the gateway for the status of a pending invoice job."""
         self.ensure_one()
@@ -881,3 +925,72 @@ class AccountMove(models.Model):
                 _logger.error("action=%s invoice_id=%s retry_count=%s mode=%s error=%s",
                               'retry_cron', move.id, move.zatca_retry_count, move_with_ctx._resolve_mode(), str(e))
                 move.write({'zatca_error': str(e)})
+
+    @api.model
+    def _zatca_sync_payments(self):
+        """Cron job: Poll gateway for payments of open invoices to balance ledger."""
+        open_invoices = self.search([
+            ('state', '=', 'posted'),
+            ('payment_state', 'in', ['not_paid', 'partial']),
+            ('move_type', '=', 'out_invoice'),
+            ('zatca_status', 'in', ['reported', 'cleared']),
+        ])
+        if not open_invoices:
+            return
+
+        api_client = self.env['cloudrefit.zatca.api.client']
+        for move in open_invoices:
+            try:
+                move_with_ctx = move.with_company(move.company_id)
+                creds = move_with_ctx._get_zatca_credentials()
+                exec_mode = move_with_ctx.zatca_exec_mode or move_with_ctx._resolve_mode()
+                business_id = creds.get(f'business_id_{exec_mode}')
+                if not business_id:
+                    continue
+
+                endpoint_url = f"/api/v1/invoices/{business_id}/sync/{move.zatca_uuid}"
+                poll_response = api_client.call_gateway(
+                    endpoint=endpoint_url,
+                    method='GET',
+                    action='verify',
+                    mode=exec_mode,
+                )
+                if poll_response.status_code == 200:
+                    data = poll_response.json()
+                    due_amount = data.get('due_amount')
+                    if due_amount is not None:
+                        diff = move.amount_residual - due_amount
+                        if diff > 0.01:
+                            payment_methods = self.env['account.payment.method'].search([('payment_type', '=', 'inbound')], limit=1)
+                            journal = self.env['account.journal'].search([('type', 'in', ['bank', 'cash']), ('company_id', '=', move.company_id.id)], limit=1)
+                            if not journal:
+                                _logger.warning("action=sync_payment_error invoice_id=%s error=no_journal_found", move.id)
+                                continue
+                            
+                            payment_vals = {
+                                'date': fields.Date.today(),
+                                'amount': diff,
+                                'payment_type': 'inbound',
+                                'partner_type': 'customer',
+                                'ref': f"Platform Auto-Sync: {move.zatca_uuid}",
+                                'journal_id': journal.id,
+                                'currency_id': move.currency_id.id,
+                                'partner_id': move.partner_id.id,
+                            }
+                            if hasattr(self.env['account.payment'], 'payment_method_id') and payment_methods:
+                                payment_vals['payment_method_id'] = payment_methods.id
+                                
+                            payment = self.env['account.payment'].create(payment_vals)
+                            payment.action_post()
+                            
+                            # Reconcile if possible
+                            lines_to_reconcile = (payment.line_ids + move.line_ids).filtered(
+                                lambda l: (hasattr(l.account_id, 'account_type') and l.account_id.account_type in ('asset_receivable', 'liability_payable') and not l.reconciled)
+                                or (hasattr(l.account_id, 'internal_type') and getattr(l.account_id, 'internal_type') in ('receivable', 'payable') and not l.reconciled)
+                            )
+                            if len(lines_to_reconcile) >= 2:
+                                lines_to_reconcile.reconcile()
+
+                            _logger.info("action=sync_payment invoice_id=%s amount=%s", move.id, diff)
+            except Exception as e:
+                _logger.error("action=sync_payment_error invoice_id=%s error=%s", move.id, str(e))

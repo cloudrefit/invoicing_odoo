@@ -46,6 +46,14 @@
                         icon="fa-flask"
                         invisible="not is_zatca_sandbox_allowed or move_type not in ('out_invoice', 'out_refund') or state != 'posted' or zatca_status in ('reported', 'cleared') or cloudrefit_push_blocked or cloudrefit_show_push_modal"/>
                         
+                <!-- Generate Payment Link Button -->
+                <button name="action_generate_payment_link"
+                        string="Generate Payment Link"
+                        type="object"
+                        class="btn-secondary"
+                        icon="fa-link"
+                        invisible="move_type not in ('out_invoice', 'out_refund') or state != 'posted' or payment_state in ('paid', 'in_payment', 'reversed')"/>
+
                 <!-- Urgent Sandbox Test Button -->
                 <button name="action_push_to_sandbox_zatca"
                         string="Push to ZATCA Sandbox (Urgent Update)"
