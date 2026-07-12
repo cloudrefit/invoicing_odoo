@@ -1,9 +1,9 @@
 {
-  "version": "19.0.0.136",
+  "version": "19.0.0.137",
   "release_date": "2026-07-12",
   "severity": "minor",
-  "title": "Fix DatatypeMismatch on Upgrade",
-  "message": "Renamed corrupted jsonb settings column to bypass schema upgrade crash.",
+  "title": "Fix Odoo Plugin Upgrade and Enhance Customer Sync",
+  "message": "Adds external_id deterministic customer upserts to avoid duplication and resolves upgrade schema errors.",
   "latest_blocked_version": "19.0.0.81",
   "latest_urgent_version": "19.0.0.76",
   "latest_critical_version": "19.0.0.77",
