@@ -496,7 +496,7 @@ class AccountMove(models.Model):
             },
             'lines': lines,
             'customer': {
-                'external_id': str(partner.id),
+                'external_id': f"odoo-{self.env.cr.dbname}-{partner.id}",
                 'category': 'company' if partner.is_company else 'individual',
                 'name': partner.name,
                 'vat': partner.vat or '300000000000003',
