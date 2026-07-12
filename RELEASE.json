@@ -1,9 +1,9 @@
 {
-  "version": "19.0.0.135",
+  "version": "19.0.0.136",
   "release_date": "2026-07-12",
   "severity": "minor",
-  "title": "Fix DatatypeMismatch on Settings Save",
-  "message": "Added `company_dependent=True` to the boolean settings fields to align the Python ORM with Odoo 19's `jsonb` column schema for multi-company configurations. This resolves a crash when trying to save settings.",
+  "title": "Fix DatatypeMismatch on Upgrade",
+  "message": "Renamed corrupted jsonb settings column to bypass schema upgrade crash.",
   "latest_blocked_version": "19.0.0.81",
   "latest_urgent_version": "19.0.0.76",
   "latest_critical_version": "19.0.0.77",

@@ -140,25 +140,21 @@ class ResConfigSettings(models.TransientModel):
     is_cloudrefit_live_enabled = fields.Boolean(
         string="Enable Live",
         default=False,
-        company_dependent=True,
         help="Show the Live ZATCA tab and allow pushing invoices to live ZATCA",
     )
     cloudrefit_zatca_download_xml = fields.Boolean(
         string="Download Signed XMLs",
         default=True,
-        company_dependent=True,
         help="Download Signed XMLs (May incur additional fees — turn off if CloudRefit hosts your data)",
     )
     is_cloudrefit_sandbox_enabled = fields.Boolean(
         string='Enable Sandbox',
         default=False,
-        company_dependent=True,
         help="Enable the 'Test in Sandbox' button on invoices.",
     )
-    cloudrefit_show_sandbox_settings = fields.Boolean(
+    cloudrefit_show_sandbox_settings_ui = fields.Boolean(
         string='Show Sandbox Settings',
         default=False,
-        company_dependent=True,
         help="Toggle visibility of the sandbox configuration block to declutter the settings page."
     )
     cloudrefit_mode = fields.Selection(
@@ -260,7 +256,7 @@ class ResConfigSettings(models.TransientModel):
             cloudrefit_zatca_download_xml=ICP.get_param('cloudrefit_invoicing.zatca_download_xml', 'True') == 'True',
             is_cloudrefit_live_enabled=ICP.get_param('cloudrefit_invoicing.live_enabled', 'False') == 'True',
             is_cloudrefit_sandbox_enabled=ICP.get_param('cloudrefit_invoicing.sandbox_enabled', 'False') == 'True',
-            cloudrefit_show_sandbox_settings=ICP.get_param('cloudrefit_invoicing.show_sandbox_settings', 'False') == 'True',
+            cloudrefit_show_sandbox_settings_ui=ICP.get_param('cloudrefit_invoicing.show_sandbox_settings', 'False') == 'True',
         )
         return res
 
@@ -300,7 +296,7 @@ class ResConfigSettings(models.TransientModel):
         ICP.set_param('cloudrefit_invoicing.zatca_download_xml', str(self.cloudrefit_zatca_download_xml))
         ICP.set_param('cloudrefit_invoicing.live_enabled', str(self.is_cloudrefit_live_enabled))
         ICP.set_param('cloudrefit_invoicing.sandbox_enabled', str(self.is_cloudrefit_sandbox_enabled))
-        ICP.set_param('cloudrefit_invoicing.show_sandbox_settings', str(self.cloudrefit_show_sandbox_settings))
+        ICP.set_param('cloudrefit_invoicing.show_sandbox_settings', str(self.cloudrefit_show_sandbox_settings_ui))
 
         live_changed = (
             (self.cloudrefit_gateway_url_live or '') != old_live['url'] or

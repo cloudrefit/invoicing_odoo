@@ -28,7 +28,7 @@
                     <!-- === General UI Settings === -->
                     <block id="general_ui_settings" title="General Settings">
                         <setting title="Show Sandbox Settings">
-                            <field name="cloudrefit_show_sandbox_settings"/>
+                            <field name="cloudrefit_show_sandbox_settings_ui"/>
                             <div class="text-muted">Display configuration for the ZATCA Sandbox testing environment. Useful for decluttering the settings view once Live.</div>
                         </setting>
                     </block>
@@ -105,7 +105,7 @@
                     </block>
 
                     <!-- === Sandbox Settings === -->
-                    <block id="sandbox_settings" title="Sandbox Settings" invisible="not cloudrefit_show_sandbox_settings">
+                    <block id="sandbox_settings" title="Sandbox Settings" invisible="not cloudrefit_show_sandbox_settings_ui">
                         <setting>
                             <field name="cloudrefit_gateway_url_sandbox" placeholder="https://api.invoicing.cloudrefit.com"/>
                             <div class="text-muted">URL of your CloudRefit Gateway for sandbox/testing operations</div>
