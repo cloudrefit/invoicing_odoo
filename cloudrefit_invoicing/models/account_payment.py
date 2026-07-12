@@ -36,8 +36,8 @@ class AccountPayment(models.Model):
 
             headers = {
                 'Content-Type': 'application/json',
-                'Authorization': f'Bearer {api_key}',
-                'X-Mode': exec_mode.upper()
+                'x-api-key': api_key,
+                'x-mode': exec_mode.upper()
             }
 
             url = f"{gateway_url.rstrip('/')}/api/v1/invoices/{business_id}/payments/{move.zatca_uuid}"

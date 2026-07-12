@@ -1,9 +1,9 @@
 {
-  "version": "19.0.0.133",
-  "release_date": "2026-07-11",
+  "version": "19.0.0.135",
+  "release_date": "2026-07-12",
   "severity": "minor",
-  "title": "Fix Gateway 400 Bad Request on Payment Sync",
-  "message": "Resolved a 400 Bad Request error by ensuring the `X-Mode` header is correctly attached to the CloudRefit API webhook request when pushing manual Odoo payments. This ensures the Gateway correctly scopes the payment to the Live or Sandbox database.",
+  "title": "Fix DatatypeMismatch on Settings Save",
+  "message": "Added `company_dependent=True` to the boolean settings fields to align the Python ORM with Odoo 19's `jsonb` column schema for multi-company configurations. This resolves a crash when trying to save settings.",
   "latest_blocked_version": "19.0.0.81",
   "latest_urgent_version": "19.0.0.76",
   "latest_critical_version": "19.0.0.77",

@@ -140,21 +140,25 @@ class ResConfigSettings(models.TransientModel):
     is_cloudrefit_live_enabled = fields.Boolean(
         string="Enable Live",
         default=False,
+        company_dependent=True,
         help="Show the Live ZATCA tab and allow pushing invoices to live ZATCA",
     )
     cloudrefit_zatca_download_xml = fields.Boolean(
         string="Download Signed XMLs",
         default=True,
+        company_dependent=True,
         help="Download Signed XMLs (May incur additional fees — turn off if CloudRefit hosts your data)",
     )
     is_cloudrefit_sandbox_enabled = fields.Boolean(
         string='Enable Sandbox',
         default=False,
+        company_dependent=True,
         help="Enable the 'Test in Sandbox' button on invoices.",
     )
     cloudrefit_show_sandbox_settings = fields.Boolean(
         string='Show Sandbox Settings',
         default=False,
+        company_dependent=True,
         help="Toggle visibility of the sandbox configuration block to declutter the settings page."
     )
     cloudrefit_mode = fields.Selection(
