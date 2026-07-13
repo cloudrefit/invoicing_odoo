@@ -73,13 +73,23 @@ class ZatcaApiClient(models.AbstractModel):
         odoo_url = self._get_base_url()
         timestamp = str(int(time.time()))
 
-        return {
+        headers = {
             'X-API-Key': api_key,
             'X-Mode': mode.upper(),
             'X-Connector-URL': odoo_url,
             'X-Integration-URL': odoo_url,
             'Content-Type': 'application/json',
         }
+
+        auto_generate = creds.get('auto_generate_payment_links', False)
+        gateway_id = creds.get('payment_gateway_id', '')
+
+        if auto_generate:
+            headers['X-Auto-Generate-Payment-Link'] = 'true'
+        if gateway_id:
+            headers['X-Payment-Gateway-ID'] = str(gateway_id)
+
+        return headers
 
     @api.model
     def call_gateway(self, endpoint, method='POST', json_data=None, params=None, action='verify', mode='live'):

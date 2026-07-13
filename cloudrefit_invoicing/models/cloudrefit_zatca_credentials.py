@@ -41,6 +41,8 @@ _ZATCA_PARAM_REGISTRY = {
     'cloudrefit_invoicing.signing_secret_sandbox':  ('', str),
     'cloudrefit_invoicing.unit_id_sandbox':         ('', str),
     'cloudrefit_invoicing.zatca_download_xml':      ('True', lambda v: str(v) != 'False'),
+    'cloudrefit_invoicing.auto_generate_payment_links': ('False', lambda v: v == 'True'),
+    'cloudrefit_invoicing.payment_gateway_id':          ('', str),
 }
 
 #: Human-readable labels for error messages (short_key -> label)

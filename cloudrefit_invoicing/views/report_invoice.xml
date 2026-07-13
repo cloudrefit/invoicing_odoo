@@ -8,6 +8,15 @@
             <t t-set="render_qr" t-value="env.context.get('sandbox_qr_code') or o.zatca_qr_code"/>
             <t t-set="render_hash" t-value="env.context.get('sandbox_hash') or o.zatca_hash"/>
             
+            <div t-if="o.cloudrefit_payment_link_url" class="row mt-4 pt-3" id="zatca_payment_link" style="border-top: 1px solid #eee;">
+                <div class="col-12 text-center">
+                    <p class="mb-1" style="font-size: 14px;">
+                        <strong>Secure Online Payment: </strong> 
+                        <a t-att-href="o.cloudrefit_payment_link_url" target="_blank"><t t-esc="o.cloudrefit_payment_link_url"/></a>
+                    </p>
+                </div>
+            </div>
+
             <div t-if="render_qr" class="row mt-4 pt-3" id="zatca_qr_footer" style="border-top: 1px solid #eee;">
                 <div class="col-3">
                     <!-- The backend gateway returns a pre-generated Base64 PNG image, not raw TLV text. -->

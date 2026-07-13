@@ -52,7 +52,7 @@
                         type="object"
                         class="btn-secondary"
                         icon="fa-link"
-                        invisible="move_type not in ('out_invoice', 'out_refund') or state != 'posted' or payment_state in ('paid', 'in_payment', 'reversed')"/>
+                        invisible="move_type not in ('out_invoice', 'out_refund') or state != 'posted' or payment_state in ('paid', 'in_payment', 'reversed') or cloudrefit_payment_link_url"/>
 
                 <!-- Urgent Sandbox Test Button -->
                 <button name="action_push_to_sandbox_zatca"
@@ -156,6 +156,7 @@
                         <field name="zatca_invoice_type_override" readonly="zatca_status in ('reported', 'cleared') and zatca_exec_mode == 'live'"/>
                         <field name="zatca_hash" invisible="not zatca_hash"/>
                         <field name="zatca_qr_code" widget="image" invisible="not zatca_qr_code" class="mt-2" options="{'size': [150, 150]}"/>
+                        <field name="cloudrefit_payment_link_url" widget="url" invisible="not cloudrefit_payment_link_url"/>
                         <field name="zatca_signed_xml_filename" invisible="1"/>
                         <field name="zatca_signed_xml_file" filename="zatca_signed_xml_filename" widget="binary" invisible="not zatca_signed_xml"/>
                     </group>

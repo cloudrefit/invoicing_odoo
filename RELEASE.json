@@ -1,9 +1,9 @@
 {
-  "version": "19.0.0.137",
-  "release_date": "2026-07-12",
+  "version": "19.0.0.139",
+  "release_date": "2026-07-13",
   "severity": "minor",
-  "title": "Fix Odoo Plugin Upgrade and Enhance Customer Sync",
-  "message": "Adds external_id deterministic customer upserts to avoid duplication and resolves upgrade schema errors.",
+  "title": "Add Payment Integration Settings",
+  "message": "Adds configuration and API headers for StreamPay payment link auto-generation directly from Odoo invoices.",
   "latest_blocked_version": "19.0.0.81",
   "latest_urgent_version": "19.0.0.76",
   "latest_critical_version": "19.0.0.77",

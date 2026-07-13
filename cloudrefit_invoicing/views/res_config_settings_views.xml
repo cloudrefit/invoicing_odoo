@@ -192,6 +192,18 @@
 
                     </block>
 
+                    <!-- === Payment Integration === -->
+                    <block id="payment_integration" title="Payment Integration">
+                        <setting title="Auto-Generate Payment Links">
+                            <field name="cloudrefit_auto_generate_payment_links"/>
+                            <div class="text-muted">Automatically generate a payment link when an invoice is sent or cleared</div>
+                        </setting>
+                        <setting title="Gateway ID Override">
+                            <field name="cloudrefit_payment_gateway_id"/>
+                            <div class="text-muted">Optional: Override the default gateway by entering a specific Gateway ID</div>
+                        </setting>
+                    </block>
+
                     <!-- === About Plugin === -->
                     <div class="row mt-3" name="about_plugin">
                         <div class="col-12">

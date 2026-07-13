@@ -88,6 +88,11 @@ class AccountMove(models.Model):
     ], string='Force ZATCA Type', default='auto',
         help='Override the auto-detected ZATCA invoice type for this specific invoice.')
 
+    cloudrefit_payment_link_url = fields.Char(
+        string='Payment Link', readonly=True, copy=False,
+        help='Payment link generated from CloudRefit Gateway'
+    )
+
     is_zatca_push_allowed = fields.Boolean(
         compute='_compute_is_zatca_push_allowed', string="Is ZATCA Push Allowed",
         help="Whether this invoice meets all conditions to be pushed to ZATCA"
@@ -833,8 +838,7 @@ class AccountMove(models.Model):
             data = response.json()
             payment_url = data.get('payment_url')
             if payment_url:
-                # Optionally store payment_url on the move if needed, 
-                # but returning action to open URL is sufficient
+                self.write({'cloudrefit_payment_link_url': payment_url})
                 return {
                     'type': 'ir.actions.act_url',
                     'url': payment_url,

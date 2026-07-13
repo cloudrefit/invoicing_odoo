@@ -165,6 +165,22 @@ class ResConfigSettings(models.TransientModel):
         default='live',
         help='Operational mode for ZATCA integration',
     )
+    
+    # === Payment Integration Settings ===
+    cloudrefit_auto_generate_payment_links = fields.Boolean(
+        string='Auto-Generate Payment Links',
+        config_parameter='cloudrefit_invoicing.auto_generate_payment_links',
+        company_dependent=True,
+        default=False,
+        help='Automatically generate a payment link when an invoice is sent or cleared'
+    )
+    cloudrefit_payment_gateway_id = fields.Char(
+        string='Payment Gateway ID Override',
+        config_parameter='cloudrefit_invoicing.payment_gateway_id',
+        company_dependent=True,
+        help='Optional: Override the default gateway by entering a specific Gateway ID'
+    )
+
     cloudrefit_plugin_version = fields.Char(
         string="Plugin Version",
         compute="_compute_cloudrefit_plugin_version",
@@ -257,6 +273,7 @@ class ResConfigSettings(models.TransientModel):
             is_cloudrefit_live_enabled=ICP.get_param('cloudrefit_invoicing.live_enabled', 'False') == 'True',
             is_cloudrefit_sandbox_enabled=ICP.get_param('cloudrefit_invoicing.sandbox_enabled', 'False') == 'True',
             cloudrefit_show_sandbox_settings_ui=ICP.get_param('cloudrefit_invoicing.show_sandbox_settings', 'False') == 'True',
+            cloudrefit_auto_generate_payment_links=ICP.get_param('cloudrefit_invoicing.auto_generate_payment_links', 'False') == 'True',
         )
         return res
 
@@ -297,6 +314,7 @@ class ResConfigSettings(models.TransientModel):
         ICP.set_param('cloudrefit_invoicing.live_enabled', str(self.is_cloudrefit_live_enabled))
         ICP.set_param('cloudrefit_invoicing.sandbox_enabled', str(self.is_cloudrefit_sandbox_enabled))
         ICP.set_param('cloudrefit_invoicing.show_sandbox_settings', str(self.cloudrefit_show_sandbox_settings_ui))
+        ICP.set_param('cloudrefit_invoicing.auto_generate_payment_links', str(self.cloudrefit_auto_generate_payment_links))
 
         live_changed = (
             (self.cloudrefit_gateway_url_live or '') != old_live['url'] or
