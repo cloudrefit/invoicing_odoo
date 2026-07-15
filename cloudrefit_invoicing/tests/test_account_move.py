@@ -622,3 +622,73 @@ class TestZatcaInvoiceSigning(TransactionCase):
         # Trigger compute
         invoice._compute_is_zatca_sandbox_allowed()
         self.assertFalse(invoice.is_zatca_sandbox_allowed)
+
+    # ------------------------------------------------------------------ #
+    #  _apply_cloudrefit_status_update (Webhook & Fast-Polling)
+    # ------------------------------------------------------------------ #
+
+    def test_apply_status_update_success(self):
+        """Standard valid status update must apply."""
+        invoice = self._create_invoice()
+        payload = {
+            'status': 'cleared',
+            'zatca_status': 'REPORTED',
+            'hash': 'xyz789',
+            'qr_code': 'qr_xyz',
+            'xml': '<Test/>',
+            'cleared_at': '2023-01-01T12:00:00Z',
+        }
+        invoice._apply_cloudrefit_status_update(payload, 'invoice.status_changed')
+        self.assertEqual(invoice.zatca_status, 'cleared')
+        self.assertEqual(invoice.zatca_hash, 'xyz789')
+        self.assertEqual(invoice.zatca_qr_code, 'qr_xyz')
+        self.assertEqual(invoice.zatca_signed_xml, '<Test/>')
+
+    def test_apply_status_update_regression_guard(self):
+        """A status update must be ignored if it tries to regress to an older state."""
+        invoice = self._create_invoice()
+        
+        # Advance to 'cleared'
+        invoice.write({'zatca_status': 'cleared'})
+        
+        # Attempt to regress to 'pending'
+        payload = {
+            'status': 'pending',
+            'hash': 'old_hash',
+        }
+        invoice._apply_cloudrefit_status_update(payload, 'invoice.status_changed')
+        
+        # Must still be 'cleared'
+        self.assertEqual(invoice.zatca_status, 'cleared')
+        self.assertNotEqual(invoice.zatca_hash, 'old_hash')
+
+    def test_apply_status_update_from_failed_allowed(self):
+        """A status update from 'failed' to 'pending' is allowed since failed has lower rank."""
+        invoice = self._create_invoice()
+        
+        # Currently failed
+        invoice.write({'zatca_status': 'failed'})
+        
+        # Update to pending
+        payload = {
+            'status': 'pending',
+            'hash': 'new_hash',
+        }
+        invoice._apply_cloudrefit_status_update(payload, 'invoice.status_changed')
+        
+        self.assertEqual(invoice.zatca_status, 'pending')
+        self.assertEqual(invoice.zatca_hash, 'new_hash')
+
+    def test_apply_payment_update(self):
+        """A payment.status_changed event must not affect ZATCA fields but must call _create_zatca_payment."""
+        invoice = self._create_invoice()
+        
+        payload = {
+            'status': 'paid',
+            'transaction_id': 'txn_123',
+            'amount': 100.0,
+        }
+        
+        with patch.object(type(invoice), '_create_zatca_payment') as mock_create_payment:
+            invoice._apply_cloudrefit_status_update(payload, 'payment.status_changed')
+            mock_create_payment.assert_called_once_with(payload)

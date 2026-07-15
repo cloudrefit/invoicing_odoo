@@ -731,6 +731,135 @@ class AccountMove(models.Model):
             }
         move.write(vals)
 
+    def _apply_cloudrefit_status_update(self, payload, event_type):
+        """Unified, idempotent, and race-safe update funnel for all CloudRefit API data."""
+        self.ensure_one()
+        
+        # 1. Row-level locking to prevent TOCTOU races
+        self.env.cr.execute('SELECT id FROM account_move WHERE id = %s FOR UPDATE', [self.id])
+        
+        if event_type == 'clearance':
+            self._handle_clearance_update(payload)
+        elif event_type == 'payment':
+            self._handle_payment_update(payload)
+        else:
+            _logger.warning("action=apply_status_update error=unknown_event_type event_type=%s", event_type)
+
+    def _handle_clearance_update(self, payload):
+        status = payload.get('status')
+        if not status:
+            return
+            
+        STATUS_RANK = {
+            'not_signed': 0,
+            'failed': 1,
+            'pending': 2,
+            'processing': 3,
+            'cleared': 4,
+            'reported': 4,
+        }
+        
+        current_rank = STATUS_RANK.get(self.zatca_status, 0)
+        
+        if status == 'completed':
+            invoice_type = self._resolve_invoice_type()
+            new_status = 'cleared' if invoice_type == 'standard' else 'reported'
+        elif status == 'failed':
+            new_status = 'failed'
+        else:
+            new_status = status
+            
+        new_rank = STATUS_RANK.get(new_status, 0)
+        
+        # 2. State-Aware Guard (Regression Prevention)
+        if new_rank <= current_rank and new_status not in ('failed', 'not_signed'):
+            if new_rank < current_rank:
+                _logger.info("action=apply_status_update invoice_id=%s msg=ignored_regression current=%s new=%s", self.id, self.zatca_status, new_status)
+                return
+            if new_rank == current_rank and new_status == self.zatca_status:
+                _logger.debug("action=apply_status_update invoice_id=%s msg=idempotent_noop status=%s", self.id, new_status)
+                return
+
+        # Safe to update
+        if status == 'completed':
+            signed_data = payload.get('signedData', {})
+            self._update_invoice_after_zatca_sign(
+                self,
+                status=new_status,
+                zatca_hash=signed_data.get('hash', ''),
+                qr_code=signed_data.get('qrImage', ''),
+                signed_xml=signed_data.get('xml', ''),
+                error_msg=False,
+                invoice_type=self._resolve_invoice_type(),
+                exec_mode=self.zatca_exec_mode,
+            )
+            self.write({'zatca_job_status': 'completed'})
+            _logger.info("action=status_update_applied invoice_id=%s type=clearance status=%s", self.id, new_status)
+        elif status == 'failed':
+            error_detail = payload.get('error', 'Background signing job failed.')
+            self.write({
+                'zatca_job_status': 'failed',
+                'zatca_status': 'failed',
+                'zatca_error': error_detail,
+            })
+            _logger.error("action=status_update_applied invoice_id=%s type=clearance status=failed error=%s", self.id, error_detail)
+        elif status in ('pending', 'processing'):
+            self.write({'zatca_job_status': 'processing'})
+
+    def _handle_payment_update(self, payload):
+        due_amount = payload.get('due_amount')
+        gateway_tx_id = payload.get('transaction_id') or payload.get('id')
+        
+        if due_amount is None:
+            return
+            
+        diff = self.amount_residual - due_amount
+        if diff <= 0.01:
+            return # Already fully paid or no new payment
+
+        # 3. Payment Deduplication (Gateway transaction ID)
+        if gateway_tx_id:
+            existing = self.env['account.payment'].search([
+                ('ref', '=', f"Gateway TX: {gateway_tx_id}"),
+                ('partner_id', '=', self.partner_id.id)
+            ], limit=1)
+            if existing:
+                _logger.info("action=apply_status_update invoice_id=%s msg=ignored_duplicate_payment tx_id=%s", self.id, gateway_tx_id)
+                return
+
+        payment_methods = self.env['account.payment.method'].search([('payment_type', '=', 'inbound')], limit=1)
+        journal = self.env['account.journal'].search([('type', 'in', ['bank', 'cash']), ('company_id', '=', self.company_id.id)], limit=1)
+        if not journal:
+            _logger.warning("action=apply_status_update invoice_id=%s error=no_journal_found", self.id)
+            return
+        
+        ref = f"Gateway TX: {gateway_tx_id}" if gateway_tx_id else f"Platform Auto-Sync: {self.zatca_uuid}"
+        
+        payment_vals = {
+            'date': fields.Date.today(),
+            'amount': diff,
+            'payment_type': 'inbound',
+            'partner_type': 'customer',
+            'ref': ref,
+            'journal_id': journal.id,
+            'currency_id': self.currency_id.id,
+            'partner_id': self.partner_id.id,
+        }
+        if hasattr(self.env['account.payment'], 'payment_method_id') and payment_methods:
+            payment_vals['payment_method_id'] = payment_methods.id
+            
+        payment = self.env['account.payment'].create(payment_vals)
+        payment.action_post()
+        
+        lines_to_reconcile = (payment.line_ids + self.line_ids).filtered(
+            lambda l: (hasattr(l.account_id, 'account_type') and l.account_id.account_type in ('asset_receivable', 'liability_payable') and not l.reconciled)
+            or (hasattr(l.account_id, 'internal_type') and getattr(l.account_id, 'internal_type') in ('receivable', 'payable') and not l.reconciled)
+        )
+        if len(lines_to_reconcile) >= 2:
+            lines_to_reconcile.reconcile()
+
+        _logger.info("action=status_update_applied invoice_id=%s type=payment amount=%s tx_id=%s", self.id, diff, gateway_tx_id)
+
     @api.model
     def _zatca_retry_failed(self):
         """Cron job: Poll in-flight async jobs and retry failed invoices."""
@@ -766,43 +895,7 @@ class AccountMove(models.Model):
                 )
                 if poll_response.status_code == 200:
                     poll_data = poll_response.json()
-                    status = poll_data.get('status')
-                    if status == 'completed':
-                        signed_data = poll_data.get('signedData', {})
-                        invoice_type = move_with_ctx._resolve_invoice_type()
-                        zatca_status = 'cleared' if invoice_type == 'standard' else 'reported'
-                        self._update_invoice_after_zatca_sign(
-                            move,
-                            status=zatca_status,
-                            zatca_hash=signed_data.get('hash', ''),
-                            qr_code=signed_data.get('qrImage', ''),
-                            signed_xml=signed_data.get('xml', ''),
-                            error_msg=False,
-                            invoice_type=invoice_type,
-                            exec_mode=exec_mode,
-                        )
-                        move.write({'zatca_job_status': 'completed'})
-                        _logger.info(
-                            "action=async_completed invoice_id=%s job_uuid=%s",
-                            move.id, move.zatca_job_uuid
-                        )
-                    elif status == 'failed':
-                        error_detail = poll_data.get('error', 'Background signing job failed.')
-                        move.write({
-                            'zatca_job_status': 'failed',
-                            'zatca_status': 'failed',
-                            'zatca_error': error_detail,
-                        })
-                        _logger.error(
-                            "action=async_failed invoice_id=%s job_uuid=%s error=%s",
-                            move.id, move.zatca_job_uuid, error_detail
-                        )
-                    elif status in ('pending', 'processing'):
-                        move.write({'zatca_job_status': 'processing'})
-                        _logger.debug(
-                            "action=async_processing invoice_id=%s job_uuid=%s",
-                            move.id, move.zatca_job_uuid
-                        )
+                    move._apply_cloudrefit_status_update(poll_data, 'clearance')
             except Exception as e:
                 _logger.error("action=retry_poll_error invoice_id=%s error=%s", move.id, str(e))
 
@@ -878,33 +971,15 @@ class AccountMove(models.Model):
             )
             if poll_response.status_code == 200:
                 poll_data = poll_response.json()
-                status = poll_data.get('status')
-                if status == 'completed':
-                    signed_data = poll_data.get('signedData', {})
-                    invoice_type = self._resolve_invoice_type()
-                    zatca_status = 'cleared' if invoice_type == 'standard' else 'reported'
-                    self._update_invoice_after_zatca_sign(
-                        self,
-                        status=zatca_status,
-                        zatca_hash=signed_data.get('hash', ''),
-                        qr_code=signed_data.get('qrImage', ''),
-                        signed_xml=signed_data.get('xml', ''),
-                        error_msg=False,
-                        invoice_type=invoice_type,
-                        exec_mode=exec_mode,
-                    )
-                    self.write({'zatca_job_status': 'completed'})
+                self._apply_cloudrefit_status_update(poll_data, 'clearance')
+                
+                # We need to reload, let's just trigger a reload anyway.
+                # The user will see the updated status from the DB.
+                if poll_data.get('status') == 'completed':
                     return self.env['cloudrefit.notification.helper']._cr_notify('success', 'ZATCA processing completed.', next_action=reload_action)
-                elif status == 'failed':
-                    error_detail = poll_data.get('error', 'Background signing job failed.')
-                    self.write({
-                        'zatca_job_status': 'failed',
-                        'zatca_status': 'failed',
-                        'zatca_error': error_detail,
-                    })
-                    return self.env['cloudrefit.notification.helper']._cr_notify('danger', f'ZATCA processing failed: {error_detail}', next_action=reload_action)
+                elif poll_data.get('status') == 'failed':
+                    return self.env['cloudrefit.notification.helper']._cr_notify('danger', f'ZATCA processing failed: {poll_data.get("error")}', next_action=reload_action)
                 else:
-                    self.write({'zatca_job_status': 'processing'})
                     return self.env['cloudrefit.notification.helper']._cr_notify('info', 'ZATCA job is still processing. Please try again in a few seconds.', next_action=reload_action)
             else:
                 return self.env['cloudrefit.notification.helper']._cr_notify('danger', f'Failed to fetch status: HTTP {poll_response.status_code}', next_action=reload_action)
@@ -963,40 +1038,6 @@ class AccountMove(models.Model):
                 )
                 if poll_response.status_code == 200:
                     data = poll_response.json()
-                    due_amount = data.get('due_amount')
-                    if due_amount is not None:
-                        diff = move.amount_residual - due_amount
-                        if diff > 0.01:
-                            payment_methods = self.env['account.payment.method'].search([('payment_type', '=', 'inbound')], limit=1)
-                            journal = self.env['account.journal'].search([('type', 'in', ['bank', 'cash']), ('company_id', '=', move.company_id.id)], limit=1)
-                            if not journal:
-                                _logger.warning("action=sync_payment_error invoice_id=%s error=no_journal_found", move.id)
-                                continue
-                            
-                            payment_vals = {
-                                'date': fields.Date.today(),
-                                'amount': diff,
-                                'payment_type': 'inbound',
-                                'partner_type': 'customer',
-                                'ref': f"Platform Auto-Sync: {move.zatca_uuid}",
-                                'journal_id': journal.id,
-                                'currency_id': move.currency_id.id,
-                                'partner_id': move.partner_id.id,
-                            }
-                            if hasattr(self.env['account.payment'], 'payment_method_id') and payment_methods:
-                                payment_vals['payment_method_id'] = payment_methods.id
-                                
-                            payment = self.env['account.payment'].create(payment_vals)
-                            payment.action_post()
-                            
-                            # Reconcile if possible
-                            lines_to_reconcile = (payment.line_ids + move.line_ids).filtered(
-                                lambda l: (hasattr(l.account_id, 'account_type') and l.account_id.account_type in ('asset_receivable', 'liability_payable') and not l.reconciled)
-                                or (hasattr(l.account_id, 'internal_type') and getattr(l.account_id, 'internal_type') in ('receivable', 'payable') and not l.reconciled)
-                            )
-                            if len(lines_to_reconcile) >= 2:
-                                lines_to_reconcile.reconcile()
-
-                            _logger.info("action=sync_payment invoice_id=%s amount=%s", move.id, diff)
+                    move._apply_cloudrefit_status_update(data, 'payment')
             except Exception as e:
                 _logger.error("action=sync_payment_error invoice_id=%s error=%s", move.id, str(e))

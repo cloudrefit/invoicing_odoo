@@ -189,6 +189,10 @@
                             <field name="cloudrefit_zatca_download_xml"/>
                             <div class="text-muted">Download Signed XMLs (May incur additional fees — turn off if CloudRefit hosts your data)</div>
                         </setting>
+                        <setting title="Webhook Endpoint">
+                            <field name="cloudrefit_webhook_url" widget="url"/>
+                            <div class="text-muted">The URL that CloudRefit Gateway will use to push background updates to your Odoo.</div>
+                        </setting>
 
                     </block>
 

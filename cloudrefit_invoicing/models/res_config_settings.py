@@ -187,6 +187,19 @@ class ResConfigSettings(models.TransientModel):
         readonly=True,
         help="Current version of the CloudRefit ZATCA Gateway plugin",
     )
+    
+    cloudrefit_webhook_url = fields.Char(
+        string="Webhook Endpoint",
+        compute="_compute_cloudrefit_webhook_url",
+        readonly=True,
+        help="The URL that CloudRefit Gateway will use to push background updates to your Odoo."
+    )
+    
+    def _compute_cloudrefit_webhook_url(self):
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url', '')
+        webhook_url = f"{base_url.rstrip('/')}/cloudrefit/webhook" if base_url else 'Please configure web.base.url in System Parameters'
+        for record in self:
+            record.cloudrefit_webhook_url = webhook_url
 
     # === Version Checker Fields ===
     cloudrefit_update_severity = fields.Selection([
