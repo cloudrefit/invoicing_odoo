@@ -85,9 +85,9 @@ class ZatcaApiClient(models.AbstractModel):
         use_default = creds.get('use_default_payment_gateway', True)
         gateway_id = creds.get('selected_payment_gateway_id', '')
 
-        if auto_generate and mode == 'live':
-            headers['X-Auto-Generate-Payment-Link'] = 'true'
-            if not use_default and gateway_id:
+        if not use_default and mode == 'live':
+            headers['X-Auto-Generate-Payment-Link'] = 'true' if auto_generate else 'false'
+            if gateway_id:
                 headers['X-Payment-Gateway-ID'] = str(gateway_id)
 
         return headers
