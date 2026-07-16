@@ -93,6 +93,13 @@ class AccountMove(models.Model):
         help='Payment link generated from CloudRefit Gateway'
     )
 
+    cloudrefit_payment_link_qr = fields.Binary(
+        string='Payment Link QR Code',
+        compute='_compute_payment_link_qr',
+        readonly=True,
+        help='Auto-generated QR code image for the payment link'
+    )
+
     is_zatca_push_allowed = fields.Boolean(
         compute='_compute_is_zatca_push_allowed', string="Is ZATCA Push Allowed",
         help="Whether this invoice meets all conditions to be pushed to ZATCA"
@@ -200,6 +207,31 @@ class AccountMove(models.Model):
             else:
                 move.zatca_signed_xml_file = False
                 move.zatca_signed_xml_filename = False
+
+    @api.depends('cloudrefit_payment_link_url')
+    def _compute_payment_link_qr(self):
+        for move in self:
+            if move.cloudrefit_payment_link_url:
+                try:
+                    import qrcode
+                    import io
+                    qr = qrcode.QRCode(
+                        version=None,
+                        error_correction=qrcode.constants.ERROR_CORRECT_M,
+                        box_size=6,
+                        border=2,
+                    )
+                    qr.add_data(move.cloudrefit_payment_link_url)
+                    qr.make(fit=True)
+                    img = qr.make_image(fill_color='black', back_color='white')
+                    buffer = io.BytesIO()
+                    img.save(buffer, format='PNG')
+                    move.cloudrefit_payment_link_qr = base64.b64encode(buffer.getvalue())
+                except Exception as e:
+                    _logger.warning('Could not generate payment link QR code: %s', str(e))
+                    move.cloudrefit_payment_link_qr = False
+            else:
+                move.cloudrefit_payment_link_qr = False
 
     # -----------------------------------------------------------
     #  SANDBOX ZATCA SUBMISSION

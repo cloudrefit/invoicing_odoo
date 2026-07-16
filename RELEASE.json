@@ -1,9 +1,9 @@
 {
-  "version": "19.0.0.139",
-  "release_date": "2026-07-13",
+  "version": "19.0.0.144",
+  "release_date": "2026-07-16",
   "severity": "minor",
-  "title": "Add Payment Integration Settings",
-  "message": "Adds configuration and API headers for StreamPay payment link auto-generation directly from Odoo invoices.",
+  "title": "Payment Link QR Code in Invoice Form & PDF",
+  "message": "Adds a computed QR code for payment links. Displays the QR in the invoice form (inline banner above invoice lines) and in the printed PDF report alongside the payment URL. Also shows the QR in the Other Info ZATCA tab.",
   "latest_blocked_version": "19.0.0.81",
   "latest_urgent_version": "19.0.0.76",
   "latest_critical_version": "19.0.0.77",
