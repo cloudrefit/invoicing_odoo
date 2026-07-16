@@ -527,13 +527,13 @@ class AccountMove(models.Model):
         is_credit = self.move_type in ('out_refund', 'in_refund')
         is_debit = hasattr(self, 'debit_origin_id') and getattr(self, 'debit_origin_id')
         
-        # Format the type exactly as the Gateway expects: e.g. STANDARD_CREDIT_NOTE
+        # Format the type as canonical platform forms: STANDARD_TAX_INVOICE, SIMPLIFIED_TAX_CREDIT_NOTE, etc.
         if is_credit:
-            zatca_type_code = f"{invoice_type}_credit_note".upper()
+            zatca_type_code = f"{invoice_type}_tax_credit_note".upper()
         elif is_debit:
-            zatca_type_code = f"{invoice_type}_debit_note".upper()
+            zatca_type_code = f"{invoice_type}_tax_debit_note".upper()
         else:
-            zatca_type_code = invoice_type.upper()
+            zatca_type_code = f"{invoice_type}_tax_invoice".upper()
 
         payload = {
             'mode': mode,

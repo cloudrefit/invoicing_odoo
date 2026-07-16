@@ -175,7 +175,7 @@ class TestZatcaInvoiceSigning(TransactionCase):
         # Invoice block
         inv = payload['invoice']
         self.assertEqual(inv['number'], invoice.name)
-        self.assertEqual(inv['type'], 'standard')  # B2B because partner has VAT
+        self.assertEqual(inv['type'], 'STANDARD_TAX_INVOICE')  # B2B because partner has VAT
         self.assertIn('uuid', inv)
         self.assertIn('icv', inv)
         self.assertIn('amount_untaxed', inv)
@@ -221,7 +221,7 @@ class TestZatcaInvoiceSigning(TransactionCase):
         successfully and use the placeholder VAT."""
         invoice = self._create_invoice(partner=self.partner_b2c)
         payload = invoice._build_zatca_payload()
-        self.assertEqual(payload['invoice']['type'], 'simplified')
+        self.assertEqual(payload['invoice']['type'], 'SIMPLIFIED_TAX_INVOICE')
         self.assertEqual(payload['customer']['vat'], '300000000000003')
 
 
