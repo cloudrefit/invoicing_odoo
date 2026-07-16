@@ -4,6 +4,7 @@ from odoo import api, SUPERUSER_ID
 
 from . import controllers
 from . import models
+from . import wizard
 
 _logger = logging.getLogger(__name__)
 
