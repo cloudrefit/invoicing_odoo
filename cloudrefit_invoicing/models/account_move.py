@@ -100,6 +100,13 @@ class AccountMove(models.Model):
         help='Auto-generated QR code image for the payment link'
     )
 
+    cloudrefit_payment_link_due_amount = fields.Monetary(
+        string='Payment Link Due Amount',
+        compute='_compute_payment_link_due_amount',
+        currency_field='currency_id',
+        help='Remaining amount due for the invoice, used as pre-fill for payment link wizard'
+    )
+
     is_zatca_push_allowed = fields.Boolean(
         compute='_compute_is_zatca_push_allowed', string="Is ZATCA Push Allowed",
         help="Whether this invoice meets all conditions to be pushed to ZATCA"
@@ -232,6 +239,15 @@ class AccountMove(models.Model):
                     move.cloudrefit_payment_link_qr = False
             else:
                 move.cloudrefit_payment_link_qr = False
+
+    @api.depends('amount_residual', 'payment_state')
+    def _compute_payment_link_due_amount(self):
+        """Compute the remaining amount due for payment link pre-fill."""
+        for move in self:
+            if move.payment_state in ('paid', 'in_payment', 'reversed'):
+                move.cloudrefit_payment_link_due_amount = 0.0
+            else:
+                move.cloudrefit_payment_link_due_amount = move.amount_residual
 
     # -----------------------------------------------------------
     #  SANDBOX ZATCA SUBMISSION
@@ -931,10 +947,23 @@ class AccountMove(models.Model):
             except Exception as e:
                 _logger.error("action=retry_poll_error invoice_id=%s error=%s", move.id, str(e))
 
-    def action_generate_payment_link(self):
-        """Generates a payment link from the CloudRefit Gateway and opens it."""
+    def action_generate_payment_link(self, amount=None):
+        """Generates a payment link from the CloudRefit Gateway.
+
+        Args:
+            amount: Optional payment amount. If provided, overrides the invoice
+                    total amount in the payload for partial payment links.
+        """
         self.ensure_one()
         payload = self._build_zatca_payload(mode='live')  # Payment links use live mode payload
+
+        # Override the invoice total with the user-specified amount for partial payments
+        if amount is not None:
+            payload['invoice']['amount_total'] = float(amount)
+            # Recalculate untaxed and tax proportionally if amount differs
+            ratio = float(amount) / float(self.amount_total) if self.amount_total else 1.0
+            payload['invoice']['amount_untaxed'] = round(float(self.amount_untaxed) * ratio, 2)
+            payload['invoice']['tax_total'] = round(float(self.amount_tax) * ratio, 2)
         
         exec_mode = payload.get('mode', 'live')
         api_client = self.env['cloudrefit.zatca.api.client']
@@ -953,7 +982,10 @@ class AccountMove(models.Model):
 
         url = f"{gateway_url.rstrip('/')}/api/v1/invoices/{business_id}/payment-links"
         
-        _logger.info("action=generate_payment_link invoice_id=%s url=%s", self.id, url)
+        _logger.info(
+            "action=generate_payment_link invoice_id=%s amount=%s url=%s",
+            self.id, amount, url
+        )
         try:
             response = requests.post(url, json=payload, headers=headers, timeout=30)
         except Exception as e:

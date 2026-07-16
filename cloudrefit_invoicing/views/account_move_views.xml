@@ -47,11 +47,12 @@
                         invisible="not is_zatca_sandbox_allowed or move_type not in ('out_invoice', 'out_refund') or state != 'posted' or zatca_status in ('reported', 'cleared') or cloudrefit_push_blocked or cloudrefit_show_push_modal"/>
                         
                 <!-- Generate Payment Link Button -->
-                <button name="action_generate_payment_link"
+                <button name="%(action_cloudrefit_payment_link_wizard)d"
                         string="Generate Payment Link"
-                        type="object"
+                        type="action"
                         class="btn-secondary"
                         icon="fa-link"
+                        context="{'action_type': 'generate'}"
                         invisible="move_type not in ('out_invoice', 'out_refund') or state != 'posted' or payment_state in ('paid', 'in_payment', 'reversed') or cloudrefit_payment_link_url"/>
 
                 <!-- Urgent Sandbox Test Button -->
@@ -178,11 +179,12 @@
                            invisible="not cloudrefit_payment_link_url"
                            options="{'size': [80, 80]}"
                            class="ml-auto border rounded p-1"/>
-                    <button name="action_generate_payment_link"
+                    <button name="%(action_cloudrefit_payment_link_wizard_regenerate)d"
                             string="Regenerate"
-                            type="object"
+                            type="action"
                             class="btn btn-sm btn-outline-success ml-2"
                             icon="fa-refresh"
+                            context="{'action_type': 'regenerate'}"
                             invisible="move_type not in ('out_invoice', 'out_refund') or state != 'posted' or payment_state in ('paid', 'in_payment', 'reversed')"/>
                 </div>
             </xpath>

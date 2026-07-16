@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_cloudrefit_payment_link_wizard_form" model="ir.ui.view">
+        <field name="name">cloudrefit.payment.link.wizard.form</field>
+        <field name="model">cloudrefit.payment.link.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Payment Link Amount">
+                <group>
+                    <field name="invoice_id" invisible="1"/>
+                    <field name="action_type" invisible="1"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="amount" widget="monetary"
+                           string="Amount (SAR)"
+                           class="text-center font-weight-bold"
+                           nolabel="0"/>
+                </group>
+                <footer>
+                    <button name="action_generate"
+                            string="Generate Payment Link"
+                            type="object"
+                            class="btn-primary"/>
+                    <button string="Cancel"
+                            class="btn-secondary"
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_cloudrefit_payment_link_wizard" model="ir.actions.act_window">
+        <field name="name">Payment Link Amount</field>
+        <field name="res_model">cloudrefit.payment.link.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'action_type': 'generate'}</field>
+    </record>
+
+    <record id="action_cloudrefit_payment_link_wizard_regenerate" model="ir.actions.act_window">
+        <field name="name">Payment Link Amount</field>
+        <field name="res_model">cloudrefit.payment.link.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'action_type': 'regenerate'}</field>
+    </record>
+</odoo>
