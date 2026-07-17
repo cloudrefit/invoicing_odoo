@@ -119,12 +119,12 @@ class ResPartner(models.Model):
             # Saudi Address check
             if partner.is_company and partner.country_id and partner.country_id.code == 'SA':
                 missing_fields = []
-                if not partner.building_no:
-                    missing_fields.append("Building Number")
-                if not partner.district:
+                if not partner.building_no or not re.match(r'^\d{4}$', partner.building_no.strip()):
+                    missing_fields.append("Building Number (Must be 4 digits)")
+                if not partner.district or not partner.district.strip():
                     missing_fields.append("District")
-                if not partner.zip:
-                    missing_fields.append("Postal Code/Zip")
+                if not partner.zip or not re.match(r'^\d{5}$', partner.zip.strip()):
+                    missing_fields.append("Postal Code/Zip (Must be 5 digits)")
                 
                 if missing_fields:
                     raise ValidationError(

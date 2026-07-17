@@ -555,6 +555,14 @@ class AccountMove(models.Model):
                 'vat': partner.vat or '300000000000003',
                 'address': partner.street or '',
                 'city': partner.city or 'Riyadh',
+                'id_type': partner.zatca_id_type or '',
+                'id_value': partner.zatca_id_value or '',
+                'building_no': partner.building_no or '',
+                'district': partner.district or '',
+                'postal_code': partner.zip or '',
+                'country_code': partner.country_id.code if partner.country_id else 'SA',
+                'phone': partner.phone or getattr(partner, 'mobile', '') or '',
+                'email': partner.email or '',
             },
         }
 
