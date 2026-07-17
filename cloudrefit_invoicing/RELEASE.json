@@ -1,9 +1,9 @@
 {
-  "version": "19.0.0.141",
-  "release_date": "2026-07-15",
+  "version": "19.0.0.149",
+  "release_date": "2026-07-18",
   "severity": "minor",
-  "title": "Dynamic Payment Integrations UI",
-  "message": "Replaces the manual gateway ID text field with a dynamic dropdown populated directly from your CloudRefit dashboard. Payment link generation is now strictly enforced to Live mode for improved testing separation.",
+  "title": "Sync ZATCA B2B Address Validations & Payloads",
+  "message": "Synchronized ZATCA Saudi B2B address validations (strict Building Number and Postal Code constraints) and expanded the Gateway integration payload to seamlessly pass all newly mandated Phase 2 identity and structured address fields.",
   "latest_blocked_version": "19.0.0.81",
   "latest_urgent_version": "19.0.0.76",
   "latest_critical_version": "19.0.0.77",
