@@ -692,3 +692,1479 @@ class TestZatcaInvoiceSigning(TransactionCase):
         with patch.object(type(invoice), '_create_zatca_payment') as mock_create_payment:
             invoice._apply_cloudrefit_status_update(payload, 'payment.status_changed')
             mock_create_payment.assert_called_once_with(payload)
+
+
+# ================================================================== #
+#  B2B INVOICE FLOW
+# ================================================================== #
+
+
+@tagged('post_install', 'zatca_b2b_flow')
+class TestB2BInvoiceFlow(TransactionCase):
+    """B2B STANDARD / CREDIT_NOTE invoice flow — address completeness,
+    Saudi address rules, and non-SA bypass."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.ICP = cls.env['ir.config_parameter'].sudo()
+        cls.ICP.set_param('cloudrefit_invoicing.api_key_live', 'sk_live_testapikey1234567890')
+        cls.ICP.set_param('cloudrefit_invoicing.business_id_live', 'biz_test_001')
+        cls.ICP.set_param('cloudrefit_invoicing.gateway_url_live', 'https://api.invoicing.cloudrefit.com')
+        cls.ICP.set_param('cloudrefit_invoicing.signing_secret_live', 'test_secret_key_12345')
+        cls.ICP.set_param('cloudrefit_invoicing.unit_id_live', '999')
+        cls.ICP.set_param('cloudrefit_invoicing.mode', 'live')
+
+        # Countries
+        cls.country_sa = cls.env.ref('base.sa', raise_if_not_found=False)
+        cls.country_ae = cls.env.ref('base.ae', raise_if_not_found=False)
+
+        # ---- SA B2B partner with COMPLETE address ----
+        cls.partner_sa_complete = cls.env['res.partner'].create({
+            'name': 'SA B2B Complete',
+            'vat': '399999999901003',
+            'street': 'King Fahd Road',
+            'city': 'Riyadh',
+            'country_id': cls.country_sa.id if cls.country_sa else False,
+            'building_no': '1234',
+            'district': 'Al-Malaz',
+            'zip': '12345',
+            'phone': '+966501234567',
+            'is_company': True,
+        })
+
+        # ---- SA B2B partner MISSING district ----
+        cls.partner_sa_no_district = cls.env['res.partner'].create({
+            'name': 'SA B2B No District',
+            'vat': '399999999901004',
+            'street': 'Olaya Street',
+            'city': 'Riyadh',
+            'country_id': cls.country_sa.id if cls.country_sa else False,
+            'building_no': '5678',
+            'district': '',
+            'zip': '54321',
+            'phone': '+966501234568',
+            'is_company': True,
+        })
+
+        # ---- SA B2B partner MISSING building_no ----
+        cls.partner_sa_no_building = cls.env['res.partner'].create({
+            'name': 'SA B2B No Building',
+            'vat': '399999999901005',
+            'street': 'Tahlia Street',
+            'city': 'Jeddah',
+            'country_id': cls.country_sa.id if cls.country_sa else False,
+            'building_no': '',
+            'district': 'Al-Shati',
+            'zip': '23456',
+            'phone': '+966501234569',
+            'is_company': True,
+        })
+
+        # ---- SA B2B partner MISSING postal_code ----
+        cls.partner_sa_no_zip = cls.env['res.partner'].create({
+            'name': 'SA B2B No Zip',
+            'vat': '399999999901006',
+            'street': 'Prince Sultan Road',
+            'city': 'Dammam',
+            'country_id': cls.country_sa.id if cls.country_sa else False,
+            'building_no': '9012',
+            'district': 'Al-Sharq',
+            'zip': '',
+            'phone': '+966501234570',
+            'is_company': True,
+        })
+
+        # ---- Non-SA B2B partner (UAE) ----
+        cls.partner_uae = cls.env['res.partner'].create({
+            'name': 'UAE B2B Customer',
+            'vat': '123456789012345',
+            'street': 'Sheikh Zayed Road',
+            'city': 'Dubai',
+            'country_id': cls.country_ae.id if cls.country_ae else False,
+            'phone': '+971501234567',
+            'is_company': True,
+        })
+
+        # ---- Product & Tax & Journal ----
+        cls.product = cls.env['product.product'].create({
+            'name': 'Test Service',
+            'type': 'service',
+            'list_price': 100.0,
+        })
+        cls.tax_15 = cls.env['account.tax'].create({
+            'name': 'KSA VAT 15%',
+            'amount': 15.0,
+            'amount_type': 'percent',
+            'type_tax_use': 'sale',
+        })
+        cls.journal = cls.env['account.journal'].search([('type', '=', 'sale')], limit=1)
+        if not cls.journal:
+            cls.journal = cls.env['account.journal'].create({
+                'name': 'Test Sale Journal',
+                'type': 'sale',
+                'code': 'TSJ',
+            })
+
+        # ---- Patch gateway client ----
+        cls.api_client = cls.env['cloudrefit.zatca.api.client']
+        cls._original_call = type(cls.api_client).call_gateway
+        type(cls.api_client).call_gateway = MockZatcaApiClient.call_gateway
+
+    @classmethod
+    def tearDownClass(cls):
+        type(cls.api_client).call_gateway = cls._original_call
+        MockZatcaApiClient.reset()
+        super().tearDownClass()
+
+    def setUp(self):
+        super().setUp()
+        MockZatcaApiClient.reset()
+        self.ICP.set_param('cloudrefit_invoicing.mode', 'live')
+
+    # ------------------------------------------------------------------ #
+    #  Helpers
+    # ------------------------------------------------------------------ #
+
+    def _create_invoice(self, partner=None, lines=None, invoice_date=None,
+                        name=None, move_type='out_invoice', **extra):
+        partner = partner or self.partner_sa_complete
+        invoice_date = invoice_date or date.today()
+        name = name or f'INV/TEST/{invoice_date.strftime("%Y%m%d")}/001'
+        line_vals = lines or [(self.product.id, 1, 100.0)]
+        invoice_lines = []
+        for product_id, qty, price in line_vals:
+            invoice_lines.append((0, 0, {
+                'product_id': product_id,
+                'quantity': qty,
+                'price_unit': price,
+                'tax_ids': [(6, 0, [self.tax_15.id])],
+                'name': self.product.name,
+            }))
+        invoice = self.env['account.move'].create({
+            'move_type': move_type,
+            'partner_id': partner.id,
+            'invoice_date': invoice_date,
+            'name': name,
+            'journal_id': self.journal.id,
+            'invoice_line_ids': invoice_lines,
+            **extra,
+        })
+        invoice.action_post()
+        return invoice
+
+    # ------------------------------------------------------------------ #
+    #  B2B STANDARD — Complete address → payload succeeds
+    # ------------------------------------------------------------------ #
+
+    def test_b2b_standard_complete_address_payload_builds(self):
+        """B2B STANDARD invoice with complete SA address must build payload
+        successfully with all address fields present."""
+        invoice = self._create_invoice(partner=self.partner_sa_complete)
+        payload = invoice._build_zatca_payload()
+
+        self.assertEqual(payload['invoice']['type'], 'STANDARD_TAX_INVOICE')
+        cust = payload['customer']
+        self.assertEqual(cust['building_no'], '1234')
+        self.assertEqual(cust['district'], 'Al-Malaz')
+        self.assertEqual(cust['postal_code'], '12345')
+        self.assertEqual(cust['vat'], '399999999901003')
+
+    def test_b2b_standard_complete_address_sign_success(self):
+        """B2B STANDARD invoice with complete SA address must sign
+        successfully."""
+        invoice = self._create_invoice(partner=self.partner_sa_complete)
+
+        MockZatcaApiClient.reset()
+        MockZatcaApiClient.register_response(
+            'POST', '/api/v1/invoices',
+            201,
+            {
+                'signedData': {
+                    'hash': 'b2b_complete_hash',
+                    'qrImage': 'b2b_qr',
+                    'xml': '<B2BComplete/>',
+                },
+            },
+        )
+
+        invoice.action_zatca_sign()
+        self.assertEqual(invoice.zatca_status, 'cleared')
+        self.assertEqual(invoice.zatca_hash, 'b2b_complete_hash')
+
+    # ------------------------------------------------------------------ #
+    #  B2B STANDARD — Missing district → rejected
+    # ------------------------------------------------------------------ #
+
+    def test_b2b_standard_missing_district_raises_error(self):
+        """B2B STANDARD invoice with SA buyer missing district must raise
+        UserError from _build_zatca_payload."""
+        invoice = self._create_invoice(partner=self.partner_sa_no_district)
+        with self.assertRaises(UserError) as ctx:
+            invoice._build_zatca_payload()
+        self.assertIn('District', str(ctx.exception))
+
+    # ------------------------------------------------------------------ #
+    #  B2B STANDARD — Missing building_no → rejected
+    # ------------------------------------------------------------------ #
+
+    def test_b2b_standard_missing_building_no_raises_error(self):
+        """B2B STANDARD invoice with SA buyer missing building_no must raise
+        UserError from _build_zatca_payload."""
+        invoice = self._create_invoice(partner=self.partner_sa_no_building)
+        with self.assertRaises(UserError) as ctx:
+            invoice._build_zatca_payload()
+        self.assertIn('Building Number', str(ctx.exception))
+
+    # ------------------------------------------------------------------ #
+    #  B2B STANDARD — Missing postal_code → rejected
+    # ------------------------------------------------------------------ #
+
+    def test_b2b_standard_missing_postal_code_raises_error(self):
+        """B2B STANDARD invoice with SA buyer missing postal_code must raise
+        UserError from _build_zatca_payload."""
+        invoice = self._create_invoice(partner=self.partner_sa_no_zip)
+        with self.assertRaises(UserError) as ctx:
+            invoice._build_zatca_payload()
+        self.assertIn('Postal Code', str(ctx.exception))
+
+    # ------------------------------------------------------------------ #
+    #  B2B CREDIT_NOTE — Complete address → accepted
+    # ------------------------------------------------------------------ #
+
+    def test_b2b_credit_note_complete_address(self):
+        """B2B CREDIT_NOTE with complete SA buyer address must build payload
+        successfully with STANDARD_TAX_CREDIT_NOTE type."""
+        # Create the original invoice first
+        original = self._create_invoice(partner=self.partner_sa_complete)
+
+        # Create a credit note reversing the original
+        credit_note = self._create_invoice(
+            partner=self.partner_sa_complete,
+            move_type='out_refund',
+            name=f'CN/{original.name}',
+        )
+
+        payload = credit_note._build_zatca_payload()
+        self.assertEqual(payload['invoice']['type'], 'STANDARD_TAX_CREDIT_NOTE')
+        self.assertIn('origin_number', payload['invoice'])
+        self.assertIn('origin_uuid', payload['invoice'])
+        self.assertIn('adjustment_reason', payload['invoice'])
+
+    # ------------------------------------------------------------------ #
+    #  B2B CREDIT_NOTE — Missing district → rejected
+    # ------------------------------------------------------------------ #
+
+    def test_b2b_credit_note_missing_district_raises_error(self):
+        """B2B CREDIT_NOTE with SA buyer missing district must raise
+        UserError."""
+        original = self._create_invoice(partner=self.partner_sa_complete)
+        credit_note = self._create_invoice(
+            partner=self.partner_sa_no_district,
+            move_type='out_refund',
+            name=f'CN/{original.name}',
+        )
+        with self.assertRaises(UserError) as ctx:
+            credit_note._build_zatca_payload()
+        self.assertIn('District', str(ctx.exception))
+
+    # ------------------------------------------------------------------ #
+    #  Non-SA B2B — Bypasses SA address rules
+    # ------------------------------------------------------------------ #
+
+    def test_b2b_non_sa_bypasses_building_no_requirement(self):
+        """Non-SA B2B buyer (UAE) must NOT require building_no, district, or
+        postal_code. Payload must build successfully."""
+        invoice = self._create_invoice(partner=self.partner_uae)
+        payload = invoice._build_zatca_payload()
+        self.assertEqual(payload['invoice']['type'], 'STANDARD_TAX_INVOICE')
+        # UAE partner has no SA-specific fields, but payload should still build
+        cust = payload['customer']
+        self.assertEqual(cust['country_code'], 'AE')
+        # SA-specific fields should be empty strings, not cause errors
+        self.assertIn('building_no', cust)
+        self.assertIn('district', cust)
+        self.assertIn('postal_code', cust)
+
+    def test_b2b_non_sa_sign_success_without_sa_fields(self):
+        """Non-SA B2B buyer must be signable without SA-specific address
+        fields."""
+        invoice = self._create_invoice(partner=self.partner_uae)
+
+        MockZatcaApiClient.reset()
+        MockZatcaApiClient.register_response(
+            'POST', '/api/v1/invoices',
+            201,
+            {
+                'signedData': {
+                    'hash': 'uae_b2b_hash',
+                    'qrImage': 'uae_qr',
+                    'xml': '<UAEB2B/>',
+                },
+            },
+        )
+
+        invoice.action_zatca_sign()
+        self.assertEqual(invoice.zatca_status, 'cleared')
+
+
+# ================================================================== #
+#  B2C INVOICE FLOW
+# ================================================================== #
+
+
+@tagged('post_install', 'zatca_b2c_flow')
+class TestB2CInvoiceFlow(TransactionCase):
+    """B2C SIMPLIFIED invoice flow — phone/mobile requirements and
+    address bypass."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.ICP = cls.env['ir.config_parameter'].sudo()
+        cls.ICP.set_param('cloudrefit_invoicing.api_key_live', 'sk_live_testapikey1234567890')
+        cls.ICP.set_param('cloudrefit_invoicing.business_id_live', 'biz_test_001')
+        cls.ICP.set_param('cloudrefit_invoicing.gateway_url_live', 'https://api.invoicing.cloudrefit.com')
+        cls.ICP.set_param('cloudrefit_invoicing.signing_secret_live', 'test_secret_key_12345')
+        cls.ICP.set_param('cloudrefit_invoicing.unit_id_live', '999')
+        cls.ICP.set_param('cloudrefit_invoicing.mode', 'live')
+
+        # ---- B2C partner WITH phone ----
+        cls.partner_b2c_with_phone = cls.env['res.partner'].create({
+            'name': 'B2C With Phone',
+            'phone': '+966501234567',
+            'is_company': False,
+        })
+
+        # ---- B2C partner WITH mobile (no phone) ----
+        cls.partner_b2c_with_mobile = cls.env['res.partner'].create({
+            'name': 'B2C With Mobile',
+            'mobile': '+966508765432',
+            'is_company': False,
+        })
+
+        # ---- B2C partner WITHOUT phone or mobile ----
+        cls.partner_b2c_no_phone = cls.env['res.partner'].create({
+            'name': 'B2C No Phone',
+            'phone': '',
+            'is_company': False,
+        })
+
+        # ---- Product & Tax & Journal ----
+        cls.product = cls.env['product.product'].create({
+            'name': 'Test Service',
+            'type': 'service',
+            'list_price': 100.0,
+        })
+        cls.tax_15 = cls.env['account.tax'].create({
+            'name': 'KSA VAT 15%',
+            'amount': 15.0,
+            'amount_type': 'percent',
+            'type_tax_use': 'sale',
+        })
+        cls.journal = cls.env['account.journal'].search([('type', '=', 'sale')], limit=1)
+        if not cls.journal:
+            cls.journal = cls.env['account.journal'].create({
+                'name': 'Test Sale Journal',
+                'type': 'sale',
+                'code': 'TSJ',
+            })
+
+        # ---- Patch gateway client ----
+        cls.api_client = cls.env['cloudrefit.zatca.api.client']
+        cls._original_call = type(cls.api_client).call_gateway
+        type(cls.api_client).call_gateway = MockZatcaApiClient.call_gateway
+
+    @classmethod
+    def tearDownClass(cls):
+        type(cls.api_client).call_gateway = cls._original_call
+        MockZatcaApiClient.reset()
+        super().tearDownClass()
+
+    def setUp(self):
+        super().setUp()
+        MockZatcaApiClient.reset()
+        self.ICP.set_param('cloudrefit_invoicing.mode', 'live')
+
+    def _create_invoice(self, partner=None, lines=None, invoice_date=None,
+                        name=None, move_type='out_invoice', **extra):
+        partner = partner or self.partner_b2c_with_phone
+        invoice_date = invoice_date or date.today()
+        name = name or f'INV/TEST/{invoice_date.strftime("%Y%m%d")}/001'
+        line_vals = lines or [(self.product.id, 1, 100.0)]
+        invoice_lines = []
+        for product_id, qty, price in line_vals:
+            invoice_lines.append((0, 0, {
+                'product_id': product_id,
+                'quantity': qty,
+                'price_unit': price,
+                'tax_ids': [(6, 0, [self.tax_15.id])],
+                'name': self.product.name,
+            }))
+        invoice = self.env['account.move'].create({
+            'move_type': move_type,
+            'partner_id': partner.id,
+            'invoice_date': invoice_date,
+            'name': name,
+            'journal_id': self.journal.id,
+            'invoice_line_ids': invoice_lines,
+            **extra,
+        })
+        invoice.action_post()
+        return invoice
+
+    # ------------------------------------------------------------------ #
+    #  B2C with phone → success
+    # ------------------------------------------------------------------ #
+
+    def test_b2c_simplified_with_phone(self):
+        """B2C SIMPLIFIED invoice with partner phone must build payload
+        successfully with SIMPLIFIED_TAX_INVOICE type."""
+        invoice = self._create_invoice(partner=self.partner_b2c_with_phone)
+        payload = invoice._build_zatca_payload()
+        self.assertEqual(payload['invoice']['type'], 'SIMPLIFIED_TAX_INVOICE')
+        self.assertEqual(payload['customer']['phone'], '+966501234567')
+
+    def test_b2c_simplified_with_phone_sign_success(self):
+        """B2C SIMPLIFIED invoice with phone must sign successfully and get
+        'reported' status."""
+        invoice = self._create_invoice(partner=self.partner_b2c_with_phone)
+
+        MockZatcaApiClient.reset()
+        MockZatcaApiClient.register_response(
+            'POST', '/api/v1/invoices',
+            201,
+            {
+                'signedData': {
+                    'hash': 'b2c_phone_hash',
+                    'qrImage': 'b2c_phone_qr',
+                    'xml': '<B2CPhone/>',
+                },
+            },
+        )
+
+        invoice.action_zatca_sign()
+        self.assertEqual(invoice.zatca_status, 'reported')
+
+    # ------------------------------------------------------------------ #
+    #  B2C with mobile (no phone) → success
+    # ------------------------------------------------------------------ #
+
+    def test_b2c_simplified_with_mobile(self):
+        """B2C SIMPLIFIED invoice with mobile (no phone) must build payload
+        successfully."""
+        invoice = self._create_invoice(partner=self.partner_b2c_with_mobile)
+        payload = invoice._build_zatca_payload()
+        self.assertEqual(payload['invoice']['type'], 'SIMPLIFIED_TAX_INVOICE')
+        # Phone field should fall back to mobile
+        self.assertTrue(payload['customer']['phone'])
+
+    # ------------------------------------------------------------------ #
+    #  B2C without phone or mobile → rejected
+    # ------------------------------------------------------------------ #
+
+    def test_b2c_no_phone_raises_error(self):
+        """B2C SIMPLIFIED invoice without phone or mobile must raise
+        UserError from _build_zatca_payload."""
+        invoice = self._create_invoice(partner=self.partner_b2c_no_phone)
+        with self.assertRaises(UserError) as ctx:
+            invoice._build_zatca_payload()
+        self.assertIn('Mobile or Phone Number', str(ctx.exception))
+
+    # ------------------------------------------------------------------ #
+    #  B2C with empty partner name — still requires phone
+    # ------------------------------------------------------------------ #
+
+    def test_b2c_no_phone_no_mobile_res_partner_constraint(self):
+        """Creating a B2C partner without phone or mobile must raise
+        ValidationError from res_partner constraint."""
+        # The constraint runs on create/write of res.partner
+        with self.assertRaises(Exception) as ctx:
+            self.env['res.partner'].create({
+                'name': 'B2C Invalid',
+                'phone': '',
+                'mobile': '',
+                'is_company': False,
+            })
+        # Should raise ValidationError about missing phone/mobile
+        error_text = str(ctx.exception)
+        self.assertTrue(
+            'Mobile' in error_text or 'Phone' in error_text,
+            f'Expected ValidationError about mobile/phone, got: {error_text}',
+        )
+
+    # ------------------------------------------------------------------ #
+    #  B2C address fields are NOT validated (no street/city/country needed)
+    # ------------------------------------------------------------------ #
+
+    def test_b2c_no_address_still_succeeds(self):
+        """B2C SIMPLIFIED invoice must NOT require street, city, or
+        country — only phone/mobile matters."""
+        partner_no_address = self.env['res.partner'].create({
+            'name': 'B2C Minimal',
+            'phone': '+966501234569',
+            'is_company': False,
+        })
+        invoice = self._create_invoice(partner=partner_no_address)
+        payload = invoice._build_zatca_payload()
+        self.assertEqual(payload['invoice']['type'], 'SIMPLIFIED_TAX_INVOICE')
+
+
+# ================================================================== #
+#  STATE GUARDS
+# ================================================================== #
+
+
+@tagged('post_install', 'zatca_state_guards')
+class TestZatcaStateGuards(TransactionCase):
+    """Invoice state transitions and guards against invalid operations."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.ICP = cls.env['ir.config_parameter'].sudo()
+        cls.ICP.set_param('cloudrefit_invoicing.api_key_live', 'sk_live_testapikey1234567890')
+        cls.ICP.set_param('cloudrefit_invoicing.business_id_live', 'biz_test_001')
+        cls.ICP.set_param('cloudrefit_invoicing.gateway_url_live', 'https://api.invoicing.cloudrefit.com')
+        cls.ICP.set_param('cloudrefit_invoicing.signing_secret_live', 'test_secret_key_12345')
+        cls.ICP.set_param('cloudrefit_invoicing.unit_id_live', '999')
+        cls.ICP.set_param('cloudrefit_invoicing.mode', 'live')
+
+        cls.country_sa = cls.env.ref('base.sa', raise_if_not_found=False)
+
+        cls.partner_complete = cls.env['res.partner'].create({
+            'name': 'SA B2B Complete',
+            'vat': '399999999901003',
+            'street': 'King Fahd Road',
+            'city': 'Riyadh',
+            'country_id': cls.country_sa.id if cls.country_sa else False,
+            'building_no': '1234',
+            'district': 'Al-Malaz',
+            'zip': '12345',
+            'phone': '+966501234567',
+            'is_company': True,
+        })
+
+        cls.product = cls.env['product.product'].create({
+            'name': 'Test Service',
+            'type': 'service',
+            'list_price': 100.0,
+        })
+        cls.tax_15 = cls.env['account.tax'].create({
+            'name': 'KSA VAT 15%',
+            'amount': 15.0,
+            'amount_type': 'percent',
+            'type_tax_use': 'sale',
+        })
+        cls.journal = cls.env['account.journal'].search([('type', '=', 'sale')], limit=1)
+        if not cls.journal:
+            cls.journal = cls.env['account.journal'].create({
+                'name': 'Test Sale Journal',
+                'type': 'sale',
+                'code': 'TSJ',
+            })
+
+        cls.api_client = cls.env['cloudrefit.zatca.api.client']
+        cls._original_call = type(cls.api_client).call_gateway
+        type(cls.api_client).call_gateway = MockZatcaApiClient.call_gateway
+
+    @classmethod
+    def tearDownClass(cls):
+        type(cls.api_client).call_gateway = cls._original_call
+        MockZatcaApiClient.reset()
+        super().tearDownClass()
+
+    def setUp(self):
+        super().setUp()
+        MockZatcaApiClient.reset()
+        self.ICP.set_param('cloudrefit_invoicing.mode', 'live')
+
+    def _create_draft_invoice(self):
+        """Create a draft (unposted) invoice."""
+        return self.env['account.move'].create({
+            'move_type': 'out_invoice',
+            'partner_id': self.partner_complete.id,
+            'invoice_date': date.today(),
+            'name': 'INV/DRAFT/001',
+            'journal_id': self.journal.id,
+            'invoice_line_ids': [(0, 0, {
+                'product_id': self.product.id,
+                'quantity': 1,
+                'price_unit': 100.0,
+                'tax_ids': [(6, 0, [self.tax_15.id])],
+                'name': self.product.name,
+            })],
+        })
+
+    # ------------------------------------------------------------------ #
+    #  Draft → Posted transition
+    # ------------------------------------------------------------------ #
+
+    def test_draft_to_posted_transition(self):
+        """Invoice must transition from draft to posted state."""
+        invoice = self._create_draft_invoice()
+        self.assertEqual(invoice.state, 'draft')
+        invoice.action_post()
+        self.assertEqual(invoice.state, 'posted')
+
+    def test_draft_to_posted_generates_uuid(self):
+        """Posting an invoice must generate a deterministic zatca_uuid."""
+        invoice = self._create_draft_invoice()
+        self.assertFalse(invoice.zatca_uuid)
+        invoice.action_post()
+        self.assertTrue(invoice.zatca_uuid)
+        # UUID must be a valid UUID string
+        import uuid as py_uuid
+        self.assertIsNotNone(py_uuid.UUID(invoice.zatca_uuid))
+
+    # ------------------------------------------------------------------ #
+    #  Cannot sign invoice in draft state
+    # ------------------------------------------------------------------ #
+
+    def test_cannot_sign_draft_invoice(self):
+        """A draft invoice must have is_zatca_push_allowed = False."""
+        invoice = self._create_draft_invoice()
+        self.assertFalse(invoice.is_zatca_push_allowed)
+
+    # ------------------------------------------------------------------ #
+    #  Cannot sign invoice already CLEARED in live
+    # ------------------------------------------------------------------ #
+
+    def test_cannot_sign_already_cleared_live(self):
+        """Signing an invoice already cleared in live must raise UserError."""
+        invoice = self._create_draft_invoice()
+        invoice.action_post()
+        invoice.write({
+            'zatca_status': 'cleared',
+            'zatca_exec_mode': 'live',
+        })
+        with self.assertRaises(UserError):
+            invoice.action_zatca_sign()
+
+    def test_cannot_push_to_sandbox_if_cleared_live(self):
+        """Pushing to sandbox an invoice already cleared in live must raise
+        UserError."""
+        invoice = self._create_draft_invoice()
+        invoice.action_post()
+        invoice.write({
+            'zatca_status': 'cleared',
+            'zatca_exec_mode': 'live',
+        })
+        with self.assertRaises(UserError):
+            invoice.action_push_to_sandbox_zatca()
+
+    def test_cannot_push_to_sandbox_if_cleared_sandbox(self):
+        """Pushing to sandbox an invoice already cleared in sandbox must raise
+        UserError."""
+        invoice = self._create_draft_invoice()
+        invoice.action_post()
+        invoice.write({
+            'zatca_status': 'cleared',
+            'zatca_exec_mode': 'sandbox',
+        })
+        with self.assertRaises(UserError):
+            invoice.action_push_to_sandbox_zatca()
+
+    # ------------------------------------------------------------------ #
+    #  _check_zatca_push_allowed guards
+    # ------------------------------------------------------------------ #
+
+    def test_push_not_allowed_when_not_posted(self):
+        """_check_zatca_push_allowed must return False for draft invoices."""
+        invoice = self._create_draft_invoice()
+        allowed, reason = invoice._check_zatca_push_allowed()
+        self.assertFalse(allowed)
+        self.assertIn('not posted', reason.lower())
+
+    def test_push_not_allowed_when_already_cleared_live(self):
+        """_check_zatca_push_allowed must return False for already cleared
+        live invoices."""
+        invoice = self._create_draft_invoice()
+        invoice.action_post()
+        invoice.write({
+            'zatca_status': 'cleared',
+            'zatca_exec_mode': 'live',
+        })
+        allowed, reason = invoice._check_zatca_push_allowed()
+        self.assertFalse(allowed)
+        self.assertIn('already signed', reason.lower())
+
+    def test_push_not_allowed_when_no_invoice_date(self):
+        """_check_zatca_push_allowed must return False when invoice_date is
+        missing."""
+        invoice = self._create_draft_invoice()
+        invoice.action_post()
+        invoice.write({'invoice_date': False})
+        allowed, reason = invoice._check_zatca_push_allowed()
+        self.assertFalse(allowed)
+        self.assertIn('invoice date', reason.lower())
+
+    def test_push_not_allowed_when_date_older_than_15_days(self):
+        """_check_zatca_push_allowed must return False for invoices older than
+        15 days."""
+        old_date = date.today() - timedelta(days=20)
+        invoice = self._create_draft_invoice()
+        invoice.write({'invoice_date': old_date})
+        invoice.action_post()
+        allowed, reason = invoice._check_zatca_push_allowed()
+        self.assertFalse(allowed)
+        self.assertIn('15 days', reason.lower())
+
+    # ------------------------------------------------------------------ #
+    #  _apply_cloudrefit_status_update — Regression guard (existing tests
+    #  in TestZatcaInvoiceSigning cover basic cases; this covers edge cases)
+    # ------------------------------------------------------------------ #
+
+    def test_status_update_idempotent_same_status(self):
+        """Applying the same status twice must be a no-op (idempotent)."""
+        invoice = self._create_draft_invoice()
+        invoice.action_post()
+        invoice.write({'zatca_status': 'cleared'})
+
+        payload = {
+            'status': 'completed',
+            'signedData': {
+                'hash': 'new_hash',
+                'qrImage': 'new_qr',
+                'xml': '<New/>',
+            },
+        }
+        # First update — should apply
+        invoice._apply_cloudrefit_status_update(payload, 'clearance')
+        self.assertEqual(invoice.zatca_hash, 'new_hash')
+
+        # Second update with same data — must be idempotent (no error)
+        invoice._apply_cloudrefit_status_update(payload, 'clearance')
+        self.assertEqual(invoice.zatca_hash, 'new_hash')
+
+    def test_status_update_regression_cleared_to_pending_ignored(self):
+        """Regression from cleared to pending must be ignored."""
+        invoice = self._create_draft_invoice()
+        invoice.action_post()
+        invoice.write({'zatca_status': 'cleared', 'zatca_hash': 'original_hash'})
+
+        payload = {
+            'status': 'pending',
+            'signedData': {},
+        }
+        invoice._apply_cloudrefit_status_update(payload, 'clearance')
+        # Must remain cleared
+        self.assertEqual(invoice.zatca_status, 'cleared')
+        self.assertEqual(invoice.zatca_hash, 'original_hash')
+
+    def test_status_update_reported_to_cleared_allowed(self):
+        """Forward transition from reported to cleared must be allowed."""
+        invoice = self._create_draft_invoice()
+        invoice.action_post()
+        invoice.write({'zatca_status': 'reported', 'zatca_hash': 'old_hash'})
+
+        payload = {
+            'status': 'completed',
+            'signedData': {
+                'hash': 'promoted_hash',
+                'qrImage': 'promoted_qr',
+                'xml': '<Promoted/>',
+            },
+        }
+        invoice._apply_cloudrefit_status_update(payload, 'clearance')
+        self.assertEqual(invoice.zatca_status, 'cleared')
+        self.assertEqual(invoice.zatca_hash, 'promoted_hash')
+
+
+# ================================================================== #
+#  ZATCA COMPLIANCE — res.partner _check_zatca_identity_and_address
+#  These tests mirror the TypeScript validation.ts rules per AGENTS.md
+#  ZATCA Validation Sync Rule.
+# ================================================================== #
+
+
+@tagged('post_install', 'zatca_compliance')
+class TestZatcaPartnerCompliance(TransactionCase):
+    """Validate that res.partner ZATCA identity & address constraints match
+    the TypeScript validation.ts rules:
+
+    - VAT regex: ``/^3\\d{13}3$/``
+    - Building No: ``/^\\d{4}$/``
+    - Postal Code: ``/^\\d{5}$/``
+    - District required for SA buyers
+    - Other ID type enum values
+    - Other ID value format: ``/^[a-zA-Z0-9]*$/``
+    - B2C required fields: name + phone
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.country_sa = cls.env.ref('base.sa', raise_if_not_found=False)
+        cls.valid_vat = '399999999901003'  # Starts with 3, 15 digits, ends with 3
+
+    # ------------------------------------------------------------------ #
+    #  VAT regex: /^3\d{13}3$/
+    # ------------------------------------------------------------------ #
+
+    def test_vat_valid_15_digits_saudi(self):
+        """A valid SA VAT (15 digits, starts and ends with 3) must not raise
+        ValidationError."""
+        partner = self.env['res.partner'].create({
+            'name': 'Valid VAT Partner',
+            'vat': self.valid_vat,
+            'is_company': True,
+            'street': 'Test Street',
+            'city': 'Riyadh',
+            'country_id': self.country_sa.id if self.country_sa else False,
+            'building_no': '1234',
+            'district': 'Test District',
+            'zip': '12345',
+            'phone': '+966501234567',
+        })
+        # The constraint should have passed since we provided all required fields
+        self.assertTrue(partner.vat == self.valid_vat)
+
+    def test_vat_invalid_wrong_prefix(self):
+        """VAT not starting with 3 must raise ValidationError for SA."""
+        with self.assertRaises(Exception) as ctx:
+            self.env['res.partner'].create({
+                'name': 'Bad VAT Prefix',
+                'vat': '199999999901003',
+                'is_company': True,
+                'street': 'Test Street',
+                'city': 'Riyadh',
+                'country_id': self.country_sa.id if self.country_sa else False,
+                'building_no': '1234',
+                'district': 'Test District',
+                'zip': '12345',
+                'phone': '+966501234567',
+            })
+        self.assertIn('VAT', str(ctx.exception))
+
+    def test_vat_invalid_wrong_suffix(self):
+        """VAT not ending with 3 must raise ValidationError for SA."""
+        with self.assertRaises(Exception) as ctx:
+            self.env['res.partner'].create({
+                'name': 'Bad VAT Suffix',
+                'vat': '399999999901000',
+                'is_company': True,
+                'street': 'Test Street',
+                'city': 'Riyadh',
+                'country_id': self.country_sa.id if self.country_sa else False,
+                'building_no': '1234',
+                'district': 'Test District',
+                'zip': '12345',
+                'phone': '+966501234567',
+            })
+        self.assertIn('VAT', str(ctx.exception))
+
+    def test_vat_invalid_too_short(self):
+        """VAT with fewer than 15 digits must raise ValidationError for SA."""
+        with self.assertRaises(Exception) as ctx:
+            self.env['res.partner'].create({
+                'name': 'Short VAT',
+                'vat': '39999999901',
+                'is_company': True,
+                'street': 'Test Street',
+                'city': 'Riyadh',
+                'country_id': self.country_sa.id if self.country_sa else False,
+                'building_no': '1234',
+                'district': 'Test District',
+                'zip': '12345',
+                'phone': '+966501234567',
+            })
+        self.assertIn('VAT', str(ctx.exception))
+
+    def test_vat_invalid_too_long(self):
+        """VAT with more than 15 digits must raise ValidationError for SA."""
+        with self.assertRaises(Exception) as ctx:
+            self.env['res.partner'].create({
+                'name': 'Long VAT',
+                'vat': '39999999990100399',
+                'is_company': True,
+                'street': 'Test Street',
+                'city': 'Riyadh',
+                'country_id': self.country_sa.id if self.country_sa else False,
+                'building_no': '1234',
+                'district': 'Test District',
+                'zip': '12345',
+                'phone': '+966501234567',
+            })
+        self.assertIn('VAT', str(ctx.exception))
+
+    def test_vat_non_sa_skip_validation(self):
+        """Non-SA VAT must NOT be validated against the SA pattern."""
+        country_ae = self.env.ref('base.ae', raise_if_not_found=False)
+        partner = self.env['res.partner'].create({
+            'name': 'Non-SA VAT',
+            'vat': '12345',
+            'is_company': True,
+            'street': 'Test Street',
+            'city': 'Dubai',
+            'country_id': country_ae.id if country_ae else False,
+            'building_no': '1234',
+            'district': 'Test District',
+            'zip': '12345',
+            'phone': '+971501234567',
+        })
+        self.assertEqual(partner.vat, '12345')
+
+    # ------------------------------------------------------------------ #
+    #  Building No: /^\d{4}$/
+    # ------------------------------------------------------------------ #
+
+    def test_building_no_valid_4_digits(self):
+        """Building number with exactly 4 digits must pass."""
+        partner = self.env['res.partner'].create({
+            'name': 'Valid Building',
+            'vat': self.valid_vat,
+            'is_company': True,
+            'street': 'Test Street',
+            'city': 'Riyadh',
+            'country_id': self.country_sa.id if self.country_sa else False,
+            'building_no': '5678',
+            'district': 'Test District',
+            'zip': '12345',
+            'phone': '+966501234567',
+        })
+        self.assertEqual(partner.building_no, '5678')
+
+    def test_building_no_invalid_3_digits(self):
+        """Building number with 3 digits must raise ValidationError."""
+        with self.assertRaises(Exception) as ctx:
+            self.env['res.partner'].create({
+                'name': 'Bad Building',
+                'vat': self.valid_vat,
+                'is_company': True,
+                'street': 'Test Street',
+                'city': 'Riyadh',
+                'country_id': self.country_sa.id if self.country_sa else False,
+                'building_no': '567',
+                'district': 'Test District',
+                'zip': '12345',
+                'phone': '+966501234567',
+            })
+        self.assertIn('Building Number', str(ctx.exception))
+
+    def test_building_no_invalid_with_letters(self):
+        """Building number containing letters must raise ValidationError."""
+        with self.assertRaises(Exception) as ctx:
+            self.env['res.partner'].create({
+                'name': 'Alpha Building',
+                'vat': self.valid_vat,
+                'is_company': True,
+                'street': 'Test Street',
+                'city': 'Riyadh',
+                'country_id': self.country_sa.id if self.country_sa else False,
+                'building_no': '56A8',
+                'district': 'Test District',
+                'zip': '12345',
+                'phone': '+966501234567',
+            })
+        self.assertIn('Building Number', str(ctx.exception))
+
+    def test_building_no_empty_raises_for_sa_b2b(self):
+        """Empty building_no must raise ValidationError for SA B2B."""
+        with self.assertRaises(Exception) as ctx:
+            self.env['res.partner'].create({
+                'name': 'Empty Building',
+                'vat': self.valid_vat,
+                'is_company': True,
+                'street': 'Test Street',
+                'city': 'Riyadh',
+                'country_id': self.country_sa.id if self.country_sa else False,
+                'building_no': '',
+                'district': 'Test District',
+                'zip': '12345',
+                'phone': '+966501234567',
+            })
+        self.assertIn('Building Number', str(ctx.exception))
+
+    # ------------------------------------------------------------------ #
+    #  Postal Code: /^\d{5}$/
+    # ------------------------------------------------------------------ #
+
+    def test_postal_code_valid_5_digits(self):
+        """Postal code with exactly 5 digits must pass."""
+        partner = self.env['res.partner'].create({
+            'name': 'Valid Zip',
+            'vat': self.valid_vat,
+            'is_company': True,
+            'street': 'Test Street',
+            'city': 'Riyadh',
+            'country_id': self.country_sa.id if self.country_sa else False,
+            'building_no': '1234',
+            'district': 'Test District',
+            'zip': '54321',
+            'phone': '+966501234567',
+        })
+        self.assertEqual(partner.zip, '54321')
+
+    def test_postal_code_invalid_4_digits(self):
+        """Postal code with 4 digits must raise ValidationError."""
+        with self.assertRaises(Exception) as ctx:
+            self.env['res.partner'].create({
+                'name': 'Short Zip',
+                'vat': self.valid_vat,
+                'is_company': True,
+                'street': 'Test Street',
+                'city': 'Riyadh',
+                'country_id': self.country_sa.id if self.country_sa else False,
+                'building_no': '1234',
+                'district': 'Test District',
+                'zip': '5432',
+                'phone': '+966501234567',
+            })
+        self.assertIn('Postal Code', str(ctx.exception))
+
+    def test_postal_code_invalid_with_letters(self):
+        """Postal code containing letters must raise ValidationError."""
+        with self.assertRaises(Exception) as ctx:
+            self.env['res.partner'].create({
+                'name': 'Alpha Zip',
+                'vat': self.valid_vat,
+                'is_company': True,
+                'street': 'Test Street',
+                'city': 'Riyadh',
+                'country_id': self.country_sa.id if self.country_sa else False,
+                'building_no': '1234',
+                'district': 'Test District',
+                'zip': '54E21',
+                'phone': '+966501234567',
+            })
+        self.assertIn('Postal Code', str(ctx.exception))
+
+    def test_postal_code_empty_raises_for_sa_b2b(self):
+        """Empty postal_code must raise ValidationError for SA B2B."""
+        with self.assertRaises(Exception) as ctx:
+            self.env['res.partner'].create({
+                'name': 'Empty Zip',
+                'vat': self.valid_vat,
+                'is_company': True,
+                'street': 'Test Street',
+                'city': 'Riyadh',
+                'country_id': self.country_sa.id if self.country_sa else False,
+                'building_no': '1234',
+                'district': 'Test District',
+                'zip': '',
+                'phone': '+966501234567',
+            })
+        self.assertIn('Postal Code', str(ctx.exception))
+
+    # ------------------------------------------------------------------ #
+    #  District required for SA B2B
+    # ------------------------------------------------------------------ #
+
+    def test_district_required_for_sa_b2b(self):
+        """Empty district must raise ValidationError for SA B2B."""
+        with self.assertRaises(Exception) as ctx:
+            self.env['res.partner'].create({
+                'name': 'No District',
+                'vat': self.valid_vat,
+                'is_company': True,
+                'street': 'Test Street',
+                'city': 'Riyadh',
+                'country_id': self.country_sa.id if self.country_sa else False,
+                'building_no': '1234',
+                'district': '',
+                'zip': '12345',
+                'phone': '+966501234567',
+            })
+        self.assertIn('District', str(ctx.exception))
+
+    def test_district_whitespace_only_raises(self):
+        """District with only whitespace must raise ValidationError."""
+        with self.assertRaises(Exception) as ctx:
+            self.env['res.partner'].create({
+                'name': 'Blank District',
+                'vat': self.valid_vat,
+                'is_company': True,
+                'street': 'Test Street',
+                'city': 'Riyadh',
+                'country_id': self.country_sa.id if self.country_sa else False,
+                'building_no': '1234',
+                'district': '   ',
+                'zip': '12345',
+                'phone': '+966501234567',
+            })
+        self.assertIn('District', str(ctx.exception))
+
+    # ------------------------------------------------------------------ #
+    #  B2B requires VAT or Other ID (Type + Value)
+    # ------------------------------------------------------------------ #
+
+    def test_b2b_requires_vat_or_other_id(self):
+        """B2B partner without VAT AND without Other ID must raise
+        ValidationError."""
+        with self.assertRaises(Exception) as ctx:
+            self.env['res.partner'].create({
+                'name': 'No ID B2B',
+                'vat': '',
+                'is_company': True,
+                'street': 'Test Street',
+                'city': 'Riyadh',
+                'country_id': self.country_sa.id if self.country_sa else False,
+                'building_no': '1234',
+                'district': 'Test District',
+                'zip': '12345',
+                'phone': '+966501234567',
+            })
+        self.assertIn('VAT', str(ctx.exception))
+
+    def test_b2b_with_other_id_only_passes(self):
+        """B2B partner with Other ID (Type + Value) but no VAT must pass."""
+        partner = self.env['res.partner'].create({
+            'name': 'Other ID B2B',
+            'vat': '',
+            'zatca_id_type': 'CRN',
+            'zatca_id_value': '1234567890',
+            'is_company': True,
+            'street': 'Test Street',
+            'city': 'Riyadh',
+            'country_id': self.country_sa.id if self.country_sa else False,
+            'building_no': '1234',
+            'district': 'Test District',
+            'zip': '12345',
+            'phone': '+966501234567',
+        })
+        self.assertEqual(partner.zatca_id_type, 'CRN')
+        self.assertEqual(partner.zatca_id_value, '1234567890')
+
+    def test_b2b_requires_street(self):
+        """B2B partner without street must raise ValidationError."""
+        with self.assertRaises(Exception) as ctx:
+            self.env['res.partner'].create({
+                'name': 'No Street B2B',
+                'vat': self.valid_vat,
+                'is_company': True,
+                'street': '',
+                'city': 'Riyadh',
+                'country_id': self.country_sa.id if self.country_sa else False,
+                'building_no': '1234',
+                'district': 'Test District',
+                'zip': '12345',
+                'phone': '+966501234567',
+            })
+        self.assertIn('Street', str(ctx.exception))
+
+    def test_b2b_requires_city(self):
+        """B2B partner without city must raise ValidationError."""
+        with self.assertRaises(Exception) as ctx:
+            self.env['res.partner'].create({
+                'name': 'No City B2B',
+                'vat': self.valid_vat,
+                'is_company': True,
+                'street': 'Test Street',
+                'city': '',
+                'country_id': self.country_sa.id if self.country_sa else False,
+                'building_no': '1234',
+                'district': 'Test District',
+                'zip': '12345',
+                'phone': '+966501234567',
+            })
+        self.assertIn('City', str(ctx.exception))
+
+    # ------------------------------------------------------------------ #
+    #  Other ID type enum values — matches TypeScript enum
+    # ------------------------------------------------------------------ #
+
+    def test_other_id_type_valid_values(self):
+        """All valid ZATCA Other ID types must be accepted."""
+        valid_types = ['CRN', 'TIN', 'NAT', 'PAS', 'GCC', 'IQA', 'MOM', 'MLS', 'SAG', '700', 'OTH']
+        for id_type in valid_types:
+            partner = self.env['res.partner'].create({
+                'name': f'ID Type {id_type}',
+                'vat': '',
+                'zatca_id_type': id_type,
+                'zatca_id_value': 'ABCDEF1234',
+                'is_company': True,
+                'street': 'Test Street',
+                'city': 'Riyadh',
+                'country_id': self.country_sa.id if self.country_sa else False,
+                'building_no': '1234',
+                'district': 'Test District',
+                'zip': '12345',
+                'phone': '+966501234567',
+            })
+            self.assertEqual(partner.zatca_id_type, id_type)
+
+    # ------------------------------------------------------------------ #
+    #  B2C requires phone or mobile
+    # ------------------------------------------------------------------ #
+
+    def test_b2c_requires_phone_or_mobile(self):
+        """B2C partner without phone AND without mobile must raise
+        ValidationError."""
+        with self.assertRaises(Exception) as ctx:
+            self.env['res.partner'].create({
+                'name': 'B2C No Contact',
+                'phone': '',
+                'mobile': '',
+                'is_company': False,
+            })
+        self.assertTrue(
+            'Mobile' in str(ctx.exception) or 'Phone' in str(ctx.exception),
+        )
+
+    def test_b2c_with_phone_passes(self):
+        """B2C partner with phone must pass validation."""
+        partner = self.env['res.partner'].create({
+            'name': 'B2C With Phone',
+            'phone': '+966501234567',
+            'is_company': False,
+        })
+        self.assertEqual(partner.phone, '+966501234567')
+
+    def test_b2c_with_mobile_passes(self):
+        """B2C partner with mobile (no phone) must pass validation."""
+        partner = self.env['res.partner'].create({
+            'name': 'B2C With Mobile',
+            'mobile': '+966508765432',
+            'is_company': False,
+        })
+        self.assertEqual(partner.mobile, '+966508765432')
+
+
+# ================================================================== #
+#  CONCURRENCY
+# ================================================================== #
+
+
+@tagged('post_install', 'zatca_concurrency')
+class TestZatcaConcurrency(TransactionCase):
+    """Concurrency and idempotency tests for ZATCA invoice operations."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.ICP = cls.env['ir.config_parameter'].sudo()
+        cls.ICP.set_param('cloudrefit_invoicing.api_key_live', 'sk_live_testapikey1234567890')
+        cls.ICP.set_param('cloudrefit_invoicing.business_id_live', 'biz_test_001')
+        cls.ICP.set_param('cloudrefit_invoicing.gateway_url_live', 'https://api.invoicing.cloudrefit.com')
+        cls.ICP.set_param('cloudrefit_invoicing.signing_secret_live', 'test_secret_key_12345')
+        cls.ICP.set_param('cloudrefit_invoicing.unit_id_live', '999')
+        cls.ICP.set_param('cloudrefit_invoicing.mode', 'live')
+
+        cls.country_sa = cls.env.ref('base.sa', raise_if_not_found=False)
+
+        cls.partner = cls.env['res.partner'].create({
+            'name': 'SA B2B Complete',
+            'vat': '399999999901003',
+            'street': 'King Fahd Road',
+            'city': 'Riyadh',
+            'country_id': cls.country_sa.id if cls.country_sa else False,
+            'building_no': '1234',
+            'district': 'Al-Malaz',
+            'zip': '12345',
+            'phone': '+966501234567',
+            'is_company': True,
+        })
+
+        cls.product = cls.env['product.product'].create({
+            'name': 'Test Service',
+            'type': 'service',
+            'list_price': 100.0,
+        })
+        cls.tax_15 = cls.env['account.tax'].create({
+            'name': 'KSA VAT 15%',
+            'amount': 15.0,
+            'amount_type': 'percent',
+            'type_tax_use': 'sale',
+        })
+        cls.journal = cls.env['account.journal'].search([('type', '=', 'sale')], limit=1)
+        if not cls.journal:
+            cls.journal = cls.env['account.journal'].create({
+                'name': 'Test Sale Journal',
+                'type': 'sale',
+                'code': 'TSJ',
+            })
+
+        cls.api_client = cls.env['cloudrefit.zatca.api.client']
+        cls._original_call = type(cls.api_client).call_gateway
+        type(cls.api_client).call_gateway = MockZatcaApiClient.call_gateway
+
+    @classmethod
+    def tearDownClass(cls):
+        type(cls.api_client).call_gateway = cls._original_call
+        MockZatcaApiClient.reset()
+        super().tearDownClass()
+
+    def setUp(self):
+        super().setUp()
+        MockZatcaApiClient.reset()
+        self.ICP.set_param('cloudrefit_invoicing.mode', 'live')
+
+    def _create_invoice(self, **extra):
+        invoice = self.env['account.move'].create({
+            'move_type': 'out_invoice',
+            'partner_id': self.partner.id,
+            'invoice_date': date.today(),
+            'name': f'INV/CONC/{self.id()}',
+            'journal_id': self.journal.id,
+            'invoice_line_ids': [(0, 0, {
+                'product_id': self.product.id,
+                'quantity': 1,
+                'price_unit': 100.0,
+                'tax_ids': [(6, 0, [self.tax_15.id])],
+                'name': self.product.name,
+            })],
+            **extra,
+        })
+        invoice.action_post()
+        return invoice
+
+    # ------------------------------------------------------------------ #
+    #  Deterministic UUID — same dbname + id = same UUID
+    # ------------------------------------------------------------------ #
+
+    def test_deterministic_uuid_same_inputs(self):
+        """UUID generated for the same database + invoice ID must be
+        deterministic (UUIDv5)."""
+        import uuid as py_uuid
+
+        invoice = self._create_invoice()
+        # The UUID was already generated during post()
+        uuid1 = invoice.zatca_uuid
+
+        # Recompute using the same algorithm
+        namespace = py_uuid.uuid5(py_uuid.NAMESPACE_OID, invoice.env.cr.dbname)
+        expected = str(py_uuid.uuid5(namespace, str(invoice.id)))
+
+        self.assertEqual(uuid1, expected)
+
+    # ------------------------------------------------------------------ #
+    #  _apply_cloudrefit_status_update — idempotent calls
+    # ------------------------------------------------------------------ #
+
+    def test_clearance_update_idempotent(self):
+        """Calling _apply_cloudrefit_status_update twice with the same
+        completed payload must be idempotent (no error, same result)."""
+        invoice = self._create_invoice()
+
+        payload = {
+            'status': 'completed',
+            'signedData': {
+                'hash': 'idempotent_hash',
+                'qrImage': 'idempotent_qr',
+                'xml': '<Idempotent/>',
+            },
+        }
+
+        # First call
+        invoice._apply_cloudrefit_status_update(payload, 'clearance')
+        self.assertEqual(invoice.zatca_status, 'cleared')
+
+        # Second call — must not raise and must keep same data
+        invoice._apply_cloudrefit_status_update(payload, 'clearance')
+        self.assertEqual(invoice.zatca_status, 'cleared')
+        self.assertEqual(invoice.zatca_hash, 'idempotent_hash')
+
+    def test_clearance_update_race_safe(self):
+        """_apply_cloudrefit_status_update uses SELECT FOR UPDATE to prevent
+        TOCTOU races."""
+        import threading
+        from unittest.mock import patch
+
+        invoice = self._create_invoice()
+        invoice.write({'zatca_status': 'not_signed'})
+
+        results = []
+
+        def apply_update(status_val):
+            """Apply a clearance update in a thread."""
+            try:
+                payload = {
+                    'status': status_val,
+                    'signedData': {
+                        'hash': f'race_{status_val}_hash',
+                        'qrImage': f'race_{status_val}_qr',
+                        'xml': f'<Race{status_val}/>',
+                    },
+                }
+                # Use a separate env cursor for each thread
+                with self.env.cr.savepoint():
+                    invoice._apply_cloudrefit_status_update(payload, 'clearance')
+                    results.append(('success', invoice.zatca_status))
+            except Exception as e:
+                results.append(('error', str(e)))
+
+        # Simulate two concurrent updates — completed and failed
+        t1 = threading.Thread(target=apply_update, args=('completed',))
+        t2 = threading.Thread(target=apply_update, args=('failed',))
+
+        t1.start()
+        t2.start()
+        t1.join()
+        t2.join()
+
+        # At least one should have succeeded
+        successes = [r for r in results if r[0] == 'success']
+        self.assertGreaterEqual(len(successes), 1,
+                                msg=f'Expected at least one success, got: {results}')
+
+    # ------------------------------------------------------------------ #
+    #  Duplicate sign submission — gateway idempotency
+    # ------------------------------------------------------------------ #
+
+    def test_sign_idempotent_same_invoice(self):
+        """Calling action_zatca_sign twice on the same invoice should succeed
+        the first time and the second call should be handled gracefully
+        (status already cleared, so raises UserError)."""
+        invoice = self._create_invoice()
+
+        MockZatcaApiClient.reset()
+        MockZatcaApiClient.register_response(
+            'POST', '/api/v1/invoices',
+            201,
+            {
+                'signedData': {
+                    'hash': 'first_sign_hash',
+                    'qrImage': 'first_qr',
+                    'xml': '<First/>',
+                },
+            },
+        )
+
+        # First sign — should succeed
+        invoice.action_zatca_sign()
+        self.assertEqual(invoice.zatca_status, 'cleared')
+
+        # Second sign — should raise because already cleared in live
+        with self.assertRaises(UserError):
+            invoice.action_zatca_sign()
+
+    # ------------------------------------------------------------------ #
+    #  Row-level lock in _apply_cloudrefit_status_update
+    # ------------------------------------------------------------------ #
+
+    def test_apply_status_update_uses_for_update(self):
+        """_apply_cloudrefit_status_update must execute SELECT FOR UPDATE on
+        the invoice row."""
+        from odoo.exceptions import UserError as OdooUserError
+
+        invoice = self._create_invoice()
+        invoice.write({'zatca_status': 'not_signed'})
+
+        # Verify that the method runs the FOR UPDATE query
+        # by checking that the cr.execute is called with SELECT ... FOR UPDATE
+        payload = {
+            'status': 'completed',
+            'signedData': {
+                'hash': 'lock_test_hash',
+                'qrImage': 'lock_test_qr',
+                'xml': '<LockTest/>',
+            },
+        }
+
+        with patch.object(invoice.env.cr, 'execute', wraps=invoice.env.cr.execute) as mock_execute:
+            invoice._apply_cloudrefit_status_update(payload, 'clearance')
+            # Check that FOR UPDATE was used
+            for call_args in mock_execute.call_args_list:
+                sql = call_args[0][0] if call_args[0] else ''
+                params = call_args[0][1] if len(call_args[0]) > 1 else []
+                if 'SELECT' in sql and 'FOR UPDATE' in sql:
+                    break
+            else:
+                self.fail('Expected SELECT ... FOR UPDATE query, but none found')
+
+        self.assertEqual(invoice.zatca_status, 'cleared')
