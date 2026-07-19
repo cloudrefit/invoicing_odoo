@@ -16,7 +16,7 @@
                 </div>
                 <div class="col-9 pt-2">
                     <p class="mb-1" style="font-size: 13px; font-weight: bold; color: #28a745;">
-                        <i class="fa fa-credit-card"/> Scan to View & Pay
+                        <i class="fa fa-credit-card"/> Scan to View &amp; Pay
                     </p>
                     <p class="mb-1" style="font-size: 11px;">
                         Scan the QR code or visit:
