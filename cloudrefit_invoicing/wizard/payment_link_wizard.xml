@@ -13,6 +13,7 @@
                            string="Amount (SAR)"
                            class="text-center font-weight-bold"
                            nolabel="0"/>
+                    <field name="include_payment_buttons"/>
                 </group>
                 <footer>
                     <button name="action_generate"

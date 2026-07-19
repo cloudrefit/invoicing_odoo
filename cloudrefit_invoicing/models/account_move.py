@@ -955,7 +955,7 @@ class AccountMove(models.Model):
             except Exception as e:
                 _logger.error("action=retry_poll_error invoice_id=%s error=%s", move.id, str(e))
 
-    def action_generate_payment_link(self, amount=None):
+    def action_generate_payment_link(self, amount=None, include_payment_buttons=True):
         """Generates an invoice share link — constructs the invoice page URL locally.
 
         Instead of calling the Gateway API, this method deterministically constructs
@@ -964,6 +964,7 @@ class AccountMove(models.Model):
         Args:
             amount: Optional payment amount (kept for wizard compatibility,
                     no longer used in URL construction).
+            include_payment_buttons: When False, appends ?nopayment=1 to hide payment buttons.
         """
         self.ensure_one()
 
@@ -991,9 +992,12 @@ class AccountMove(models.Model):
         # is served by the dashboard frontend, not the API gateway.
         payment_url = f"{dashboard_url.rstrip('/')}/{locale}/print-invoice/{business_id}/{self.zatca_uuid}"
 
+        if not include_payment_buttons:
+            payment_url += '?nopayment=1'
+
         _logger.info(
-            "action=generate_payment_link invoice_id=%s business_id=%s url=%s",
-            self.id, business_id, payment_url
+            "action=generate_payment_link invoice_id=%s business_id=%s url=%s include_payment_buttons=%s",
+            self.id, business_id, payment_url, include_payment_buttons,
         )
 
         self.write({'cloudrefit_payment_link_url': payment_url})

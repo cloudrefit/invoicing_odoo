@@ -27,6 +27,12 @@ class PaymentLinkWizard(models.TransientModel):
         ('regenerate', 'Regenerate'),
     ], string='Action Type', default='generate', required=True)
 
+    include_payment_buttons = fields.Boolean(
+        string='Include Payment Buttons',
+        default=True,
+        help='When unchecked, the invoice will not show payment buttons.',
+    )
+
     @api.model
     def default_get(self, fields_list):
         res = super().default_get(fields_list)
@@ -43,5 +49,8 @@ class PaymentLinkWizard(models.TransientModel):
     def action_generate(self):
         self.ensure_one()
         invoice = self.invoice_id
-        invoice.action_generate_payment_link(amount=self.amount)
+        invoice.action_generate_payment_link(
+            amount=self.amount,
+            include_payment_buttons=self.include_payment_buttons,
+        )
         return {'type': 'ir.actions.client', 'tag': 'reload'}
