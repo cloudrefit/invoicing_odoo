@@ -150,7 +150,7 @@ class ResConfigSettings(models.TransientModel):
         default=False,
         help="Show the Live ZATCA tab and allow pushing invoices to live ZATCA",
     )
-    cloudrefit_zatca_download_xml = fields.Boolean(
+    cloudrefit_enable_zatca_xml_download = fields.Boolean(
         string="Download Signed XMLs",
         default=True,
         help="Download Signed XMLs (May incur additional fees — turn off if CloudRefit hosts your data)",
@@ -275,7 +275,7 @@ class ResConfigSettings(models.TransientModel):
         res = super(ResConfigSettings, self).get_values()
         ICP = self.env['ir.config_parameter'].sudo()
         res.update(
-            cloudrefit_zatca_download_xml=ICP.get_param('cloudrefit_invoicing.zatca_download_xml', 'True') == 'True',
+            cloudrefit_enable_zatca_xml_download=ICP.get_param('cloudrefit_invoicing.zatca_download_xml', 'True') == 'True',
             is_cloudrefit_live_enabled=ICP.get_param('cloudrefit_invoicing.live_enabled', 'False') == 'True',
             is_cloudrefit_sandbox_enabled=ICP.get_param('cloudrefit_invoicing.sandbox_enabled', 'False') == 'True',
             cloudrefit_show_sandbox_settings_ui=ICP.get_param('cloudrefit_invoicing.show_sandbox_settings', 'False') == 'True',
@@ -315,7 +315,7 @@ class ResConfigSettings(models.TransientModel):
                     ICP.set_param(f'cloudrefit_invoicing.{key}_{company.id}', new_val)
 
         # Manually save booleans
-        ICP.set_param('cloudrefit_invoicing.zatca_download_xml', str(self.cloudrefit_zatca_download_xml))
+        ICP.set_param('cloudrefit_invoicing.zatca_download_xml', str(self.cloudrefit_enable_zatca_xml_download))
         ICP.set_param('cloudrefit_invoicing.live_enabled', str(self.is_cloudrefit_live_enabled))
         ICP.set_param('cloudrefit_invoicing.sandbox_enabled', str(self.is_cloudrefit_sandbox_enabled))
         ICP.set_param('cloudrefit_invoicing.show_sandbox_settings', str(self.cloudrefit_show_sandbox_settings_ui))
