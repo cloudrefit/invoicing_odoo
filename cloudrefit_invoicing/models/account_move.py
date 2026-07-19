@@ -956,30 +956,22 @@ class AccountMove(models.Model):
                 _logger.error("action=retry_poll_error invoice_id=%s error=%s", move.id, str(e))
 
     def action_generate_payment_link(self, amount=None):
-        """Generates a payment link from the CloudRefit Gateway.
+        """Generates an invoice share link — constructs the invoice page URL locally.
+
+        Instead of calling the Gateway API, this method deterministically constructs
+        the invoice page URL from the gateway base URL, locale, business ID, and ZATCA UUID.
 
         Args:
-            amount: Optional payment amount. If provided, overrides the invoice
-                    total amount in the payload for partial payment links.
+            amount: Optional payment amount (kept for wizard compatibility,
+                    no longer used in URL construction).
         """
         self.ensure_one()
-        payload = self._build_zatca_payload(mode='live')  # Payment links use live mode payload
-
-        # Override the invoice total with the user-specified amount for partial payments
-        if amount is not None:
-            payload['invoice']['amount_total'] = float(amount)
-            # Recalculate untaxed and tax proportionally if amount differs
-            ratio = float(amount) / float(self.amount_total) if self.amount_total else 1.0
-            payload['invoice']['amount_untaxed'] = round(float(self.amount_untaxed) * ratio, 2)
-            payload['invoice']['tax_total'] = round(float(self.amount_tax) * ratio, 2)
-        
-        exec_mode = payload.get('mode', 'live')
-        api_client = self.env['cloudrefit.zatca.api.client']
-        headers = api_client._build_headers(payload, exec_mode)
 
         creds = self.with_company(self.company_id)._get_zatca_credentials()
+        exec_mode = 'live'  # Payment links always use live mode
         business_id = creds.get(f'business_id_{exec_mode}')
         gateway_url = creds.get(f'gateway_url_{exec_mode}')
+        dashboard_url = creds.get('dashboard_url')
 
         if not business_id:
             raise UserError(
@@ -988,31 +980,29 @@ class AccountMove(models.Model):
                 % creds['company_name']
             )
 
-        url = f"{gateway_url.rstrip('/')}/api/v1/invoices/{business_id}/payment-links"
-        
-        _logger.info(
-            "action=generate_payment_link invoice_id=%s amount=%s url=%s",
-            self.id, amount, url
-        )
-        try:
-            response = requests.post(url, json=payload, headers=headers, timeout=30)
-        except Exception as e:
-            raise UserError(f'Cannot connect to CloudRefit Gateway: {str(e)}')
+        if not self.zatca_uuid:
+            raise UserError('Invoice does not have a ZATCA UUID. Please post the invoice first.')
 
-        if response.status_code in (200, 201, 202):
-            data = response.json()
-            payment_url = data.get('payment_url')
-            if payment_url:
-                self.write({'cloudrefit_payment_link_url': payment_url})
-                return {
-                    'type': 'ir.actions.act_url',
-                    'url': payment_url,
-                    'target': 'new',
-                }
-            else:
-                raise UserError('Gateway did not return a payment URL.')
-        else:
-            raise UserError(f"Gateway Error ({response.status_code}): {response.text}")
+        # Get locale from config, default to 'en'
+        locale = self.env['ir.config_parameter'].sudo().get_param('cloudrefit_invoicing.locale', 'en')
+
+        # Construct the invoice page URL deterministically — no API call needed
+        # NOTE: Uses dashboard_url (not gateway_url) because the print-invoice page
+        # is served by the dashboard frontend, not the API gateway.
+        payment_url = f"{dashboard_url.rstrip('/')}/{locale}/print-invoice/{business_id}/{self.zatca_uuid}"
+
+        _logger.info(
+            "action=generate_payment_link invoice_id=%s business_id=%s url=%s",
+            self.id, business_id, payment_url
+        )
+
+        self.write({'cloudrefit_payment_link_url': payment_url})
+
+        return {
+            'type': 'ir.actions.act_url',
+            'url': payment_url,
+            'target': 'new',
+        }
 
     def action_zatca_refresh_status(self):
         """Manually poll the gateway for the status of a pending invoice job."""

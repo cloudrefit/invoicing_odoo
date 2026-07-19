@@ -46,9 +46,9 @@
                         icon="fa-flask"
                         invisible="not is_zatca_sandbox_allowed or move_type not in ('out_invoice', 'out_refund') or state != 'posted' or zatca_status in ('reported', 'cleared') or cloudrefit_push_blocked or cloudrefit_show_push_modal"/>
                         
-                <!-- Generate Payment Link Button -->
+                <!-- Share Invoice Button -->
                 <button name="%(action_cloudrefit_payment_link_wizard)d"
-                        string="Generate Payment Link"
+                        string="Share Invoice"
                         type="action"
                         class="btn-secondary"
                         icon="fa-link"
@@ -172,7 +172,7 @@
                      style="border-left: 4px solid #28a745;">
                     <i class="fa fa-qrcode fa-2x text-success mr-3"/>
                     <div class="flex-grow-1">
-                        <strong>Payment Link Ready: </strong>
+                        <strong>Invoice Share Link Ready: </strong>
                         <field name="cloudrefit_payment_link_url" widget="url" readonly="1" class="d-inline"/>
                     </div>
                     <field name="cloudrefit_payment_link_qr" widget="image"
@@ -180,7 +180,7 @@
                            options="{'size': [80, 80]}"
                            class="ml-auto border rounded p-1"/>
                     <button name="%(action_cloudrefit_payment_link_wizard_regenerate)d"
-                            string="Regenerate"
+                            string="Refresh Link"
                             type="action"
                             class="btn btn-sm btn-outline-success ml-2"
                             icon="fa-refresh"

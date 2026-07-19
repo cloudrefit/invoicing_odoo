@@ -30,6 +30,7 @@ _ZATCA_PARAM_REGISTRY = {
     'cloudrefit_invoicing.business_id_sandbox':     ('', str),
     'cloudrefit_invoicing.gateway_url_live':        ('https://api.invoicing.cloudrefit.com', str),
     'cloudrefit_invoicing.gateway_url_sandbox':     ('https://api.invoicing.cloudrefit.com', str),
+    'cloudrefit_invoicing.dashboard_url':           ('https://invoicing.cloudrefit.com', str),
     'cloudrefit_invoicing.mode':                    ('live', str),
     'cloudrefit_invoicing.sandbox_enabled':         ('False', lambda v: v == 'True'),
     'cloudrefit_invoicing.live_enabled':            ('False', lambda v: v == 'True'),
@@ -41,9 +42,6 @@ _ZATCA_PARAM_REGISTRY = {
     'cloudrefit_invoicing.signing_secret_sandbox':  ('', str),
     'cloudrefit_invoicing.unit_id_sandbox':         ('', str),
     'cloudrefit_invoicing.zatca_download_xml':      ('True', lambda v: str(v) != 'False'),
-    'cloudrefit_invoicing.auto_generate_payment_links': ('False', lambda v: v == 'True'),
-    'cloudrefit_invoicing.use_default_payment_gateway': ('True', lambda v: v == 'True'),
-    'cloudrefit_invoicing.selected_payment_gateway_id': ('', str),
 }
 
 #: Human-readable labels for error messages (short_key -> label)

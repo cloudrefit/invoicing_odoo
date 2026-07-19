@@ -16,7 +16,7 @@
                 </group>
                 <footer>
                     <button name="action_generate"
-                            string="Generate Payment Link"
+                            string="Share Invoice"
                             type="object"
                             class="btn-primary"/>
                     <button string="Cancel"

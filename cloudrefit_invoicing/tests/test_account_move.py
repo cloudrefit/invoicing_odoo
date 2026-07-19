@@ -30,6 +30,7 @@ class TestZatcaInvoiceSigning(TransactionCase):
         cls.ICP.set_param('cloudrefit_invoicing.api_key_live', 'sk_live_testapikey1234567890')
         cls.ICP.set_param('cloudrefit_invoicing.business_id_live', 'biz_test_001')
         cls.ICP.set_param('cloudrefit_invoicing.gateway_url_live', 'https://api.invoicing.cloudrefit.com')
+        cls.ICP.set_param('cloudrefit_invoicing.dashboard_url', 'https://invoicing.cloudrefit.com')
         cls.ICP.set_param('cloudrefit_invoicing.signing_secret_live', 'test_secret_key_12345')
         cls.ICP.set_param('cloudrefit_invoicing.unit_id_live', '999')
         cls.ICP.set_param('cloudrefit_invoicing.mode', 'live')
@@ -37,7 +38,7 @@ class TestZatcaInvoiceSigning(TransactionCase):
         # ---- Test data: partner with VAT (B2B) ----
         cls.partner_b2b = cls.env['res.partner'].create({
             'name': 'Test B2B Customer',
-            'vat': 'SA399999999901',
+            'vat': '399999999901003',
             'street': 'King Fahd Road',
             'city': 'Riyadh',
         })
@@ -183,7 +184,7 @@ class TestZatcaInvoiceSigning(TransactionCase):
 
         # Customer block
         cust = payload['customer']
-        self.assertEqual(cust['vat'], 'SA399999999901')
+        self.assertEqual(cust['vat'], '399999999901003')
         self.assertEqual(cust['name'], 'Test B2B Customer')
 
         # Lines
@@ -692,6 +693,64 @@ class TestZatcaInvoiceSigning(TransactionCase):
         with patch.object(type(invoice), '_create_zatca_payment') as mock_create_payment:
             invoice._apply_cloudrefit_status_update(payload, 'payment.status_changed')
             mock_create_payment.assert_called_once_with(payload)
+
+
+    # ------------------------------------------------------------------ #
+    #  action_generate_payment_link – local URL construction (no API call)
+    # ------------------------------------------------------------------ #
+
+    def test_generate_payment_link_constructs_url_locally(self):
+        """action_generate_payment_link must construct the invoice page URL
+        locally without making any gateway API call."""
+        invoice = self._create_invoice()
+
+        MockZatcaApiClient.reset()
+        call_count_before = len(MockZatcaApiClient.call_history)
+
+        result = invoice.action_generate_payment_link()
+
+        # Verify no API call was made
+        self.assertEqual(
+            len(MockZatcaApiClient.call_history), call_count_before,
+            "No gateway API call should be made when generating payment link",
+        )
+
+        # Verify the URL was written to the field
+        self.assertTrue(
+            invoice.cloudrefit_payment_link_url,
+            "cloudrefit_payment_link_url should be set",
+        )
+
+        # Verify URL format: {dashboard_url}/{locale}/print-invoice/{business_id}/{zatca_uuid}
+        expected_prefix = f"https://invoicing.cloudrefit.com/en/print-invoice/biz_test_001/"
+        self.assertIn(expected_prefix, invoice.cloudrefit_payment_link_url)
+        self.assertIn(invoice.zatca_uuid, invoice.cloudrefit_payment_link_url)
+
+        # Verify the action opens the URL in a new tab
+        self.assertEqual(result['type'], 'ir.actions.act_url')
+        self.assertEqual(result['url'], invoice.cloudrefit_payment_link_url)
+        self.assertEqual(result['target'], 'new')
+
+    def test_generate_payment_link_missing_business_id(self):
+        """action_generate_payment_link must raise UserError if business_id
+        is not configured."""
+        # Clear business_id
+        self.ICP.set_param('cloudrefit_invoicing.business_id_live', '')
+
+        invoice = self._create_invoice()
+        with self.assertRaises(UserError) as ctx:
+            invoice.action_generate_payment_link()
+        self.assertIn('Business ID', str(ctx.exception))
+
+    def test_generate_payment_link_missing_zatca_uuid(self):
+        """action_generate_payment_link must raise UserError if the invoice
+        has no zatca_uuid."""
+        invoice = self._create_invoice()
+        # Clear the UUID that was set during post
+        invoice.write({'zatca_uuid': False})
+        with self.assertRaises(UserError) as ctx:
+            invoice.action_generate_payment_link()
+        self.assertIn('ZATCA UUID', str(ctx.exception))
 
 
 # ================================================================== #

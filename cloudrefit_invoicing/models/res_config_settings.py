@@ -57,6 +57,14 @@ class ResConfigSettings(models.TransientModel):
         company_dependent=True,
         help='Base URL of the CloudRefit Gateway for sandbox/testing operations',
     )
+
+    # === Dashboard URL (print-invoice page) ===
+    cloudrefit_dashboard_url = fields.Char(
+        string='Dashboard URL',
+        config_parameter='cloudrefit_invoicing.dashboard_url',
+        default='https://invoicing.cloudrefit.com',
+        help='Base URL of the CloudRefit Dashboard (serves the print-invoice page)',
+    )
     cloudrefit_api_key_sandbox = fields.Char(
         string='Sandbox API Key',
         config_parameter='cloudrefit_invoicing.api_key_sandbox',
@@ -165,52 +173,6 @@ class ResConfigSettings(models.TransientModel):
         default='live',
         help='Operational mode for ZATCA integration',
     )
-    
-    # === Payment Integration Settings ===
-    cloudrefit_auto_generate_payment_links = fields.Boolean(
-        string='Auto-Generate Payment Links',
-        config_parameter='cloudrefit_invoicing.auto_generate_payment_links',
-        company_dependent=True,
-        default=False,
-        help='Automatically generate a payment link when a LIVE invoice is sent or cleared'
-    )
-    cloudrefit_use_default_payment_gateway = fields.Boolean(
-        string='Use Business Default Gateway',
-        config_parameter='cloudrefit_invoicing.use_default_payment_gateway',
-        company_dependent=True,
-        default=True,
-        help='Use the default payment integration configured in the CloudRefit dashboard.'
-    )
-    def _get_payment_gateways(self):
-        gateways_json = self.env['ir.config_parameter'].sudo().get_param('cloudrefit_invoicing.payment_gateways', '[]')
-        try:
-            gateways = json.loads(gateways_json)
-            return [(str(g['id']), f"{g.get('name') or g['provider']} (ID: {g['id']})") for g in gateways]
-        except Exception:
-            return []
-            
-    cloudrefit_selected_payment_gateway_id = fields.Selection(
-        selection=_get_payment_gateways,
-        string='Select Payment Gateway',
-        config_parameter='cloudrefit_invoicing.selected_payment_gateway_id',
-        company_dependent=True,
-        help='Select a specific payment integration for this Odoo instance.'
-    )
-    has_payment_integrations = fields.Boolean(
-        string='Has Payment Integrations',
-        compute='_compute_has_payment_integrations',
-        help='Technical field to determine if payment settings should be visible'
-    )
-    
-    @api.depends('cloudrefit_business_id_live')
-    def _compute_has_payment_integrations(self):
-        for rec in self:
-            gateways_json = self.env['ir.config_parameter'].sudo().get_param('cloudrefit_invoicing.payment_gateways', '[]')
-            try:
-                gateways = json.loads(gateways_json)
-                rec.has_payment_integrations = len(gateways) > 0
-            except Exception:
-                rec.has_payment_integrations = False
 
     cloudrefit_plugin_version = fields.Char(
         string="Plugin Version",
@@ -317,8 +279,6 @@ class ResConfigSettings(models.TransientModel):
             is_cloudrefit_live_enabled=ICP.get_param('cloudrefit_invoicing.live_enabled', 'False') == 'True',
             is_cloudrefit_sandbox_enabled=ICP.get_param('cloudrefit_invoicing.sandbox_enabled', 'False') == 'True',
             cloudrefit_show_sandbox_settings_ui=ICP.get_param('cloudrefit_invoicing.show_sandbox_settings', 'False') == 'True',
-            cloudrefit_auto_generate_payment_links=ICP.get_param('cloudrefit_invoicing.auto_generate_payment_links', 'False') == 'True',
-            cloudrefit_use_default_payment_gateway=ICP.get_param('cloudrefit_invoicing.use_default_payment_gateway', 'True') == 'True',
         )
         return res
 
@@ -359,8 +319,6 @@ class ResConfigSettings(models.TransientModel):
         ICP.set_param('cloudrefit_invoicing.live_enabled', str(self.is_cloudrefit_live_enabled))
         ICP.set_param('cloudrefit_invoicing.sandbox_enabled', str(self.is_cloudrefit_sandbox_enabled))
         ICP.set_param('cloudrefit_invoicing.show_sandbox_settings', str(self.cloudrefit_show_sandbox_settings_ui))
-        ICP.set_param('cloudrefit_invoicing.auto_generate_payment_links', str(self.cloudrefit_auto_generate_payment_links))
-        ICP.set_param('cloudrefit_invoicing.use_default_payment_gateway', str(self.cloudrefit_use_default_payment_gateway))
 
         live_changed = (
             (self.cloudrefit_gateway_url_live or '') != old_live['url'] or
@@ -631,7 +589,6 @@ class ResConfigSettings(models.TransientModel):
         bid = response_data.get('business_id')
         bname = response_data.get('business_name', '')
         units = response_data.get('technical_units', [])
-        payment_gateways = response_data.get('payment_gateways', [])
         
         ICP = self.env['ir.config_parameter'].sudo()
 
@@ -639,7 +596,6 @@ class ResConfigSettings(models.TransientModel):
             param_key = f'cloudrefit_invoicing.business_id_{mode}'
             name_key = f'cloudrefit_invoicing.business_name_{mode}'
             units_key = f'cloudrefit_invoicing.technical_units_{mode}'
-            pg_key = 'cloudrefit_invoicing.payment_gateways'
             
             _logger.info("action=auto_save_business_id mode=%s business_id=%s name=%s units=%d", mode, bid, bname, len(units))
             
@@ -655,19 +611,6 @@ class ResConfigSettings(models.TransientModel):
             units_json = json.dumps(units)
             self._cr_set_param(units_key, units_json)
             ICP.set_param(units_key, units_json)
-            
-            # Save payment gateways (from Live mode primarily)
-            if mode == 'live' or payment_gateways:
-                pg_json = json.dumps(payment_gateways)
-                ICP.set_param(pg_key, pg_json)
-                
-                # Check if current selected gateway is still valid
-                current_gw = ICP.get_param('cloudrefit_invoicing.selected_payment_gateway_id')
-                if current_gw:
-                    valid_gws = [str(g['id']) for g in payment_gateways]
-                    if current_gw not in valid_gws:
-                        ICP.set_param('cloudrefit_invoicing.selected_payment_gateway_id', '')
-                        self.cloudrefit_selected_payment_gateway_id = False
             
             # Check if current selected unit is still valid
             current_unit = self._cr_get_param(f'cloudrefit_invoicing.unit_id_{mode}')

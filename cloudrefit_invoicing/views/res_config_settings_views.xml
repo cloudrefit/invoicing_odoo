@@ -24,7 +24,6 @@
                     <field name="gateway_health_message_sandbox" invisible="1"/>
                     <field name="can_enable_live" invisible="1"/>
                     <field name="can_enable_sandbox" invisible="1"/>
-                    <field name="has_payment_integrations" invisible="1"/>
 
                     <!-- === General UI Settings === -->
                     <block id="general_ui_settings" title="General Settings">
@@ -103,22 +102,6 @@
                             </div>
                             <small class="text-muted">Last checked: <field name="gateway_health_last_check_live"/></small>
                         </div>
-                    </block>
-
-                    <!-- === Payment Integration === -->
-                    <block id="payment_integration" title="Payment Integration (Live Only)" invisible="not is_cloudrefit_live_enabled or not has_payment_integrations">
-                        <setting title="Business Default Gateway">
-                            <field name="cloudrefit_use_default_payment_gateway"/>
-                            <div class="text-muted">Use the default payment integration configured in the CloudRefit dashboard.</div>
-                        </setting>
-                        <setting title="Auto-Generate Payment Links" invisible="cloudrefit_use_default_payment_gateway">
-                            <field name="cloudrefit_auto_generate_payment_links"/>
-                            <div class="text-muted">Automatically generate a payment link when a LIVE invoice is sent or cleared</div>
-                        </setting>
-                        <setting title="Select Payment Gateway" invisible="cloudrefit_use_default_payment_gateway">
-                            <field name="cloudrefit_selected_payment_gateway_id"/>
-                            <div class="text-muted">Select a specific payment integration for this Odoo instance.</div>
-                        </setting>
                     </block>
 
                     <!-- === Sandbox Settings === -->
