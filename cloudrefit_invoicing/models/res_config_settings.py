@@ -238,6 +238,26 @@ class ResConfigSettings(models.TransientModel):
         store=False,
     )
 
+    # === Combined Connection Health (derived from Live + Sandbox) ===
+    gateway_health_combined_status = fields.Char(
+        string='Combined Gateway Health Status',
+        compute='_compute_health_fields_combined',
+        readonly=True,
+        store=False,
+    )
+    gateway_health_combined_message = fields.Char(
+        string='Combined Health Check Message',
+        compute='_compute_health_fields_combined',
+        readonly=True,
+        store=False,
+    )
+    gateway_health_combined_last_check = fields.Char(
+        string='Combined Last Health Check',
+        compute='_compute_health_fields_combined',
+        readonly=True,
+        store=False,
+    )
+
     # === Connection Health Indicator Fields (Sandbox) ===
     gateway_health_status_sandbox = fields.Char(
         string='Sandbox Gateway Health Status',
@@ -346,6 +366,31 @@ class ResConfigSettings(models.TransientModel):
         defaults['gateway_health_last_check_sandbox'] = self._cr_get_param('cloudrefit_invoicing.health_last_check_sandbox', '')
         defaults['gateway_health_message_sandbox'] = self._cr_get_param('cloudrefit_invoicing.health_last_message_sandbox', '')
 
+        # Combined health status (pre-computed from individual statuses — TransientModel compute is unreliable)
+        _clive_status = defaults.get('gateway_health_status_live', 'untested')
+        _csbox_status = defaults.get('gateway_health_status_sandbox', 'untested')
+        _clive_msg = defaults.get('gateway_health_message_live', '')
+        _csbox_msg = defaults.get('gateway_health_message_sandbox', '')
+        _clive_ts = defaults.get('gateway_health_last_check_live', '')
+        _csbox_ts = defaults.get('gateway_health_last_check_sandbox', '')
+        _both_ok = _clive_status == 'connected' and _csbox_status == 'connected'
+        _either_fail = _clive_status == 'failed' or _csbox_status == 'failed'
+        if _both_ok:
+            defaults['gateway_health_combined_status'] = 'connected'
+            defaults['gateway_health_combined_message'] = 'All modes connected'
+        elif _either_fail:
+            defaults['gateway_health_combined_status'] = 'failed'
+            _parts = []
+            if _clive_status == 'failed':
+                _parts.append(f"Live: {_clive_msg}")
+            if _csbox_status == 'failed':
+                _parts.append(f"Sandbox: {_csbox_msg}")
+            defaults['gateway_health_combined_message'] = '; '.join(_parts)
+        else:
+            defaults['gateway_health_combined_status'] = 'untested'
+            defaults['gateway_health_combined_message'] = 'Not yet connected'
+        defaults['gateway_health_combined_last_check'] = max(_clive_ts, _csbox_ts) if (_clive_ts or _csbox_ts) else ''
+
         # Business ID fields (read via unified config_parameter keys)
         biz_id = self._cr_get_param('cloudrefit_invoicing.business_id', '')
         if not biz_id:
@@ -397,6 +442,41 @@ class ResConfigSettings(models.TransientModel):
             rec.gateway_health_status_sandbox = rec._cr_get_param('cloudrefit_invoicing.health_status_sandbox', 'untested')
             rec.gateway_health_last_check_sandbox = rec._cr_get_param('cloudrefit_invoicing.health_last_check_sandbox', '')
             rec.gateway_health_message_sandbox = rec._cr_get_param('cloudrefit_invoicing.health_last_message_sandbox', '')
+
+    @api.depends('gateway_health_status_live', 'gateway_health_status_sandbox',
+                 'gateway_health_message_live', 'gateway_health_message_sandbox',
+                 'gateway_health_last_check_live', 'gateway_health_last_check_sandbox')
+    def _compute_health_fields_combined(self):
+        """Derive the single combined health indicator from both Live and Sandbox statuses.
+
+        Connected  → both are 'connected'
+        Failed     → at least one is 'failed' (show worst-case message)
+        Untested   → neither connected nor failed (e.g. both untested, or one untested + one connected)
+        """
+        for rec in self:
+            status_live = rec.gateway_health_status_live or 'untested'
+            status_sbox = rec.gateway_health_status_sandbox or 'untested'
+            both_connected = status_live == 'connected' and status_sbox == 'connected'
+            either_failed = status_live == 'failed' or status_sbox == 'failed'
+
+            if both_connected:
+                rec.gateway_health_combined_status = 'connected'
+                rec.gateway_health_combined_message = 'All modes connected'
+            elif either_failed:
+                rec.gateway_health_combined_status = 'failed'
+                parts = []
+                if status_live == 'failed':
+                    parts.append(f"Live: {rec.gateway_health_message_live}")
+                if status_sbox == 'failed':
+                    parts.append(f"Sandbox: {rec.gateway_health_message_sandbox}")
+                rec.gateway_health_combined_message = '; '.join(parts)
+            else:
+                rec.gateway_health_combined_status = 'untested'
+                rec.gateway_health_combined_message = 'Not yet connected'
+
+            ts_live = rec.gateway_health_last_check_live or ''
+            ts_sbox = rec.gateway_health_last_check_sandbox or ''
+            rec.gateway_health_combined_last_check = max(ts_live, ts_sbox) if (ts_live or ts_sbox) else ''
 
     # === Plugin Version ===
     def _compute_cloudrefit_plugin_version(self):
