@@ -159,6 +159,7 @@
                         <field name="zatca_qr_code" widget="image" invisible="not zatca_qr_code" class="mt-2" options="{'size': [150, 150]}"/>
                         <field name="cloudrefit_payment_link_url" widget="url" invisible="not cloudrefit_payment_link_url"/>
                         <field name="cloudrefit_payment_link_qr" widget="image" invisible="not cloudrefit_payment_link_url" class="mt-2" options="{'size': [150, 150]}"/>
+                        <field name="cloudrefit_show_payment_buttons"/>
                         <field name="zatca_signed_xml_filename" invisible="1"/>
                         <field name="zatca_signed_xml_file" filename="zatca_signed_xml_filename" widget="binary" invisible="not zatca_signed_xml"/>
                     </group>

@@ -44,11 +44,14 @@ class PaymentLinkWizard(models.TransientModel):
                 res['amount'] = invoice.cloudrefit_payment_link_due_amount
             if 'action_type' in fields_list:
                 res['action_type'] = self.env.context.get('action_type', 'generate')
+            if 'include_payment_buttons' in fields_list:
+                res['include_payment_buttons'] = invoice.cloudrefit_show_payment_buttons
         return res
 
     def action_generate(self):
         self.ensure_one()
         invoice = self.invoice_id
+        invoice.cloudrefit_show_payment_buttons = self.include_payment_buttons
         invoice.action_generate_payment_link(
             amount=self.amount,
             include_payment_buttons=self.include_payment_buttons,

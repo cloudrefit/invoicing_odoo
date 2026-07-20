@@ -14,25 +14,27 @@ _logger = logging.getLogger(__name__)
 class ResConfigSettings(models.TransientModel):
     _inherit = ['res.config.settings', 'cloudrefit.notification.helper', 'cloudrefit.settings.helper', 'cloudrefit.zatca.credentials']
 
-    # === Live Gateway Connection ===
-    cloudrefit_gateway_url_live = fields.Char(
-        string='Live Gateway URL',
-        config_parameter='cloudrefit_invoicing.gateway_url_live',
+    # === Unified Gateway Connection (shared across Live & Sandbox) ===
+    cloudrefit_gateway_url = fields.Char(
+        string='Gateway URL',
+        config_parameter='cloudrefit_invoicing.gateway_url',
         company_dependent=True,
-        help='Base URL of the CloudRefit Gateway for live/production operations',
+        help='Base URL of the CloudRefit Gateway (shared across Live & Sandbox modes)',
     )
-    cloudrefit_api_key_live = fields.Char(
-        string='Live API Key',
-        config_parameter='cloudrefit_invoicing.api_key_live',
+    cloudrefit_api_key = fields.Char(
+        string='API Key',
+        config_parameter='cloudrefit_invoicing.api_key',
         company_dependent=True,
-        help='Live API key from your CloudRefit dashboard',
+        help='API key from your CloudRefit dashboard (shared across Live & Sandbox modes)',
     )
-    cloudrefit_signing_secret_live = fields.Char(
-        string='Live Signing Secret',
-        config_parameter='cloudrefit_invoicing.signing_secret_live',
+    cloudrefit_signing_secret = fields.Char(
+        string='Signing Secret',
+        config_parameter='cloudrefit_invoicing.signing_secret',
         company_dependent=True,
-        help='Live signing secret from your CloudRefit dashboard',
+        help='Signing secret from your CloudRefit dashboard (shared across Live & Sandbox modes)',
     )
+
+    # === Live Technical Unit ===
     def _get_live_units(self):
         units_json = self.env['ir.config_parameter'].sudo().get_param('cloudrefit_invoicing.technical_units_live', '[]')
         try:
@@ -49,13 +51,11 @@ class ResConfigSettings(models.TransientModel):
         company_dependent=True,
         help='Select the Live unit/device from your CloudRefit dashboard. Test Connection to refresh the list.',
     )
-
-    # === Sandbox Gateway Connection ===
-    cloudrefit_gateway_url_sandbox = fields.Char(
-        string='Sandbox Gateway URL',
-        config_parameter='cloudrefit_invoicing.gateway_url_sandbox',
-        company_dependent=True,
-        help='Base URL of the CloudRefit Gateway for sandbox/testing operations',
+    cloudrefit_use_default_unit_live = fields.Boolean(
+        string='Use Default Live Unit',
+        config_parameter='cloudrefit_invoicing.use_default_unit_live',
+        default=True,
+        help='Use business default unit for Live (auto-selected from ping response)',
     )
 
     # === Dashboard URL (print-invoice page) ===
@@ -65,18 +65,8 @@ class ResConfigSettings(models.TransientModel):
         default='https://invoicing.cloudrefit.com',
         help='Base URL of the CloudRefit Dashboard (serves the print-invoice page)',
     )
-    cloudrefit_api_key_sandbox = fields.Char(
-        string='Sandbox API Key',
-        config_parameter='cloudrefit_invoicing.api_key_sandbox',
-        company_dependent=True,
-        help='Sandbox API key from your CloudRefit dashboard. Used only for sandbox testing wizard.',
-    )
-    cloudrefit_signing_secret_sandbox = fields.Char(
-        string='Sandbox Signing Secret',
-        config_parameter='cloudrefit_invoicing.signing_secret_sandbox',
-        company_dependent=True,
-        help='Sandbox signing secret from your CloudRefit dashboard. Used only for sandbox testing wizard.',
-    )
+
+    # === Sandbox Technical Unit ===
     def _get_sandbox_units(self):
         units_json = self.env['ir.config_parameter'].sudo().get_param('cloudrefit_invoicing.technical_units_sandbox', '[]')
         try:
@@ -93,33 +83,24 @@ class ResConfigSettings(models.TransientModel):
         company_dependent=True,
         help='Select the Sandbox unit/device from your CloudRefit dashboard. Test Connection to refresh the list.',
     )
-
-    # === Live Business ID (auto-populated from live gateway ping) ===
-    cloudrefit_business_id_live = fields.Char(
-        string='Live Business ID',
-        config_parameter='cloudrefit_invoicing.business_id_live',
-        company_dependent=True,
-        readonly=True,
-        help='Auto-populated from gateway after a successful Live connection test.',
-    )
-    cloudrefit_business_name_live = fields.Char(
-        string='Live Business Name',
-        config_parameter='cloudrefit_invoicing.business_name_live',
-        company_dependent=True,
-        readonly=True,
+    cloudrefit_use_default_unit_sandbox = fields.Boolean(
+        string='Use Default Sandbox Unit',
+        config_parameter='cloudrefit_invoicing.use_default_unit_sandbox',
+        default=True,
+        help='Use business default unit for Sandbox (auto-selected from ping response)',
     )
 
-    # === Sandbox Business ID (auto-populated from sandbox gateway ping) ===
-    cloudrefit_business_id_sandbox = fields.Char(
-        string='Sandbox Business ID',
-        config_parameter='cloudrefit_invoicing.business_id_sandbox',
+    # === Business Identity (auto-populated from gateway ping) ===
+    cloudrefit_business_id = fields.Char(
+        string='Business ID',
+        config_parameter='cloudrefit_invoicing.business_id',
         company_dependent=True,
         readonly=True,
-        help='Auto-populated from gateway after a successful Sandbox connection test.',
+        help='Auto-populated from gateway after a successful connection test.',
     )
-    cloudrefit_business_name_sandbox = fields.Char(
-        string='Sandbox Business Name',
-        config_parameter='cloudrefit_invoicing.business_name_sandbox',
+    cloudrefit_business_name = fields.Char(
+        string='Business Name',
+        config_parameter='cloudrefit_invoicing.business_name',
         company_dependent=True,
         readonly=True,
     )
@@ -293,15 +274,15 @@ class ResConfigSettings(models.TransientModel):
     def set_values(self):
         """Override set_values to detect credential changes and reset connection status."""
         old_live = {
-            'url': self._cr_get_param('cloudrefit_invoicing.gateway_url_live', ''),
-            'api': self._cr_get_param('cloudrefit_invoicing.api_key_live', ''),
-            'secret': self._cr_get_param('cloudrefit_invoicing.signing_secret_live', ''),
+            'url': self._cr_get_param('cloudrefit_invoicing.gateway_url', ''),
+            'api': self._cr_get_param('cloudrefit_invoicing.api_key', ''),
+            'secret': self._cr_get_param('cloudrefit_invoicing.signing_secret', ''),
             'unit': self._cr_get_param('cloudrefit_invoicing.unit_id_live', ''),
         }
         old_sandbox = {
-            'url': self._cr_get_param('cloudrefit_invoicing.gateway_url_sandbox', ''),
-            'api': self._cr_get_param('cloudrefit_invoicing.api_key_sandbox', ''),
-            'secret': self._cr_get_param('cloudrefit_invoicing.signing_secret_sandbox', ''),
+            'url': self._cr_get_param('cloudrefit_invoicing.gateway_url', ''),
+            'api': self._cr_get_param('cloudrefit_invoicing.api_key', ''),
+            'secret': self._cr_get_param('cloudrefit_invoicing.signing_secret', ''),
             'unit': self._cr_get_param('cloudrefit_invoicing.unit_id_sandbox', ''),
         }
 
@@ -311,11 +292,11 @@ class ResConfigSettings(models.TransientModel):
         company = self.env.company
         
         # When saving credentials via the UI, they write to the base config_parameter keys.
-        # If there are stale company-suffixed keys from an older version, they will shadow 
+        # If there are stale company-suffixed keys from an older version, they will shadow
         # the new credentials. We must delete the suffixed keys to ensure the new ones take effect.
         if company:
-            for key in ['gateway_url_live', 'api_key_live', 'signing_secret_live', 'unit_id_live',
-                        'gateway_url_sandbox', 'api_key_sandbox', 'signing_secret_sandbox', 'unit_id_sandbox']:
+            for key in ['gateway_url', 'api_key', 'signing_secret', 'unit_id_live',
+                        'unit_id_sandbox']:
                 # Read the new value from the base key
                 new_val = ICP.get_param(f'cloudrefit_invoicing.{key}')
                 # Write it to the company-suffixed key to ensure consistency
@@ -330,9 +311,9 @@ class ResConfigSettings(models.TransientModel):
         ICP.set_param('cloudrefit_invoicing.auto_include_payment_buttons', str(self.cloudrefit_auto_include_payment_buttons))
 
         live_changed = (
-            (self.cloudrefit_gateway_url_live or '') != old_live['url'] or
-            (self.cloudrefit_api_key_live or '') != old_live['api'] or
-            (self.cloudrefit_signing_secret_live or '') != old_live['secret'] or
+            (self.cloudrefit_gateway_url or '') != old_live['url'] or
+            (self.cloudrefit_api_key or '') != old_live['api'] or
+            (self.cloudrefit_signing_secret or '') != old_live['secret'] or
             (self.cloudrefit_unit_id_live or '') != old_live['unit']
         )
         if live_changed:
@@ -340,9 +321,9 @@ class ResConfigSettings(models.TransientModel):
             self._reset_mode_on_failure(mode='live', error_message='Credentials changed')
 
         sandbox_changed = (
-            (self.cloudrefit_gateway_url_sandbox or '') != old_sandbox['url'] or
-            (self.cloudrefit_api_key_sandbox or '') != old_sandbox['api'] or
-            (self.cloudrefit_signing_secret_sandbox or '') != old_sandbox['secret'] or
+            (self.cloudrefit_gateway_url or '') != old_sandbox['url'] or
+            (self.cloudrefit_api_key or '') != old_sandbox['api'] or
+            (self.cloudrefit_signing_secret or '') != old_sandbox['secret'] or
             (self.cloudrefit_unit_id_sandbox or '') != old_sandbox['unit']
         )
         if sandbox_changed:
@@ -365,33 +346,23 @@ class ResConfigSettings(models.TransientModel):
         defaults['gateway_health_last_check_sandbox'] = self._cr_get_param('cloudrefit_invoicing.health_last_check_sandbox', '')
         defaults['gateway_health_message_sandbox'] = self._cr_get_param('cloudrefit_invoicing.health_last_message_sandbox', '')
 
-        # Business ID fields (read via both _cr_get_param and ICP base key)
-        biz_id_live = self._cr_get_param('cloudrefit_invoicing.business_id_live', '')
-        if not biz_id_live:
-            biz_id_live = self.env['ir.config_parameter'].sudo().get_param('cloudrefit_invoicing.business_id_live', '')
-        defaults['cloudrefit_business_id_live'] = biz_id_live
+        # Business ID fields (read via unified config_parameter keys)
+        biz_id = self._cr_get_param('cloudrefit_invoicing.business_id', '')
+        if not biz_id:
+            biz_id = self.env['ir.config_parameter'].sudo().get_param('cloudrefit_invoicing.business_id', '')
+        defaults['cloudrefit_business_id'] = biz_id
         
-        biz_name_live = self._cr_get_param('cloudrefit_invoicing.business_name_live', '')
-        if not biz_name_live:
-            biz_name_live = self.env['ir.config_parameter'].sudo().get_param('cloudrefit_invoicing.business_name_live', '')
-        defaults['cloudrefit_business_name_live'] = biz_name_live
-
-        biz_id_sandbox = self._cr_get_param('cloudrefit_invoicing.business_id_sandbox', '')
-        if not biz_id_sandbox:
-            biz_id_sandbox = self.env['ir.config_parameter'].sudo().get_param('cloudrefit_invoicing.business_id_sandbox', '')
-        defaults['cloudrefit_business_id_sandbox'] = biz_id_sandbox
-
-        biz_name_sandbox = self._cr_get_param('cloudrefit_invoicing.business_name_sandbox', '')
-        if not biz_name_sandbox:
-            biz_name_sandbox = self.env['ir.config_parameter'].sudo().get_param('cloudrefit_invoicing.business_name_sandbox', '')
-        defaults['cloudrefit_business_name_sandbox'] = biz_name_sandbox
+        biz_name = self._cr_get_param('cloudrefit_invoicing.business_name', '')
+        if not biz_name:
+            biz_name = self.env['ir.config_parameter'].sudo().get_param('cloudrefit_invoicing.business_name', '')
+        defaults['cloudrefit_business_name'] = biz_name
 
         # can_enable fields (pre-computed because TransientModel compute is unreliable)
         live_filled = (
-            biz_id_live
-            and defaults.get('cloudrefit_gateway_url_live')
-            and defaults.get('cloudrefit_api_key_live')
-            and defaults.get('cloudrefit_signing_secret_live')
+            biz_id
+            and defaults.get('cloudrefit_gateway_url')
+            and defaults.get('cloudrefit_api_key')
+            and defaults.get('cloudrefit_signing_secret')
             and defaults.get('cloudrefit_unit_id_live')
         )
         defaults['can_enable_live'] = bool(live_filled and health_live == 'connected')
@@ -399,10 +370,10 @@ class ResConfigSettings(models.TransientModel):
             defaults['is_cloudrefit_live_enabled'] = False
 
         sandbox_filled = (
-            biz_id_sandbox
-            and defaults.get('cloudrefit_gateway_url_sandbox')
-            and defaults.get('cloudrefit_api_key_sandbox')
-            and defaults.get('cloudrefit_signing_secret_sandbox')
+            biz_id
+            and defaults.get('cloudrefit_gateway_url')
+            and defaults.get('cloudrefit_api_key')
+            and defaults.get('cloudrefit_signing_secret')
             and defaults.get('cloudrefit_unit_id_sandbox')
         )
         defaults['can_enable_sandbox'] = bool(sandbox_filled and health_sandbox == 'connected')
@@ -513,9 +484,9 @@ class ResConfigSettings(models.TransientModel):
             )
             return  # Don't reset on transient errors
 
-        biz_param = f'cloudrefit_invoicing.business_id_{mode}'
+        biz_param = 'cloudrefit_invoicing.business_id'
         enable_param = f'cloudrefit_invoicing.{mode}_enabled'
-        biz_field = f'cloudrefit_business_id_{mode}'
+        biz_field = 'cloudrefit_business_id'
         enable_field = f'cloudrefit_{mode}_enabled'
         can_enable_field = f'can_enable_{mode}'
 
@@ -543,21 +514,21 @@ class ResConfigSettings(models.TransientModel):
             mode, error_message,
         )
 
-    @api.depends('cloudrefit_business_id_live', 'cloudrefit_gateway_url_live',
-                 'cloudrefit_api_key_live', 'cloudrefit_signing_secret_live',
+    @api.depends('cloudrefit_business_id', 'cloudrefit_gateway_url',
+                 'cloudrefit_api_key', 'cloudrefit_signing_secret',
                  'cloudrefit_unit_id_live', 'gateway_health_status_live')
     def _compute_can_enable_live(self):
         """Enable Live toggle is editable only when all credentials are filled
-        AND a connection test has succeeded (meaning business_id_live is also set).
+        AND a connection test has succeeded (meaning business_id is also set).
 
         When the toggle is NOT editable, we also force the field to False
         so the checkbox appears unchecked + disabled (instead of checked + disabled)."""
         for rec in self:
             all_filled = (
-                rec.cloudrefit_business_id_live
-                and rec.cloudrefit_gateway_url_live
-                and rec.cloudrefit_api_key_live
-                and rec.cloudrefit_signing_secret_live
+                rec.cloudrefit_business_id
+                and rec.cloudrefit_gateway_url
+                and rec.cloudrefit_api_key
+                and rec.cloudrefit_signing_secret
                 and rec.cloudrefit_unit_id_live
             )
             connected = rec.gateway_health_status_live == 'connected'
@@ -566,21 +537,21 @@ class ResConfigSettings(models.TransientModel):
             if not can_enable:
                 rec.is_cloudrefit_live_enabled = False
 
-    @api.depends('cloudrefit_business_id_sandbox', 'cloudrefit_gateway_url_sandbox',
-                 'cloudrefit_api_key_sandbox', 'cloudrefit_signing_secret_sandbox',
+    @api.depends('cloudrefit_business_id', 'cloudrefit_gateway_url',
+                 'cloudrefit_api_key', 'cloudrefit_signing_secret',
                  'cloudrefit_unit_id_sandbox', 'gateway_health_status_sandbox')
     def _compute_can_enable_sandbox(self):
         """Enable Sandbox toggle is editable only when all credentials are filled
-        AND a connection test has succeeded (meaning business_id_sandbox is also set).
+        AND a connection test has succeeded (meaning business_id is also set).
 
         When the toggle is NOT editable, we also force the field to False
         so the checkbox appears unchecked + disabled (instead of checked + disabled)."""
         for rec in self:
             all_filled = (
-                rec.cloudrefit_business_id_sandbox
-                and rec.cloudrefit_gateway_url_sandbox
-                and rec.cloudrefit_api_key_sandbox
-                and rec.cloudrefit_signing_secret_sandbox
+                rec.cloudrefit_business_id
+                and rec.cloudrefit_gateway_url
+                and rec.cloudrefit_api_key
+                and rec.cloudrefit_signing_secret
                 and rec.cloudrefit_unit_id_sandbox
             )
             connected = rec.gateway_health_status_sandbox == 'connected'
@@ -602,19 +573,19 @@ class ResConfigSettings(models.TransientModel):
         ICP = self.env['ir.config_parameter'].sudo()
 
         if bid:
-            param_key = f'cloudrefit_invoicing.business_id_{mode}'
-            name_key = f'cloudrefit_invoicing.business_name_{mode}'
+            biz_param = 'cloudrefit_invoicing.business_id'
+            name_param = 'cloudrefit_invoicing.business_name'
             units_key = f'cloudrefit_invoicing.technical_units_{mode}'
             
             _logger.info("action=auto_save_business_id mode=%s business_id=%s name=%s units=%d", mode, bid, bname, len(units))
             
-            self._cr_set_param(param_key, str(bid))
-            ICP.set_param(param_key, str(bid))
-            self[f'cloudrefit_business_id_{mode}'] = str(bid)
+            self._cr_set_param(biz_param, str(bid))
+            ICP.set_param(biz_param, str(bid))
+            self.cloudrefit_business_id = str(bid)
 
-            self._cr_set_param(name_key, str(bname))
-            ICP.set_param(name_key, str(bname))
-            self[f'cloudrefit_business_name_{mode}'] = str(bname)
+            self._cr_set_param(name_param, str(bname))
+            ICP.set_param(name_param, str(bname))
+            self.cloudrefit_business_name = str(bname)
                 
             # Always update units, even if empty
             units_json = json.dumps(units)
@@ -890,8 +861,8 @@ class ResConfigSettings(models.TransientModel):
             'target': 'self',
             'context': self.env.context,
         }
-    @api.onchange('cloudrefit_api_key_live', 'cloudrefit_signing_secret_live', 'cloudrefit_unit_id_live', 'is_cloudrefit_live_enabled',
-                  'cloudrefit_api_key_sandbox', 'cloudrefit_signing_secret_sandbox', 'cloudrefit_unit_id_sandbox', 'is_cloudrefit_sandbox_enabled')
+    @api.onchange('cloudrefit_api_key', 'cloudrefit_signing_secret', 'cloudrefit_unit_id_live', 'is_cloudrefit_live_enabled',
+                  'cloudrefit_unit_id_sandbox', 'is_cloudrefit_sandbox_enabled')
     def _onchange_auto_save_cloudrefit_fields(self):
         """Silently persist critical fields to ir.config_parameter on blur/change without triggering a page reload."""
         ICP = self.env['ir.config_parameter'].sudo()
@@ -908,15 +879,12 @@ class ResConfigSettings(models.TransientModel):
                 if company:
                     ICP.set_param(f'cloudrefit_invoicing.{key}_{company.id}', '')
 
-        _save_param('api_key_live', self.cloudrefit_api_key_live)
-        _save_param('signing_secret_live', self.cloudrefit_signing_secret_live)
+        _save_param('api_key', self.cloudrefit_api_key)
+        _save_param('signing_secret', self.cloudrefit_signing_secret)
         _save_param('unit_id_live', self.cloudrefit_unit_id_live)
         
-        _save_param('api_key_sandbox', self.cloudrefit_api_key_sandbox)
-        _save_param('signing_secret_sandbox', self.cloudrefit_signing_secret_sandbox)
         _save_param('unit_id_sandbox', self.cloudrefit_unit_id_sandbox)
 
-        # Helper for booleans
         if self.is_cloudrefit_live_enabled is not None:
             ICP.set_param('cloudrefit_invoicing.live_enabled', str(self.is_cloudrefit_live_enabled))
         if self.is_cloudrefit_sandbox_enabled is not None:
