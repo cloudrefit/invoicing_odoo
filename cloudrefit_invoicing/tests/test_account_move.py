@@ -27,11 +27,11 @@ class TestZatcaInvoiceSigning(TransactionCase):
 
         # ---- Configuration ----
         cls.ICP = cls.env['ir.config_parameter'].sudo()
-        cls.ICP.set_param('cloudrefit_invoicing.api_key_live', 'sk_live_testapikey1234567890')
-        cls.ICP.set_param('cloudrefit_invoicing.business_id_live', 'biz_test_001')
-        cls.ICP.set_param('cloudrefit_invoicing.gateway_url_live', 'https://api.invoicing.cloudrefit.com')
+        cls.ICP.set_param('cloudrefit_invoicing.api_key', 'sk_live_testapikey1234567890')
+        cls.ICP.set_param('cloudrefit_invoicing.business_id', 'biz_test_001')
+        cls.ICP.set_param('cloudrefit_invoicing.gateway_url', 'https://api.invoicing.cloudrefit.com')
         cls.ICP.set_param('cloudrefit_invoicing.dashboard_url', 'https://invoicing.cloudrefit.com')
-        cls.ICP.set_param('cloudrefit_invoicing.signing_secret_live', 'test_secret_key_12345')
+        cls.ICP.set_param('cloudrefit_invoicing.signing_secret', 'test_secret_key_12345')
         cls.ICP.set_param('cloudrefit_invoicing.unit_id_live', '999')
         cls.ICP.set_param('cloudrefit_invoicing.mode', 'live')
 
@@ -584,10 +584,10 @@ class TestZatcaInvoiceSigning(TransactionCase):
     def test_is_zatca_sandbox_allowed_success(self):
         """is_zatca_sandbox_allowed must be True when sandbox is enabled and all credentials are set."""
         self.ICP.set_param('cloudrefit_invoicing.sandbox_enabled', 'True')
-        self.ICP.set_param('cloudrefit_invoicing.business_id_sandbox', 'biz_sandbox_123')
-        self.ICP.set_param('cloudrefit_invoicing.gateway_url_sandbox', 'https://api-dev-invoicing.cloudrefit.com')
-        self.ICP.set_param('cloudrefit_invoicing.api_key_sandbox', 'sk_sandbox_testapikey123')
-        self.ICP.set_param('cloudrefit_invoicing.signing_secret_sandbox', 'test_secret_sandbox_123')
+        self.ICP.set_param('cloudrefit_invoicing.business_id', 'biz_sandbox_123')
+        self.ICP.set_param('cloudrefit_invoicing.gateway_url', 'https://api-dev-invoicing.cloudrefit.com')
+        self.ICP.set_param('cloudrefit_invoicing.api_key', 'sk_sandbox_testapikey123')
+        self.ICP.set_param('cloudrefit_invoicing.signing_secret', 'test_secret_sandbox_123')
         self.ICP.set_param('cloudrefit_invoicing.unit_id_sandbox', '888')
 
         invoice = self._create_invoice()
@@ -598,11 +598,11 @@ class TestZatcaInvoiceSigning(TransactionCase):
     def test_is_zatca_sandbox_allowed_failure_missing_credential(self):
         """is_zatca_sandbox_allowed must be False if any required sandbox credential is empty."""
         self.ICP.set_param('cloudrefit_invoicing.sandbox_enabled', 'True')
-        self.ICP.set_param('cloudrefit_invoicing.business_id_sandbox', 'biz_sandbox_123')
-        self.ICP.set_param('cloudrefit_invoicing.gateway_url_sandbox', 'https://api-dev-invoicing.cloudrefit.com')
-        self.ICP.set_param('cloudrefit_invoicing.api_key_sandbox', 'sk_sandbox_testapikey123')
-        # Leave signing_secret_sandbox empty
-        self.ICP.set_param('cloudrefit_invoicing.signing_secret_sandbox', '')
+        self.ICP.set_param('cloudrefit_invoicing.business_id', 'biz_sandbox_123')
+        self.ICP.set_param('cloudrefit_invoicing.gateway_url', 'https://api-dev-invoicing.cloudrefit.com')
+        self.ICP.set_param('cloudrefit_invoicing.api_key', 'sk_sandbox_testapikey123')
+        # Leave signing_secret empty
+        self.ICP.set_param('cloudrefit_invoicing.signing_secret', '')
         self.ICP.set_param('cloudrefit_invoicing.unit_id_sandbox', '888')
 
         invoice = self._create_invoice()
@@ -613,10 +613,10 @@ class TestZatcaInvoiceSigning(TransactionCase):
     def test_is_zatca_sandbox_allowed_failure_disabled(self):
         """is_zatca_sandbox_allowed must be False if sandbox is not enabled."""
         self.ICP.set_param('cloudrefit_invoicing.sandbox_enabled', 'False')
-        self.ICP.set_param('cloudrefit_invoicing.business_id_sandbox', 'biz_sandbox_123')
-        self.ICP.set_param('cloudrefit_invoicing.gateway_url_sandbox', 'https://api-dev-invoicing.cloudrefit.com')
-        self.ICP.set_param('cloudrefit_invoicing.api_key_sandbox', 'sk_sandbox_testapikey123')
-        self.ICP.set_param('cloudrefit_invoicing.signing_secret_sandbox', 'test_secret_sandbox_123')
+        self.ICP.set_param('cloudrefit_invoicing.business_id', 'biz_sandbox_123')
+        self.ICP.set_param('cloudrefit_invoicing.gateway_url', 'https://api-dev-invoicing.cloudrefit.com')
+        self.ICP.set_param('cloudrefit_invoicing.api_key', 'sk_sandbox_testapikey123')
+        self.ICP.set_param('cloudrefit_invoicing.signing_secret', 'test_secret_sandbox_123')
         self.ICP.set_param('cloudrefit_invoicing.unit_id_sandbox', '888')
 
         invoice = self._create_invoice()
@@ -735,7 +735,7 @@ class TestZatcaInvoiceSigning(TransactionCase):
         """action_generate_payment_link must raise UserError if business_id
         is not configured."""
         # Clear business_id
-        self.ICP.set_param('cloudrefit_invoicing.business_id_live', '')
+        self.ICP.set_param('cloudrefit_invoicing.business_id', '')
 
         invoice = self._create_invoice()
         with self.assertRaises(UserError) as ctx:
@@ -768,10 +768,10 @@ class TestB2BInvoiceFlow(TransactionCase):
         super().setUpClass()
 
         cls.ICP = cls.env['ir.config_parameter'].sudo()
-        cls.ICP.set_param('cloudrefit_invoicing.api_key_live', 'sk_live_testapikey1234567890')
-        cls.ICP.set_param('cloudrefit_invoicing.business_id_live', 'biz_test_001')
-        cls.ICP.set_param('cloudrefit_invoicing.gateway_url_live', 'https://api.invoicing.cloudrefit.com')
-        cls.ICP.set_param('cloudrefit_invoicing.signing_secret_live', 'test_secret_key_12345')
+        cls.ICP.set_param('cloudrefit_invoicing.api_key', 'sk_live_testapikey1234567890')
+        cls.ICP.set_param('cloudrefit_invoicing.business_id', 'biz_test_001')
+        cls.ICP.set_param('cloudrefit_invoicing.gateway_url', 'https://api.invoicing.cloudrefit.com')
+        cls.ICP.set_param('cloudrefit_invoicing.signing_secret', 'test_secret_key_12345')
         cls.ICP.set_param('cloudrefit_invoicing.unit_id_live', '999')
         cls.ICP.set_param('cloudrefit_invoicing.mode', 'live')
 
@@ -1083,10 +1083,10 @@ class TestB2CInvoiceFlow(TransactionCase):
         super().setUpClass()
 
         cls.ICP = cls.env['ir.config_parameter'].sudo()
-        cls.ICP.set_param('cloudrefit_invoicing.api_key_live', 'sk_live_testapikey1234567890')
-        cls.ICP.set_param('cloudrefit_invoicing.business_id_live', 'biz_test_001')
-        cls.ICP.set_param('cloudrefit_invoicing.gateway_url_live', 'https://api.invoicing.cloudrefit.com')
-        cls.ICP.set_param('cloudrefit_invoicing.signing_secret_live', 'test_secret_key_12345')
+        cls.ICP.set_param('cloudrefit_invoicing.api_key', 'sk_live_testapikey1234567890')
+        cls.ICP.set_param('cloudrefit_invoicing.business_id', 'biz_test_001')
+        cls.ICP.set_param('cloudrefit_invoicing.gateway_url', 'https://api.invoicing.cloudrefit.com')
+        cls.ICP.set_param('cloudrefit_invoicing.signing_secret', 'test_secret_key_12345')
         cls.ICP.set_param('cloudrefit_invoicing.unit_id_live', '999')
         cls.ICP.set_param('cloudrefit_invoicing.mode', 'live')
 
@@ -1285,10 +1285,10 @@ class TestZatcaStateGuards(TransactionCase):
         super().setUpClass()
 
         cls.ICP = cls.env['ir.config_parameter'].sudo()
-        cls.ICP.set_param('cloudrefit_invoicing.api_key_live', 'sk_live_testapikey1234567890')
-        cls.ICP.set_param('cloudrefit_invoicing.business_id_live', 'biz_test_001')
-        cls.ICP.set_param('cloudrefit_invoicing.gateway_url_live', 'https://api.invoicing.cloudrefit.com')
-        cls.ICP.set_param('cloudrefit_invoicing.signing_secret_live', 'test_secret_key_12345')
+        cls.ICP.set_param('cloudrefit_invoicing.api_key', 'sk_live_testapikey1234567890')
+        cls.ICP.set_param('cloudrefit_invoicing.business_id', 'biz_test_001')
+        cls.ICP.set_param('cloudrefit_invoicing.gateway_url', 'https://api.invoicing.cloudrefit.com')
+        cls.ICP.set_param('cloudrefit_invoicing.signing_secret', 'test_secret_key_12345')
         cls.ICP.set_param('cloudrefit_invoicing.unit_id_live', '999')
         cls.ICP.set_param('cloudrefit_invoicing.mode', 'live')
 
@@ -1997,10 +1997,10 @@ class TestZatcaConcurrency(TransactionCase):
         super().setUpClass()
 
         cls.ICP = cls.env['ir.config_parameter'].sudo()
-        cls.ICP.set_param('cloudrefit_invoicing.api_key_live', 'sk_live_testapikey1234567890')
-        cls.ICP.set_param('cloudrefit_invoicing.business_id_live', 'biz_test_001')
-        cls.ICP.set_param('cloudrefit_invoicing.gateway_url_live', 'https://api.invoicing.cloudrefit.com')
-        cls.ICP.set_param('cloudrefit_invoicing.signing_secret_live', 'test_secret_key_12345')
+        cls.ICP.set_param('cloudrefit_invoicing.api_key', 'sk_live_testapikey1234567890')
+        cls.ICP.set_param('cloudrefit_invoicing.business_id', 'biz_test_001')
+        cls.ICP.set_param('cloudrefit_invoicing.gateway_url', 'https://api.invoicing.cloudrefit.com')
+        cls.ICP.set_param('cloudrefit_invoicing.signing_secret', 'test_secret_key_12345')
         cls.ICP.set_param('cloudrefit_invoicing.unit_id_live', '999')
         cls.ICP.set_param('cloudrefit_invoicing.mode', 'live')
 

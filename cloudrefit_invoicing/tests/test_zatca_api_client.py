@@ -26,8 +26,8 @@ class TestZatcaApiClient(TransactionCase):
 
         # Pre-configure a known signing secret for deterministic HMAC tests
         cls.ICP = cls.env['ir.config_parameter'].sudo()
-        cls.ICP.set_param('cloudrefit_invoicing.signing_secret_live', 'test_secret_key_12345')
-        cls.ICP.set_param('cloudrefit_invoicing.api_key_live', 'sk_live_test_key')
+        cls.ICP.set_param('cloudrefit_invoicing.signing_secret', 'test_secret_key_12345')
+        cls.ICP.set_param('cloudrefit_invoicing.api_key', 'sk_live_test_key')
 
         # Store original call_gateway and patch with mock
         cls._original_call = type(cls.api_client).call_gateway
@@ -82,18 +82,18 @@ class TestZatcaApiClient(TransactionCase):
     def test_build_hmac_signature_no_secret(self):
         """If signing secret is not configured, _sign_payload must raise
         UserError."""
-        self.ICP.set_param('cloudrefit_invoicing.signing_secret_live', False)
+        self.ICP.set_param('cloudrefit_invoicing.signing_secret', False)
         with self.assertRaises(UserError):
             self.api_client._sign_payload({'action': 'verify'})
         # Restore secret for subsequent tests
-        self.ICP.set_param('cloudrefit_invoicing.signing_secret_live', 'test_secret_key_12345')
+        self.ICP.set_param('cloudrefit_invoicing.signing_secret', 'test_secret_key_12345')
 
     def test_build_hmac_signature_empty_secret(self):
         """An empty signing secret string should also raise UserError."""
-        self.ICP.set_param('cloudrefit_invoicing.signing_secret_live', '')
+        self.ICP.set_param('cloudrefit_invoicing.signing_secret', '')
         with self.assertRaises(UserError):
             self.api_client._sign_payload({'action': 'verify'})
-        self.ICP.set_param('cloudrefit_invoicing.signing_secret_live', 'test_secret_key_12345')
+        self.ICP.set_param('cloudrefit_invoicing.signing_secret', 'test_secret_key_12345')
 
     # ------------------------------------------------------------------ #
     #  call_gateway – request execution

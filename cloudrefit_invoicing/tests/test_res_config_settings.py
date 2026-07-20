@@ -18,10 +18,10 @@ class TestResConfigSettings(TransactionCase):
         super().setUpClass()
 
         cls.ICP = cls.env['ir.config_parameter'].sudo()
-        cls.ICP.set_param('cloudrefit_invoicing.api_key_live', 'sk_live_testapikey1234567890')
-        cls.ICP.set_param('cloudrefit_invoicing.signing_secret_live', 'test_secret_key_12345')
-        cls.ICP.set_param('cloudrefit_invoicing.gateway_url_live', 'https://api.invoicing.cloudrefit.com')
-        cls.ICP.set_param('cloudrefit_invoicing.business_id_live', 'biz_test_001')
+        cls.ICP.set_param('cloudrefit_invoicing.api_key', 'sk_live_testapikey1234567890')
+        cls.ICP.set_param('cloudrefit_invoicing.signing_secret', 'test_secret_key_12345')
+        cls.ICP.set_param('cloudrefit_invoicing.gateway_url', 'https://api.invoicing.cloudrefit.com')
+        cls.ICP.set_param('cloudrefit_invoicing.business_id', 'biz_test_001')
         cls.ICP.set_param('cloudrefit_invoicing.unit_id_live', '999')
         cls.ICP.set_param('cloudrefit_invoicing.mode', 'live')
 
@@ -50,10 +50,10 @@ class TestResConfigSettings(TransactionCase):
 
         # Create a fresh settings record for each test
         self.settings = self.env['res.config.settings'].create({
-            'cloudrefit_gateway_url_live': 'https://api.invoicing.cloudrefit.com',
-            'cloudrefit_api_key_live': 'sk_live_testapikey1234567890',
-            'cloudrefit_signing_secret_live': 'test_secret_key_12345',
-            'cloudrefit_business_id_live': 'biz_test_001',
+            'cloudrefit_gateway_url': 'https://api.invoicing.cloudrefit.com',
+            'cloudrefit_api_key': 'sk_live_testapikey1234567890',
+            'cloudrefit_signing_secret': 'test_secret_key_12345',
+            'cloudrefit_business_id': 'biz_test_001',
             'cloudrefit_unit_id_live': 999,
             'cloudrefit_default_invoice_type': 'auto',
         })
@@ -152,7 +152,7 @@ class TestResConfigSettings(TransactionCase):
         )
         # business_id should be auto-saved from the ping response (live)
         self.assertEqual(
-            self.ICP.get_param('cloudrefit_invoicing.business_id_live'), 'biz_auto_001',
+            self.ICP.get_param('cloudrefit_invoicing.business_id'), 'biz_auto_001',
         )
 
     def test_test_connection_live_success_without_business_id(self):
@@ -165,17 +165,17 @@ class TestResConfigSettings(TransactionCase):
             {'message': 'pong', 'status': 'ok'},
         )
 
-        # Set an existing business_id_live
-        self.ICP.set_param('cloudrefit_invoicing.business_id_live', 'biz_existing')
+        # Set an existing business_id
+        self.ICP.set_param('cloudrefit_invoicing.business_id', 'biz_existing')
 
         result = self.settings.action_test_connection_live()
         self.assertIsNotNone(result)
         self.assertEqual(
             self.ICP.get_param('cloudrefit_invoicing.health_status_live'), 'connected',
         )
-        # business_id_live should remain unchanged
+        # business_id should remain unchanged
         self.assertEqual(
-            self.ICP.get_param('cloudrefit_invoicing.business_id_live'), 'biz_existing',
+            self.ICP.get_param('cloudrefit_invoicing.business_id'), 'biz_existing',
         )
 
     def test_test_connection_live_failure(self):
@@ -224,22 +224,22 @@ class TestResConfigSettings(TransactionCase):
 
         # Configure sandbox credentials on the settings record
         self.settings.write({
-            'cloudrefit_gateway_url_sandbox': 'https://sandbox.invoicing.cloudrefit.com',
-            'cloudrefit_api_key_sandbox': 'sk_sandbox_testkey',
-            'cloudrefit_signing_secret_sandbox': 'sandbox_secret_key',
+            'cloudrefit_gateway_url': 'https://sandbox.invoicing.cloudrefit.com',
+            'cloudrefit_api_key': 'sk_sandbox_testkey',
+            'cloudrefit_signing_secret': 'sandbox_secret_key',
         })
-        self.ICP.set_param('cloudrefit_invoicing.gateway_url_sandbox', 'https://sandbox.invoicing.cloudrefit.com')
-        self.ICP.set_param('cloudrefit_invoicing.api_key_sandbox', 'sk_sandbox_testkey')
-        self.ICP.set_param('cloudrefit_invoicing.signing_secret_sandbox', 'sandbox_secret_key')
+        self.ICP.set_param('cloudrefit_invoicing.gateway_url', 'https://sandbox.invoicing.cloudrefit.com')
+        self.ICP.set_param('cloudrefit_invoicing.api_key', 'sk_sandbox_testkey')
+        self.ICP.set_param('cloudrefit_invoicing.signing_secret', 'sandbox_secret_key')
 
         result = self.settings.action_test_connection_sandbox()
         self.assertIsNotNone(result)
         self.assertEqual(
             self.ICP.get_param('cloudrefit_invoicing.health_status_sandbox'), 'connected',
         )
-        # business_id_sandbox should be auto-saved from the ping response
+        # business_id should be auto-saved from the ping response
         self.assertEqual(
-            self.ICP.get_param('cloudrefit_invoicing.business_id_sandbox'), 'biz_sandbox_001',
+            self.ICP.get_param('cloudrefit_invoicing.business_id'), 'biz_sandbox_001',
         )
 
     def test_test_connection_sandbox_failure(self):
@@ -254,11 +254,11 @@ class TestResConfigSettings(TransactionCase):
 
         # Configure sandbox credentials
         self.settings.write({
-            'cloudrefit_api_key_sandbox': 'sk_sandbox_testkey',
-            'cloudrefit_signing_secret_sandbox': 'sandbox_secret_key',
+            'cloudrefit_api_key': 'sk_sandbox_testkey',
+            'cloudrefit_signing_secret': 'sandbox_secret_key',
         })
-        self.ICP.set_param('cloudrefit_invoicing.api_key_sandbox', 'sk_sandbox_testkey')
-        self.ICP.set_param('cloudrefit_invoicing.signing_secret_sandbox', 'sandbox_secret_key')
+        self.ICP.set_param('cloudrefit_invoicing.api_key', 'sk_sandbox_testkey')
+        self.ICP.set_param('cloudrefit_invoicing.signing_secret', 'sandbox_secret_key')
 
         result = self.settings.action_test_connection_sandbox()
         self.assertIsNotNone(result)
@@ -287,15 +287,15 @@ class TestResConfigSettings(TransactionCase):
         )
         # Settings should be persisted
         self.assertEqual(
-            self.ICP.get_param('cloudrefit_invoicing.api_key_live'),
+            self.ICP.get_param('cloudrefit_invoicing.api_key'),
             'sk_live_testapikey1234567890',
         )
 
     def test_save_and_connect_no_api_key(self):
         """When no API key is configured, health must remain 'untested'."""
         settings_no_key = self.env['res.config.settings'].create({
-            'cloudrefit_gateway_url_live': 'https://api.invoicing.cloudrefit.com',
-            'cloudrefit_api_key_live': False,
+            'cloudrefit_gateway_url': 'https://api.invoicing.cloudrefit.com',
+            'cloudrefit_api_key': False,
         })
 
         result = settings_no_key.action_save_and_connect()
@@ -309,44 +309,44 @@ class TestResConfigSettings(TransactionCase):
     # ------------------------------------------------------------------ #
 
     def test_auto_save_business_id_saves_new_live(self):
-        """_auto_save_business_id must persist a new business_id_live value."""
+        """_auto_save_business_id must persist a new business_id value."""
         self.settings._auto_save_business_id({'business_id': 'biz_new_001'}, mode='live')
         self.assertEqual(
-            self.ICP.get_param('cloudrefit_invoicing.business_id_live'), 'biz_new_001',
+            self.ICP.get_param('cloudrefit_invoicing.business_id'), 'biz_new_001',
         )
 
     def test_auto_save_business_id_saves_new_sandbox(self):
-        """_auto_save_business_id must persist a new business_id_sandbox value."""
+        """_auto_save_business_id must persist a new business_id value."""
         self.settings._auto_save_business_id({'business_id': 'biz_sb_001'}, mode='sandbox')
         self.assertEqual(
-            self.ICP.get_param('cloudrefit_invoicing.business_id_sandbox'), 'biz_sb_001',
+            self.ICP.get_param('cloudrefit_invoicing.business_id'), 'biz_sb_001',
         )
 
     def test_auto_save_business_id_skips_if_missing_live(self):
-        """_auto_save_business_id must not change business_id_live if not
+        """_auto_save_business_id must not change business_id if not
         present in response."""
-        self.ICP.set_param('cloudrefit_invoicing.business_id_live', 'biz_existing')
+        self.ICP.set_param('cloudrefit_invoicing.business_id', 'biz_existing')
         self.settings._auto_save_business_id({'message': 'pong'}, mode='live')
         self.assertEqual(
-            self.ICP.get_param('cloudrefit_invoicing.business_id_live'), 'biz_existing',
+            self.ICP.get_param('cloudrefit_invoicing.business_id'), 'biz_existing',
         )
 
     def test_auto_save_business_id_skips_if_same_live(self):
-        """_auto_save_business_id must not rewrite if business_id_live is
+        """_auto_save_business_id must not rewrite if business_id is
         unchanged."""
-        self.ICP.set_param('cloudrefit_invoicing.business_id_live', 'biz_same')
+        self.ICP.set_param('cloudrefit_invoicing.business_id', 'biz_same')
         self.settings._auto_save_business_id({'business_id': 'biz_same'}, mode='live')
         self.assertEqual(
-            self.ICP.get_param('cloudrefit_invoicing.business_id_live'), 'biz_same',
+            self.ICP.get_param('cloudrefit_invoicing.business_id'), 'biz_same',
         )
 
     def test_auto_save_business_id_skips_if_same_sandbox(self):
-        """_auto_save_business_id must not rewrite if business_id_sandbox is
+        """_auto_save_business_id must not rewrite if business_id is
         unchanged."""
-        self.ICP.set_param('cloudrefit_invoicing.business_id_sandbox', 'biz_same_sb')
+        self.ICP.set_param('cloudrefit_invoicing.business_id', 'biz_same_sb')
         self.settings._auto_save_business_id({'business_id': 'biz_same_sb'}, mode='sandbox')
         self.assertEqual(
-            self.ICP.get_param('cloudrefit_invoicing.business_id_sandbox'), 'biz_same_sb',
+            self.ICP.get_param('cloudrefit_invoicing.business_id'), 'biz_same_sb',
         )
 
     # ------------------------------------------------------------------ #
