@@ -155,6 +155,25 @@ class ResConfigSettings(models.TransientModel):
         help='Operational mode for ZATCA integration',
     )
 
+    cloudrefit_mode_display = fields.Char(
+        string='Environment Mode',
+        compute='_compute_cloudrefit_mode_display',
+        readonly=True,
+        help='Displays which ZATCA environments are enabled for this company',
+    )
+
+    @api.depends_context('company')
+    def _compute_cloudrefit_mode_display(self):
+        for rec in self:
+            live_enabled = rec._cr_get_param('cloudrefit_invoicing.live_enabled', 'False') == 'True'
+            sandbox_enabled = rec._cr_get_param('cloudrefit_invoicing.sandbox_enabled', 'False') == 'True'
+            parts = []
+            if live_enabled:
+                parts.append('live')
+            if sandbox_enabled:
+                parts.append('sandbox')
+            rec.cloudrefit_mode_display = ', '.join(parts) if parts else 'Not Configured'
+
     cloudrefit_auto_include_payment_buttons = fields.Boolean(
         string='Auto-Include Payment Buttons',
         config_parameter='cloudrefit_invoicing.auto_include_payment_buttons',

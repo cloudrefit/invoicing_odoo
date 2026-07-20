@@ -136,9 +136,10 @@
                             <hr/>
                         </div>
                         <setting title="Environment Mode">
-                            <field name="cloudrefit_mode"/>
-                            <div class="text-muted">Target ZATCA environment for this company</div>
+                            <field name="cloudrefit_mode_display"/>
+                            <div class="text-muted">Shows the currently enabled ZATCA environments for this company (configured via the Live/Sandbox enable toggles above)</div>
                         </setting>
+                        <field name="cloudrefit_mode" invisible="1"/>
                         <setting>
                             <field name="cloudrefit_default_invoice_type"/>
                             <div class="text-muted">Select the default ZATCA invoice type for this company</div>

@@ -19,6 +19,8 @@
                 <field name="cloudrefit_banner_dismissible" invisible="1"/>
                 <field name="cloudrefit_show_push_modal" invisible="1"/>
                 <field name="cloudrefit_push_blocked" invisible="1"/>
+                <field name="is_cloudrefit_live_enabled_for_company" invisible="1"/>
+                <field name="is_cloudrefit_sandbox_enabled_for_company" invisible="1"/>
                 
                 <!-- Live Push Button -->
                 <button name="action_zatca_sign"
@@ -27,7 +29,7 @@
                         class="oe_highlight"
                         icon="fa-cloud-upload"
                         confirm="This invoice will be permanently reported to ZATCA Live. Continue?"
-                        invisible="not is_zatca_push_allowed or move_type not in ('out_invoice', 'out_refund') or cloudrefit_push_blocked or cloudrefit_show_push_modal"/>
+                        invisible="not is_zatca_push_allowed or move_type not in ('out_invoice', 'out_refund') or cloudrefit_push_blocked or cloudrefit_show_push_modal or not is_cloudrefit_live_enabled_for_company"/>
                         
                 <!-- Urgent Push Button -->
                 <button name="action_zatca_sign"
@@ -36,7 +38,7 @@
                         class="btn-danger"
                         icon="fa-cloud-upload"
                         confirm="An urgent compliance update is available. We strongly recommend updating before pushing. Proceed anyway?"
-                        invisible="not is_zatca_push_allowed or move_type not in ('out_invoice', 'out_refund') or not cloudrefit_show_push_modal"/>
+                        invisible="not is_zatca_push_allowed or move_type not in ('out_invoice', 'out_refund') or not cloudrefit_show_push_modal or not is_cloudrefit_live_enabled_for_company"/>
 
                 <!-- Sandbox Test Button -->
                 <button name="action_push_to_sandbox_zatca"
@@ -44,7 +46,7 @@
                         type="object"
                         class="btn-secondary"
                         icon="fa-flask"
-                        invisible="not is_zatca_sandbox_allowed or move_type not in ('out_invoice', 'out_refund') or state != 'posted' or zatca_status in ('reported', 'cleared') or cloudrefit_push_blocked or cloudrefit_show_push_modal"/>
+                        invisible="not is_zatca_sandbox_allowed or move_type not in ('out_invoice', 'out_refund') or state != 'posted' or zatca_status in ('reported', 'cleared') or cloudrefit_push_blocked or cloudrefit_show_push_modal or not is_cloudrefit_sandbox_enabled_for_company"/>
                         
                 <!-- Share Invoice Button -->
                 <button name="%(action_cloudrefit_payment_link_wizard)d"
@@ -62,7 +64,7 @@
                         class="btn-outline-danger"
                         icon="fa-flask"
                         confirm="An urgent compliance update is available. We strongly recommend updating before testing. Proceed anyway?"
-                        invisible="not is_zatca_sandbox_allowed or move_type not in ('out_invoice', 'out_refund') or state != 'posted' or zatca_status in ('reported', 'cleared') or not cloudrefit_show_push_modal"/>
+                        invisible="not is_zatca_sandbox_allowed or move_type not in ('out_invoice', 'out_refund') or state != 'posted' or zatca_status in ('reported', 'cleared') or not cloudrefit_show_push_modal or not is_cloudrefit_sandbox_enabled_for_company"/>
                 
             </xpath>
             

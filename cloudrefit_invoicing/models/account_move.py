@@ -129,6 +129,15 @@ class AccountMove(models.Model):
         help="Whether all sandbox credentials are configured and sandbox is enabled"
     )
 
+    is_cloudrefit_live_enabled_for_company = fields.Boolean(
+        compute='_compute_is_cloudrefit_live_enabled_for_company',
+        help="Technical: whether Live mode is enabled for this invoice's company",
+    )
+    is_cloudrefit_sandbox_enabled_for_company = fields.Boolean(
+        compute='_compute_is_cloudrefit_sandbox_enabled_for_company',
+        help="Technical: whether Sandbox mode is enabled for this invoice's company",
+    )
+
     zatca_15_days_warning = fields.Boolean(
         compute='_compute_zatca_15_days_warning',
         string="15 Days Warning",
@@ -301,6 +310,20 @@ class AccountMove(models.Model):
                     creds.get('unit_id_sandbox'),
                     missing,
                 )
+
+    @api.depends('company_id')
+    @api.depends_context('company')
+    def _compute_is_cloudrefit_live_enabled_for_company(self):
+        for move in self:
+            creds = move.with_company(move.company_id)._get_zatca_credentials()
+            move.is_cloudrefit_live_enabled_for_company = bool(creds.get('live_enabled'))
+
+    @api.depends('company_id')
+    @api.depends_context('company')
+    def _compute_is_cloudrefit_sandbox_enabled_for_company(self):
+        for move in self:
+            creds = move.with_company(move.company_id)._get_zatca_credentials()
+            move.is_cloudrefit_sandbox_enabled_for_company = bool(creds.get('sandbox_enabled'))
 
     def _check_zatca_push_allowed(self):
         """Check if this invoice can be pushed to ZATCA (live only).
