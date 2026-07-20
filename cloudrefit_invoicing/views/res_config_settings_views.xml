@@ -84,7 +84,7 @@
                     <block id="zatca_settings" title="ZATCA Settings"
                            invisible="gateway_health_status_live != 'connected' or gateway_health_status_sandbox != 'connected'">
 
-                        <!-- --- Live Sub-section --- -->
+                        <!-- Live Sub-section -->
                         <setting title="Live Configuration">
                             <field name="is_cloudrefit_live_enabled" readonly="not can_enable_live"/>
                             <span class="text-muted">
@@ -103,7 +103,7 @@
                             <div class="text-muted">Live Technical Unit ID</div>
                         </setting>
 
-                        <!-- --- Sandbox Sub-section --- -->
+                        <!-- Sandbox Sub-section -->
                         <setting invisible="not cloudrefit_show_sandbox_settings_ui">
                             <span>── Sandbox Configuration ──</span>
                         </setting>
