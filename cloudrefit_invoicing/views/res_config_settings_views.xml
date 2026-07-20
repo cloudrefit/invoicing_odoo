@@ -55,69 +55,21 @@
                             <field name="cloudrefit_business_name" readonly="1"/>
                             <div class="text-muted">Business Name auto-populated from gateway.</div>
                         </setting>
+                        <setting>
+                            <button name="action_test_connection_all" type="object" string="Test Connection (All Modes)" class="btn btn-primary"/>
+                            <div class="text-muted">Tests both Live and Sandbox connectivity using the credentials above.</div>
+                        </setting>
                     </block>
 
-                    <!-- === Live Settings === -->
-                    <block id="live_settings" title="Live Settings">
-                        <setting>
-                            <field name="cloudrefit_unit_id_live"/>
-                            <div class="text-muted">Live Technical Unit ID.</div>
-                        </setting>
-                        <setting>
-                            <field name="cloudrefit_use_default_unit_live"/>
-                            <div class="text-muted">Use business default unit for Live (auto-selected from ping response)</div>
-                        </setting>
-                        <setting title="Enable Live">
-                            <field name="is_cloudrefit_live_enabled" readonly="not can_enable_live"/>
-                            <span class="text-muted">
-                                Show the Live ZATCA tab and allow pushing invoices to live ZATCA.
-                                <t invisible="can_enable_live">
-                                    — Fill in all credentials above and click "Test Connection" first.
-                                </t>
-                            </span>
-                        </setting>
-                        <!-- Live Connection Health -->
-                        <div class="mt-3">
-                            <div class="alert alert-success" invisible="gateway_health_status_live != 'connected'" role="alert" style="margin-bottom: 0;">
-                                <i class="fa fa-check-circle mr-2"/>
-                                <span>🟢 Connected to Live </span>
-                                <span class="ml-2">
-                                    <button name="action_test_connection_live" type="object"
-                                            string="Test Connection (Live)"
-                                            class="btn btn-sm btn-outline-success float-right"/>
-                                </span>
-                            </div>
-                            <div class="alert alert-danger" invisible="gateway_health_status_live != 'failed'" role="alert" style="margin-bottom: 0;">
-                                <i class="fa fa-exclamation-circle mr-2"/>
-                                <span>🔴 Connection Failed: </span><field name="gateway_health_message_live"/>
-                                <span class="ml-2">
-                                    <button name="action_test_connection_live" type="object"
-                                            string="Test Connection (Live)"
-                                            class="btn btn-sm btn-outline-danger float-right"/>
-                                </span>
-                            </div>
-                            <div class="alert alert-secondary" invisible="gateway_health_status_live != 'untested'" role="alert" style="margin-bottom: 0;">
-                                <i class="fa fa-circle-o mr-2"/>
-                                <span>⚪ Not yet connected — configure credentials and click "Test Connection (Live)"</span>
-                                <span class="ml-2">
-                                    <button name="action_test_connection_live" type="object"
-                                            string="Test Connection (Live)"
-                                            class="btn btn-sm btn-outline-secondary float-right"/>
-                                </span>
-                            </div>
-                            <small class="text-muted">Last checked: <field name="gateway_health_last_check_live"/></small>
-                        </div>
-                    </block>
-
-                    <!-- === Sandbox Settings === -->
-                    <block id="sandbox_settings" title="Sandbox Settings" invisible="not cloudrefit_show_sandbox_settings_ui">
-                        <setting>
-                            <field name="cloudrefit_unit_id_sandbox"/>
-                            <div class="text-muted">Sandbox Technical Unit ID for testing.</div>
-                        </setting>
-                        <setting>
+                    <!-- === ZATCA Units Settings === -->
+                    <block id="zatca_units" title="ZATCA Units Settings">
+                        <setting title="Use Default Sandbox Unit">
                             <field name="cloudrefit_use_default_unit_sandbox"/>
-                            <div class="text-muted">Use business default unit for Sandbox (auto-selected from ping response)</div>
+                            <div class="text-muted">Auto-select from business default technical units</div>
+                        </setting>
+                        <setting invisible="cloudrefit_use_default_unit_sandbox">
+                            <field name="cloudrefit_unit_id_sandbox"/>
+                            <div class="text-muted">Sandbox Technical Unit ID</div>
                         </setting>
                         <setting title="Enable Sandbox">
                             <field name="is_cloudrefit_sandbox_enabled" readonly="not can_enable_sandbox"/>
@@ -128,36 +80,55 @@
                                 </t>
                             </span>
                         </setting>
-                        <!-- Sandbox Connection Health -->
+                        <!-- Sandbox Connection Health (read-only, no test button) -->
                         <div class="mt-3">
                             <div class="alert alert-success" invisible="gateway_health_status_sandbox != 'connected'" role="alert" style="margin-bottom: 0;">
                                 <i class="fa fa-check-circle mr-2"/>
                                 <span>🟢 Connected to Sandbox </span>
-                                <span class="ml-2">
-                                    <button name="action_test_connection_sandbox" type="object"
-                                            string="Test Connection (Sandbox)"
-                                            class="btn btn-sm btn-outline-success float-right"/>
-                                </span>
                             </div>
                             <div class="alert alert-danger" invisible="gateway_health_status_sandbox != 'failed'" role="alert" style="margin-bottom: 0;">
                                 <i class="fa fa-exclamation-circle mr-2"/>
                                 <span>🔴 Connection Failed: </span><field name="gateway_health_message_sandbox"/>
-                                <span class="ml-2">
-                                    <button name="action_test_connection_sandbox" type="object"
-                                            string="Test Connection (Sandbox)"
-                                            class="btn btn-sm btn-outline-danger float-right"/>
-                                </span>
                             </div>
                             <div class="alert alert-secondary" invisible="gateway_health_status_sandbox != 'untested'" role="alert" style="margin-bottom: 0;">
                                 <i class="fa fa-circle-o mr-2"/>
-                                <span>⚪ Not yet connected — configure credentials and click "Test Connection (Sandbox)"</span>
-                                <span class="ml-2">
-                                    <button name="action_test_connection_sandbox" type="object"
-                                            string="Test Connection (Sandbox)"
-                                            class="btn btn-sm btn-outline-secondary float-right"/>
-                                </span>
+                                <span>⚪ Not yet connected — configure credentials and click "Test Connection"</span>
                             </div>
                             <small class="text-muted">Last checked: <time datetime="gateway_health_last_check_sandbox"/></small>
+                        </div>
+
+                        <setting title="Use Default Live Unit">
+                            <field name="cloudrefit_use_default_unit_live"/>
+                            <div class="text-muted">Auto-select from business default technical units</div>
+                        </setting>
+                        <setting invisible="cloudrefit_use_default_unit_live">
+                            <field name="cloudrefit_unit_id_live"/>
+                            <div class="text-muted">Live Technical Unit ID</div>
+                        </setting>
+                        <setting title="Enable Live">
+                            <field name="is_cloudrefit_live_enabled" readonly="not can_enable_live"/>
+                            <span class="text-muted">
+                                Show the Live ZATCA tab and allow pushing invoices to live ZATCA.
+                                <t invisible="can_enable_live">
+                                    — Fill in all credentials above and click "Test Connection" first.
+                                </t>
+                            </span>
+                        </setting>
+                        <!-- Live Connection Health (read-only, no test button) -->
+                        <div class="mt-3">
+                            <div class="alert alert-success" invisible="gateway_health_status_live != 'connected'" role="alert" style="margin-bottom: 0;">
+                                <i class="fa fa-check-circle mr-2"/>
+                                <span>🟢 Connected to Live </span>
+                            </div>
+                            <div class="alert alert-danger" invisible="gateway_health_status_live != 'failed'" role="alert" style="margin-bottom: 0;">
+                                <i class="fa fa-exclamation-circle mr-2"/>
+                                <span>🔴 Connection Failed: </span><field name="gateway_health_message_live"/>
+                            </div>
+                            <div class="alert alert-secondary" invisible="gateway_health_status_live != 'untested'" role="alert" style="margin-bottom: 0;">
+                                <i class="fa fa-circle-o mr-2"/>
+                                <span>⚪ Not yet connected — configure credentials and click "Test Connection"</span>
+                            </div>
+                            <small class="text-muted">Last checked: <field name="gateway_health_last_check_live"/></small>
                         </div>
                     </block>
 

@@ -833,6 +833,22 @@ class ResConfigSettings(models.TransientModel):
             self.gateway_health_message_sandbox = message
             return self._cr_notify('danger', f'Connection failed: {message}', next_action=reload_action)
 
+    # === Combined Test Connection (All Modes) ===
+    def action_test_connection_all(self):
+        """Test connectivity for both Live and Sandbox modes simultaneously.
+
+        Calls action_test_connection_live() first, then action_test_connection_sandbox(),
+        then reloads the page so both health status indicators are up to date.
+        """
+        self.ensure_one()
+        self.execute()
+
+        live_result = self.action_test_connection_live()
+        sandbox_result = self.action_test_connection_sandbox()
+
+        # Reload the page to show updated health status for both modes
+        return {'type': 'ir.actions.client', 'tag': 'reload'}
+
     # === Save & Connect Action ===
     def action_save_and_connect(self):
         """Save all settings AND verify gateway connectivity (both modes if applicable)."""
