@@ -174,6 +174,13 @@ class ResConfigSettings(models.TransientModel):
         help='Operational mode for ZATCA integration',
     )
 
+    cloudrefit_auto_include_payment_buttons = fields.Boolean(
+        string='Auto-Include Payment Buttons',
+        config_parameter='cloudrefit_invoicing.auto_include_payment_buttons',
+        default=True,
+        help='Default setting for new invoices. Can be overridden per invoice.'
+    )
+
     cloudrefit_plugin_version = fields.Char(
         string="Plugin Version",
         compute="_compute_cloudrefit_plugin_version",
@@ -279,6 +286,7 @@ class ResConfigSettings(models.TransientModel):
             is_cloudrefit_live_enabled=ICP.get_param('cloudrefit_invoicing.live_enabled', 'False') == 'True',
             is_cloudrefit_sandbox_enabled=ICP.get_param('cloudrefit_invoicing.sandbox_enabled', 'False') == 'True',
             cloudrefit_show_sandbox_settings_ui=ICP.get_param('cloudrefit_invoicing.show_sandbox_settings', 'False') == 'True',
+            cloudrefit_auto_include_payment_buttons=ICP.get_param('cloudrefit_invoicing.auto_include_payment_buttons', 'True') == 'True',
         )
         return res
 
@@ -319,6 +327,7 @@ class ResConfigSettings(models.TransientModel):
         ICP.set_param('cloudrefit_invoicing.live_enabled', str(self.is_cloudrefit_live_enabled))
         ICP.set_param('cloudrefit_invoicing.sandbox_enabled', str(self.is_cloudrefit_sandbox_enabled))
         ICP.set_param('cloudrefit_invoicing.show_sandbox_settings', str(self.cloudrefit_show_sandbox_settings_ui))
+        ICP.set_param('cloudrefit_invoicing.auto_include_payment_buttons', str(self.cloudrefit_auto_include_payment_buttons))
 
         live_changed = (
             (self.cloudrefit_gateway_url_live or '') != old_live['url'] or
@@ -638,9 +647,9 @@ class ResConfigSettings(models.TransientModel):
         self.execute()
 
         creds = self._get_zatca_credentials()
-        gateway_url = self.cloudrefit_gateway_url_live or creds.get('gateway_url_live')
-        api_key = self.cloudrefit_api_key_live or creds.get('api_key_live')
-        signing_secret = self.cloudrefit_signing_secret_live or creds.get('signing_secret_live')
+        gateway_url = self.cloudrefit_gateway_url or creds.get('gateway_url')
+        api_key = self.cloudrefit_api_key or creds.get('api_key')
+        signing_secret = self.cloudrefit_signing_secret or creds.get('signing_secret')
 
         reload_action = {'type': 'ir.actions.client', 'tag': 'reload'}
 
@@ -654,15 +663,6 @@ class ResConfigSettings(models.TransientModel):
                 'warning', 'Live API Key not configured — enter your Live API Key and try again.',
                 next_action=reload_action,
             )
-
-        if not api_key.startswith('live_pk_'):
-            msg = 'Mode isolation error: API Key is for SANDBOX mode, but request targets LIVE mode.'
-            self._reset_mode_on_failure(mode='live', error_message=msg)
-            self._set_health_status('failed', msg, mode='live')
-            self.gateway_health_status_live = 'failed'
-            self.gateway_health_last_check_live = datetime.datetime.now().isoformat()
-            self.gateway_health_message_live = 'Mode isolation error'
-            return self._cr_notify('danger', msg, next_action=reload_action)
 
         try:
             body = json.dumps({'action': 'ping'}, sort_keys=True, separators=(',', ':'), ensure_ascii=False)
@@ -760,9 +760,9 @@ class ResConfigSettings(models.TransientModel):
         self.execute()
 
         creds = self._get_zatca_credentials()
-        gateway_url = self.cloudrefit_gateway_url_sandbox or creds.get('gateway_url_sandbox')
-        api_key = self.cloudrefit_api_key_sandbox or creds.get('api_key_sandbox')
-        signing_secret = self.cloudrefit_signing_secret_sandbox or creds.get('signing_secret_sandbox')
+        gateway_url = self.cloudrefit_gateway_url or creds.get('gateway_url')
+        api_key = self.cloudrefit_api_key or creds.get('api_key')
+        signing_secret = self.cloudrefit_signing_secret or creds.get('signing_secret')
 
         reload_action = {'type': 'ir.actions.client', 'tag': 'reload'}
 
@@ -776,15 +776,6 @@ class ResConfigSettings(models.TransientModel):
                 'warning', 'Sandbox API Key not configured — enter your Sandbox API Key and try again.',
                 next_action=reload_action,
             )
-
-        if not api_key.startswith('test_pk_'):
-            msg = 'Mode isolation error: API Key is for LIVE mode, but request targets SANDBOX mode.'
-            self._reset_mode_on_failure(mode='sandbox', error_message=msg)
-            self._set_health_status('failed', msg, mode='sandbox')
-            self.gateway_health_status_sandbox = 'failed'
-            self.gateway_health_last_check_sandbox = datetime.datetime.now().isoformat()
-            self.gateway_health_message_sandbox = 'Mode isolation error'
-            return self._cr_notify('danger', msg, next_action=reload_action)
 
         try:
             body = json.dumps({'action': 'ping'}, sort_keys=True, separators=(',', ':'), ensure_ascii=False)

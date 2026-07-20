@@ -26,45 +26,43 @@ _logger = logging.getLogger(__name__)
 
 #: Map of (full_ir_config_key) -> (default, type_coerce)
 _ZATCA_PARAM_REGISTRY = {
-    'cloudrefit_invoicing.business_id_live':        ('', str),
-    'cloudrefit_invoicing.business_id_sandbox':     ('', str),
-    'cloudrefit_invoicing.gateway_url_live':        ('https://api.invoicing.cloudrefit.com', str),
-    'cloudrefit_invoicing.gateway_url_sandbox':     ('https://api.invoicing.cloudrefit.com', str),
+    'cloudrefit_invoicing.business_id':             ('', str),
+    'cloudrefit_invoicing.gateway_url':             ('https://api.invoicing.cloudrefit.com', str),
     'cloudrefit_invoicing.dashboard_url':           ('https://invoicing.cloudrefit.com', str),
     'cloudrefit_invoicing.mode':                    ('live', str),
     'cloudrefit_invoicing.sandbox_enabled':         ('False', lambda v: v == 'True'),
     'cloudrefit_invoicing.live_enabled':            ('False', lambda v: v == 'True'),
     'cloudrefit_invoicing.default_invoice_type':    ('auto', str),
-    'cloudrefit_invoicing.api_key_live':            ('', str),
-    'cloudrefit_invoicing.signing_secret_live':     ('', str),
+    'cloudrefit_invoicing.api_key':                 ('', str),
+    'cloudrefit_invoicing.signing_secret':          ('', str),
     'cloudrefit_invoicing.unit_id_live':            ('', str),
-    'cloudrefit_invoicing.api_key_sandbox':         ('', str),
-    'cloudrefit_invoicing.signing_secret_sandbox':  ('', str),
     'cloudrefit_invoicing.unit_id_sandbox':         ('', str),
+    'cloudrefit_invoicing.use_default_unit_live':   ('True', lambda v: v == 'True'),
+    'cloudrefit_invoicing.use_default_unit_sandbox':('True', lambda v: v == 'True'),
     'cloudrefit_invoicing.zatca_download_xml':      ('True', lambda v: str(v) != 'False'),
 }
 
 #: Human-readable labels for error messages (short_key -> label)
 _ZATCA_PARAM_LABELS = {
-    'business_id_live':       'Live Business ID',
-    'business_id_sandbox':    'Sandbox Business ID',
-    'gateway_url_live':       'Live Gateway URL',
-    'gateway_url_sandbox':    'Sandbox Gateway URL',
-    'api_key_live':           'Live API Key',
-    'signing_secret_live':    'Live Signing Secret',
+    'business_id':            'Business ID',
+    'gateway_url':            'Gateway URL',
+    'api_key':                'API Key',
+    'signing_secret':         'Signing Secret',
     'unit_id_live':           'Live Technical Unit ID',
-    'api_key_sandbox':        'Sandbox API Key',
-    'signing_secret_sandbox': 'Sandbox Signing Secret',
     'unit_id_sandbox':        'Sandbox Technical Unit ID',
+    'use_default_unit_live':  'Use Default Live Unit',
+    'use_default_unit_sandbox': 'Use Default Sandbox Unit',
     'sandbox_enabled':        'Sandbox Enabled',
     'live_enabled':           'Enable Live',
     'zatca_download_xml':     'Download Signed XMLs',
 }
 
 #: Which credential short-keys are required per execution mode
+#: api_key, signing_secret, gateway_url, business_id are unified (single field).
+#: unit_id remains mode-specific (per D1 — ZATCA devices are per-environment).
 _REQUIRED_BY_MODE = {
-    'live':    ['business_id_live', 'gateway_url_live', 'api_key_live', 'signing_secret_live', 'unit_id_live'],
-    'sandbox': ['business_id_sandbox', 'gateway_url_sandbox', 'api_key_sandbox', 'signing_secret_sandbox', 'unit_id_sandbox'],
+    'live':    ['business_id', 'gateway_url', 'api_key', 'signing_secret', 'unit_id_live'],
+    'sandbox': ['business_id', 'gateway_url', 'api_key', 'signing_secret', 'unit_id_sandbox'],
 }
 
 
@@ -89,18 +87,17 @@ class CloudrefitZatcaCredentials(models.AbstractModel):
             {
                 'company_id': 1,
                 'company_name': 'My Company',
-                'business_id_live': 'biz_live_001',
-                'business_id_sandbox': 'biz_sandbox_001',
+                'business_id': 'biz_001',
                 'gateway_url': 'https://...',
                 'mode': 'live',
                 'sandbox_enabled': True,
                 'default_invoice_type': 'auto',
-                'api_key_live': 'sk_...',
-                'signing_secret_live': '...',
+                'api_key': 'cr_pk_...',
+                'signing_secret': 'cr_sk_...',
                 'unit_id_live': 999,
-                'api_key_sandbox': 'sk_...',
-                'signing_secret_sandbox': '...',
                 'unit_id_sandbox': 998,
+                'use_default_unit_live': True,
+                'use_default_unit_sandbox': True,
             }
         """
         target_company = company or self.env.company

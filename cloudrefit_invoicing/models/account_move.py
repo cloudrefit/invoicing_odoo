@@ -107,6 +107,13 @@ class AccountMove(models.Model):
         help='Remaining amount due for the invoice, used as pre-fill for payment link wizard'
     )
 
+    cloudrefit_show_payment_buttons = fields.Boolean(
+        string='Show Payment Buttons',
+        default=True,
+        help='When unchecked, the invoice URL will suppress payment buttons (?nopayment=1). '
+             'Leave checked to follow the business-level default.'
+    )
+
     is_zatca_push_allowed = fields.Boolean(
         compute='_compute_is_zatca_push_allowed', string="Is ZATCA Push Allowed",
         help="Whether this invoice meets all conditions to be pushed to ZATCA"
@@ -621,8 +628,8 @@ class AccountMove(models.Model):
         Returns (response, status_code).
         """
         creds = self.with_company(self.company_id)._get_zatca_credentials()
-        business_id = creds.get(f'business_id_{exec_mode}')
-        gateway_url = creds.get(f'gateway_url_{exec_mode}')
+        business_id = creds.get('business_id')
+        gateway_url = creds.get('gateway_url')
 
         if not business_id:
             raise UserError(
@@ -984,6 +991,16 @@ class AccountMove(models.Model):
         if not self.zatca_uuid:
             raise UserError('Invoice does not have a ZATCA UUID. Please post the invoice first.')
 
+        # === Determine whether to show payment buttons ===
+        # Layer 1: per-invoice field
+        show_buttons = self.cloudrefit_show_payment_buttons
+        if show_buttons is None or show_buttons:  # default True
+            # Layer 2: business-level default from ir.config_parameter
+            auto_include = self.env['ir.config_parameter'].sudo().get_param(
+                'cloudrefit_invoicing.auto_include_payment_buttons', 'True'
+            )
+            show_buttons = auto_include != 'False'
+
         # Get locale from config, default to 'en'
         locale = self.env['ir.config_parameter'].sudo().get_param('cloudrefit_invoicing.locale', 'en')
 
@@ -992,12 +1009,12 @@ class AccountMove(models.Model):
         # is served by the dashboard frontend, not the API gateway.
         payment_url = f"{dashboard_url.rstrip('/')}/{locale}/print-invoice/{business_id}/{self.zatca_uuid}"
 
-        if not include_payment_buttons:
+        if not show_buttons:
             payment_url += '?nopayment=1'
 
         _logger.info(
             "action=generate_payment_link invoice_id=%s business_id=%s url=%s include_payment_buttons=%s",
-            self.id, business_id, payment_url, include_payment_buttons,
+            self.id, business_id, payment_url, show_buttons,
         )
 
         self.write({'cloudrefit_payment_link_url': payment_url})

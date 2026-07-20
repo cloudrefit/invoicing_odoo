@@ -28,18 +28,11 @@ class CloudRefitWebhookController(http.Controller):
         target_secret = None
         
         for company in companies:
-            # Check live first
-            live_biz_id = request.env['ir.config_parameter'].sudo().get_param(f'cloudrefit_invoicing.business_id_live_{company.id}')
-            if live_biz_id == business_id:
+            # Business ID is now unified (single field, no mode suffix)
+            biz_id = request.env['ir.config_parameter'].sudo().get_param(f'cloudrefit_invoicing.business_id_{company.id}')
+            if biz_id == business_id:
                 target_company = company
-                target_secret = request.env['ir.config_parameter'].sudo().get_param(f'cloudrefit_invoicing.signing_secret_live_{company.id}')
-                break
-                
-            # Check sandbox
-            sandbox_biz_id = request.env['ir.config_parameter'].sudo().get_param(f'cloudrefit_invoicing.business_id_sandbox_{company.id}')
-            if sandbox_biz_id == business_id:
-                target_company = company
-                target_secret = request.env['ir.config_parameter'].sudo().get_param(f'cloudrefit_invoicing.signing_secret_sandbox_{company.id}')
+                target_secret = request.env['ir.config_parameter'].sudo().get_param(f'cloudrefit_invoicing.signing_secret_{company.id}')
                 break
 
         if not target_company or not target_secret:

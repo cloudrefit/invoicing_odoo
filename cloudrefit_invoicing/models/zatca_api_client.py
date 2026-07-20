@@ -28,7 +28,7 @@ class ZatcaApiClient(models.AbstractModel):
         """
         creds = self._get_zatca_credentials()
         self._assert_zatca_credentials(creds, mode=mode)
-        secret = creds.get(f'signing_secret_{mode}', '')
+        secret = creds.get('signing_secret', '')
         if not secret:
             raise UserError(
                 'Signing secret (%s) is not configured for company "%s". '
@@ -62,7 +62,7 @@ class ZatcaApiClient(models.AbstractModel):
         """
         creds = self._get_zatca_credentials()
         self._assert_zatca_credentials(creds, mode=mode)
-        api_key = creds.get(f'api_key_{mode}', '')
+        api_key = creds.get('api_key', '')
         if not api_key:
             raise UserError(
                 'API key (%s) is not configured for company "%s". '
@@ -90,8 +90,8 @@ class ZatcaApiClient(models.AbstractModel):
         Raises UserError if the API key is not configured for the requested mode.
         """
         creds = self._get_zatca_credentials()
-        gateway_url = creds.get(f'gateway_url_{mode}')
-        api_key = creds.get(f'api_key_{mode}')
+        gateway_url = creds.get('gateway_url')
+        api_key = creds.get('api_key')
         if not api_key:
             raise UserError(
                 'API key (%s) is not configured for company "%s". '
