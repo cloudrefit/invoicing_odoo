@@ -85,7 +85,11 @@
                            invisible="gateway_health_status_live != 'connected' or gateway_health_status_sandbox != 'connected'">
 
                         <!-- Live Sub-section -->
-                        <setting title="Live Configuration">
+                        <div class="mt-4">
+                            <h4>Live Configuration</h4>
+                            <hr/>
+                        </div>
+                        <setting title="Enable Live">
                             <field name="is_cloudrefit_live_enabled" readonly="not can_enable_live"/>
                             <span class="text-muted">
                                 Show the Live ZATCA tab and allow pushing invoices to live ZATCA.
@@ -104,9 +108,10 @@
                         </setting>
 
                         <!-- Sandbox Sub-section -->
-                        <setting invisible="not cloudrefit_show_sandbox_settings_ui">
-                            <span>── Sandbox Configuration ──</span>
-                        </setting>
+                        <div class="mt-4" invisible="not cloudrefit_show_sandbox_settings_ui">
+                            <h4>Sandbox Configuration</h4>
+                            <hr/>
+                        </div>
                         <setting title="Enable Sandbox" invisible="not cloudrefit_show_sandbox_settings_ui">
                             <field name="is_cloudrefit_sandbox_enabled" readonly="not can_enable_sandbox"/>
                             <span class="text-muted">
