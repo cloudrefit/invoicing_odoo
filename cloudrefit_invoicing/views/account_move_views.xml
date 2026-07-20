@@ -55,7 +55,7 @@
                         class="btn-secondary"
                         icon="fa-link"
                         context="{'action_type': 'generate'}"
-                        invisible="move_type not in ('out_invoice', 'out_refund') or state != 'posted' or payment_state in ('paid', 'in_payment', 'reversed') or cloudrefit_payment_link_url"/>
+                        invisible="move_type not in ('out_invoice', 'out_refund') or state not in ('draft', 'posted') or payment_state in ('paid', 'in_payment', 'reversed') or cloudrefit_payment_link_url"/>
 
                 <!-- Urgent Sandbox Test Button -->
                 <button name="action_push_to_sandbox_zatca"
@@ -188,7 +188,7 @@
                             class="btn btn-sm btn-outline-success ml-2"
                             icon="fa-refresh"
                             context="{'action_type': 'regenerate'}"
-                            invisible="move_type not in ('out_invoice', 'out_refund') or state != 'posted' or payment_state in ('paid', 'in_payment', 'reversed')"/>
+                            invisible="move_type not in ('out_invoice', 'out_refund') or state not in ('draft', 'posted') or payment_state in ('paid', 'in_payment', 'reversed')"/>
                 </div>
             </xpath>
         </field>

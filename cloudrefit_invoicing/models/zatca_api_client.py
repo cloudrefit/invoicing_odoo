@@ -144,3 +144,79 @@ class ZatcaApiClient(models.AbstractModel):
             raise UserError(f'Cannot connect to CloudRefit Gateway at {gateway_url}.')
         except requests.exceptions.Timeout:
             raise UserError('CloudRefit Gateway request timed out.')
+
+    @api.model
+    def upsert_invoice_for_checkout(self, move):
+        """Upsert a draft invoice to the platform before generating a payment link.
+
+        Sends the full invoice payload to POST /payments/invoices/upsert
+        so the platform has the latest draft data before the customer views
+        the print-invoice page.
+
+        Args:
+            move: An account.move record to upsert.
+
+        Returns:
+            bool: True if the upsert succeeded, False otherwise (non-blocking).
+        """
+        creds = move.with_company(move.company_id)._get_zatca_credentials()
+        mode = 'live'  # Payment links always use live mode
+        business_id = creds.get(f'business_id_{mode}')
+        gateway_url = creds.get(f'gateway_url_{mode}')
+        api_key = creds.get('api_key')
+
+        if not business_id or not gateway_url or not api_key:
+            _logger.warning(
+                "action=upsert_invoice_for_checkout invoice_id=%s error=missing_credentials "
+                "business_id=%s gateway_url=%s api_key=%s",
+                move.id, bool(business_id), bool(gateway_url), bool(api_key),
+            )
+            return False
+
+        # Build the payload — reuse _build_zatca_payload logic
+        try:
+            payload = move._build_zatca_payload()
+        except Exception as e:
+            _logger.warning(
+                "action=upsert_invoice_for_checkout invoice_id=%s error=payload_build_failed reason=%s",
+                move.id, str(e),
+            )
+            return False
+
+        odoo_url = self._get_base_url()
+        headers = {
+            'X-API-Key': api_key,
+            'X-Mode': mode.upper(),
+            'X-Connector-URL': odoo_url,
+            'X-Integration-URL': odoo_url,
+            'Content-Type': 'application/json',
+        }
+
+        url = f"{gateway_url.rstrip('/')}/api/v1/payments/invoices/upsert"
+
+        _logger.info(
+            "action=upsert_invoice_for_checkout invoice_id=%s business_id=%s url=%s",
+            move.id, business_id, url,
+        )
+
+        try:
+            response = requests.post(url, json=payload, headers=headers, timeout=30)
+            response.raise_for_status()
+            result = response.json()
+            _logger.info(
+                "action=upsert_invoice_for_checkout invoice_id=%s created=%s uuid=%s",
+                move.id, result.get('created'), result.get('uuid'),
+            )
+            return True
+        except requests.exceptions.RequestException as e:
+            _logger.warning(
+                "action=upsert_invoice_for_checkout invoice_id=%s error=http_request_failed reason=%s",
+                move.id, str(e),
+            )
+            return False
+        except Exception as e:
+            _logger.warning(
+                "action=upsert_invoice_for_checkout invoice_id=%s error=unexpected reason=%s",
+                move.id, str(e),
+            )
+            return False

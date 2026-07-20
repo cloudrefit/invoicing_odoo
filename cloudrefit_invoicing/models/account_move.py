@@ -998,6 +998,12 @@ class AccountMove(models.Model):
         """
         self.ensure_one()
 
+        # Only allow draft or posted invoices for payment link generation
+        if self.state not in ('draft', 'posted'):
+            raise UserError(
+                _('Payment links can only be generated for draft or posted invoices.')
+            )
+
         creds = self.with_company(self.company_id)._get_zatca_credentials()
         exec_mode = 'live'  # Payment links always use live mode
         business_id = creds.get(f'business_id_{exec_mode}')
@@ -1013,6 +1019,12 @@ class AccountMove(models.Model):
 
         if not self.zatca_uuid:
             raise UserError('Invoice does not have a ZATCA UUID. Please post the invoice first.')
+
+        # If the invoice is in draft state, upsert it to the platform first so the
+        # print-invoice page has the latest data before the customer views it.
+        if self.state != 'posted':
+            api_client = self.env['cloudrefit.zatca.api.client']
+            api_client.upsert_invoice_for_checkout(self)
 
         # === Determine whether to show payment buttons ===
         # Layer 1: per-invoice field
