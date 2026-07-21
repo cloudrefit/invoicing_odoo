@@ -43,8 +43,7 @@
                             <div class="text-muted">URL of your CloudRefit Gateway (shared for all modes)</div>
                         </setting>
                         <setting>
-                            <field name="cloudrefit_dashboard_url" placeholder="https://invoicing.cloudrefit.com"
-                                   attrs="{'invisible': [('cloudrefit_mode', '=', 'none')]}"/>
+                            <field name="cloudrefit_dashboard_url" placeholder="https://invoicing.cloudrefit.com"/>
                             <div class="text-muted">URL of your CloudRefit Dashboard (serves the payment page)</div>
                         </setting>
                         <setting>
