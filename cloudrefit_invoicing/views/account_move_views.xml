@@ -56,7 +56,7 @@
                         type="object"
                         class="btn-primary"
                         icon="fa-credit-card"
-                        invisible="move_type not in ('out_invoice', 'out_refund') or state not in ('draft', 'posted') or payment_state in ('paid', 'in_payment', 'reversed') or not cloudrefit_active_gateways or 'streampay' not in cloudrefit_active_gateways"/>
+                        invisible="state not in ('draft', 'posted')"/>
 
                 <!-- Pay by Tamara Button -->
                 <button name="action_pay_via_tamara"
@@ -65,7 +65,7 @@
                         class="btn-success"
                         icon="fa-credit-card"
                         translate="True"
-                        invisible="move_type not in ('out_invoice', 'out_refund') or state not in ('draft', 'posted') or payment_state in ('paid', 'in_payment', 'reversed') or not cloudrefit_active_gateways or 'tamara' not in cloudrefit_active_gateways"/>
+                        invisible="state not in ('draft', 'posted')"/>
 
                 <!-- Urgent Sandbox Test Button -->
                 <button name="action_push_to_sandbox_zatca"
