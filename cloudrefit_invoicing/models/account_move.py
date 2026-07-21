@@ -1014,7 +1014,8 @@ class AccountMove(models.Model):
 
         # Build link
         creds = self.with_company(self.company_id)._get_zatca_credentials()
-        dashboard_url = creds.get('dashboard_url', '')
+        # The dashboard frontend is on the same domain as the gateway
+        dashboard_url = creds.get('gateway_url', '')
         if not dashboard_url:
             raise UserError(_('Dashboard URL is not configured in CloudRefit settings.'))
 
