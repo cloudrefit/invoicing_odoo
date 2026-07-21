@@ -1023,7 +1023,7 @@ class AccountMove(models.Model):
             raise UserError(_('Business ID is not configured in CloudRefit settings.'))
 
         locale = self.env.context.get('lang', 'en_US')[:2]
-        link = f"{dashboard_url.rstrip('/')}/{locale}/print-invoice/{business_id}/{self.zatca_uuid}"
+        link = f"{dashboard_url.rstrip('/')}/{locale}/pay/{business_id}/{self.zatca_uuid}"
 
         self.write({'cloudrefit_payment_link_url': link})
 
