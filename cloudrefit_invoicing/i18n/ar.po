@@ -960,3 +960,50 @@ msgstr "تحذير: يجب أن يكون رقم الهوية الوطنية 10 �
 #. module: cloudrefit_invoicing
 msgid "Warning: ZATCA VAT must be 15 digits starting and ending with 3."
 msgstr "تحذير: يجب أن يكون الرقم الضريبي لـ ZATCA مكوناً من 15 رقماً ويبدأ وينتهي بـ 3."
+
+# --- Payment Button Translations ---
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_move_form_zatca
+msgid "Pay by Visa"
+msgstr "ادفع بالفيزا"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_move_form_zatca
+msgid "Pay by Tamara"
+msgstr "ادفع عبر تمارا"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.payment_error_template
+msgid "Pay Now"
+msgstr "ادفع الآن"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.payment_error_template
+msgid "Payment Method Unavailable"
+msgstr "طريقة الدفع غير متوفرة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.payment_error_template
+msgid "This payment method is no longer available. Please contact the business for an updated invoice or alternative payment method."
+msgstr "طريقة الدفع هذه لم تعد متوفرة. يرجى التواصل مع المنشأة للحصول على فاتورة محدثة أو طريقة دفع بديلة."
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.payment_error_template
+msgid "Invoice Not Found"
+msgstr "الفاتورة غير موجودة"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.payment_error_template
+msgid "The invoice you are looking for could not be found."
+msgstr "الفاتورة التي تبحث عنها غير موجودة."
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.payment_error_template
+msgid "Payment Error"
+msgstr "خطأ في الدفع"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.payment_error_template
+msgid "Unable to process payment at this time. Please try again or contact the business."
+msgstr "غير قادر على معالجة الدفع حالياً. يرجى المحاولة مرة أخرى أو التواصل مع المنشأة."

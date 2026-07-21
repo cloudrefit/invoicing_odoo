@@ -50,20 +50,21 @@
                         
                 <field name="cloudrefit_active_gateways" invisible="1"/>
 
-                <!-- Pay via StreamPay Button -->
+                <!-- Pay by Visa Button -->
                 <button name="action_pay_via_streampay"
-                        string="Pay via StreamPay"
+                        string="Pay by Visa"
                         type="object"
                         class="btn-primary"
                         icon="fa-credit-card"
                         invisible="move_type not in ('out_invoice', 'out_refund') or state not in ('draft', 'posted') or payment_state in ('paid', 'in_payment', 'reversed') or not cloudrefit_active_gateways or 'streampay' not in cloudrefit_active_gateways"/>
 
-                <!-- Pay via Tamara Button -->
+                <!-- Pay by Tamara Button -->
                 <button name="action_pay_via_tamara"
-                        string="Pay via Tamara"
+                        string="Pay by Tamara"
                         type="object"
                         class="btn-success"
                         icon="fa-credit-card"
+                        translate="True"
                         invisible="move_type not in ('out_invoice', 'out_refund') or state not in ('draft', 'posted') or payment_state in ('paid', 'in_payment', 'reversed') or not cloudrefit_active_gateways or 'tamara' not in cloudrefit_active_gateways"/>
 
                 <!-- Urgent Sandbox Test Button -->
