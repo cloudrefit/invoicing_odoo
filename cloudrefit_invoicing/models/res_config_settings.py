@@ -181,6 +181,13 @@ class ResConfigSettings(models.TransientModel):
         help='Default setting for new invoices. Can be overridden per invoice.'
     )
 
+    cloudrefit_active_gateways = fields.Char(
+        string='Active Payment Gateways',
+        compute='_compute_cloudrefit_active_gateways',
+        readonly=True,
+        help='Comma-separated list of active payment gateways from the platform, e.g. "streampay,tamara"',
+    )
+
     cloudrefit_plugin_version = fields.Char(
         string="Plugin Version",
         compute="_compute_cloudrefit_plugin_version",
@@ -216,6 +223,13 @@ class ResConfigSettings(models.TransientModel):
     cloudrefit_latest_version = fields.Char(string='Latest Version', compute='_compute_cloudrefit_update_fields')
     cloudrefit_update_checked_at = fields.Char(string='Last Checked At', compute='_compute_cloudrefit_update_fields')
     cloudrefit_changelog_url = fields.Char(string='Changelog URL', compute='_compute_cloudrefit_update_fields')
+
+    def _compute_cloudrefit_active_gateways(self):
+        """Read active gateways from ir.config_parameter (populated from ping response)."""
+        ICP = self.env['ir.config_parameter'].sudo()
+        gateways = ICP.get_param('cloudrefit_invoicing.active_gateways', '')
+        for record in self:
+            record.cloudrefit_active_gateways = gateways
 
     def _compute_cloudrefit_update_fields(self):
         ICP = self.env['ir.config_parameter'].sudo()
@@ -671,12 +685,19 @@ class ResConfigSettings(models.TransientModel):
         
         ICP = self.env['ir.config_parameter'].sudo()
 
+        active_gateways = response_data.get('active_gateways', '')
+
         if bid:
             biz_param = 'cloudrefit_invoicing.business_id'
             name_param = 'cloudrefit_invoicing.business_name'
             units_key = f'cloudrefit_invoicing.technical_units_{mode}'
             
-            _logger.info("action=auto_save_business_id mode=%s business_id=%s name=%s units=%d", mode, bid, bname, len(units))
+            _logger.info("action=auto_save_business_id mode=%s business_id=%s name=%s units=%d active_gateways=%s", mode, bid, bname, len(units), active_gateways)
+            
+            # Save active_gateways if present in ping response
+            if active_gateways:
+                gateways_str = active_gateways if isinstance(active_gateways, str) else ','.join(active_gateways)
+                ICP.set_param('cloudrefit_invoicing.active_gateways', gateways_str)
             
             self._cr_set_param(biz_param, str(bid))
             ICP.set_param(biz_param, str(bid))

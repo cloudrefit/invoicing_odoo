@@ -176,7 +176,11 @@ class ZatcaApiClient(models.AbstractModel):
         # Build the payload — reuse _build_zatca_payload logic
         try:
             payload = move._build_zatca_payload()
-        except Exception as e:
+            _logger.warning(
+                "action=upsert_invoice_for_checkout invoice_id=%s error=unexpected reason=%s",
+                move.id, str(e),
+            )
+            return False
             _logger.warning(
                 "action=upsert_invoice_for_checkout invoice_id=%s error=payload_build_failed reason=%s",
                 move.id, str(e),
@@ -220,3 +224,78 @@ class ZatcaApiClient(models.AbstractModel):
                 move.id, str(e),
             )
             return False
+
+    @api.model
+    def create_checkout_session(self, move, gateway='streampay'):
+        """Create a checkout session via POST /payments/invoices/:uuid/checkout.
+
+        Args:
+            move: An account.move record to create a checkout session for.
+            gateway: The payment gateway identifier (e.g. 'streampay', 'tamara').
+
+        Returns:
+            dict: The JSON response from the gateway, expected to contain 'redirect_url'.
+
+        Raises:
+            UserError: If credentials are missing or the request fails.
+        """
+        creds = move.with_company(move.company_id)._get_zatca_credentials()
+        mode = 'live'
+        business_id = creds.get(f'business_id_{mode}')
+        gateway_url = creds.get(f'gateway_url_{mode}')
+        api_key = creds.get('api_key')
+
+        if not business_id or not gateway_url or not api_key:
+            raise UserError(
+                'CloudRefit Gateway is not fully configured for company "%s". '
+                'Please go to Settings → CloudRefit ZATCA.'
+                % creds.get('company_name', 'Unknown')
+            )
+
+        odoo_url = self._get_base_url()
+        headers = {
+            'X-API-Key': api_key,
+            'X-Mode': mode.upper(),
+            'X-Connector-URL': odoo_url,
+            'X-Integration-URL': odoo_url,
+            'Content-Type': 'application/json',
+        }
+
+        zatca_uuid = move.zatca_uuid
+        url = f"{gateway_url.rstrip('/')}/api/v1/payments/invoices/{zatca_uuid}/checkout"
+        payload = {'gateway': gateway}
+
+        _logger.info(
+            "action=create_checkout_session invoice_id=%s business_id=%s gateway=%s url=%s",
+            move.id, business_id, gateway, url,
+        )
+
+        try:
+            response = requests.post(url, json=payload, headers=headers, timeout=30)
+            response.raise_for_status()
+            result = response.json()
+            _logger.info(
+                "action=create_checkout_session invoice_id=%s gateway=%s redirect_url=%s",
+                move.id, gateway, result.get('redirect_url'),
+            )
+            return result
+        except requests.exceptions.RequestException as e:
+            error_msg = str(e)
+            _logger.warning(
+                "action=create_checkout_session invoice_id=%s gateway=%s error=http_request_failed reason=%s",
+                move.id, gateway, error_msg,
+            )
+            # Try to extract more specific error from response body
+            if hasattr(e, 'response') and e.response is not None:
+                try:
+                    body = e.response.json()
+                    error_msg = body.get('message') or body.get('error') or error_msg
+                except Exception:
+                    pass
+            raise UserError(f'Payment gateway request failed: {error_msg}')
+        except Exception as e:
+            _logger.warning(
+                "action=create_checkout_session invoice_id=%s gateway=%s error=unexpected reason=%s",
+                move.id, gateway, str(e),
+            )
+            raise UserError(f'Payment gateway error: {str(e)}')

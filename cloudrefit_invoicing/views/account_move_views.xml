@@ -48,14 +48,23 @@
                         icon="fa-flask"
                         invisible="not is_zatca_sandbox_allowed or move_type not in ('out_invoice', 'out_refund') or state != 'posted' or zatca_status in ('reported', 'cleared') or cloudrefit_push_blocked or cloudrefit_show_push_modal or not is_cloudrefit_sandbox_enabled_for_company"/>
                         
-                <!-- Share Invoice Button -->
-                <button name="%(action_cloudrefit_payment_link_wizard)d"
-                        string="Share Invoice"
-                        type="action"
-                        class="btn-secondary"
-                        icon="fa-link"
-                        context="{'action_type': 'generate'}"
-                        invisible="move_type not in ('out_invoice', 'out_refund') or state not in ('draft', 'posted') or payment_state in ('paid', 'in_payment', 'reversed') or cloudrefit_payment_link_url"/>
+                <field name="cloudrefit_active_gateways" invisible="1"/>
+
+                <!-- Pay via StreamPay Button -->
+                <button name="action_pay_via_streampay"
+                        string="Pay via StreamPay"
+                        type="object"
+                        class="btn-primary"
+                        icon="fa-credit-card"
+                        invisible="move_type not in ('out_invoice', 'out_refund') or state not in ('draft', 'posted') or payment_state in ('paid', 'in_payment', 'reversed') or not cloudrefit_active_gateways or 'streampay' not in cloudrefit_active_gateways"/>
+
+                <!-- Pay via Tamara Button -->
+                <button name="action_pay_via_tamara"
+                        string="Pay via Tamara"
+                        type="object"
+                        class="btn-success"
+                        icon="fa-credit-card"
+                        invisible="move_type not in ('out_invoice', 'out_refund') or state not in ('draft', 'posted') or payment_state in ('paid', 'in_payment', 'reversed') or not cloudrefit_active_gateways or 'tamara' not in cloudrefit_active_gateways"/>
 
                 <!-- Urgent Sandbox Test Button -->
                 <button name="action_push_to_sandbox_zatca"
@@ -168,27 +177,20 @@
                 </group>
             </xpath>
 
-            <!-- Payment Link Banner below the invoice header (above lines) -->
+            <!-- Payment Link Info (legacy display — no regenerate button) -->
             <xpath expr="//field[@name='invoice_line_ids']" position="before">
                 <div class="alert alert-success mb-3 d-flex align-items-center gap-3"
                      invisible="not cloudrefit_payment_link_url"
                      style="border-left: 4px solid #28a745;">
                     <i class="fa fa-qrcode fa-2x text-success mr-3"/>
                     <div class="flex-grow-1">
-                        <strong>Invoice Share Link Ready: </strong>
+                        <strong>Invoice Share Link: </strong>
                         <field name="cloudrefit_payment_link_url" widget="url" readonly="1" class="d-inline"/>
                     </div>
                     <field name="cloudrefit_payment_link_qr" widget="image"
                            invisible="not cloudrefit_payment_link_url"
                            options="{'size': [80, 80]}"
                            class="ml-auto border rounded p-1"/>
-                    <button name="%(action_cloudrefit_payment_link_wizard_regenerate)d"
-                            string="Refresh Link"
-                            type="action"
-                            class="btn btn-sm btn-outline-success ml-2"
-                            icon="fa-refresh"
-                            context="{'action_type': 'regenerate'}"
-                            invisible="move_type not in ('out_invoice', 'out_refund') or state not in ('draft', 'posted') or payment_state in ('paid', 'in_payment', 'reversed')"/>
                 </div>
             </xpath>
         </field>
