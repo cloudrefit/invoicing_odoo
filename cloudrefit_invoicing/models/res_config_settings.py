@@ -694,9 +694,10 @@ class ResConfigSettings(models.TransientModel):
             
             _logger.info("action=auto_save_business_id mode=%s business_id=%s name=%s units=%d active_gateways=%s", mode, bid, bname, len(units), active_gateways)
             
-            # Always save — even empty list clears stale values
-            gateways_str = active_gateways if isinstance(active_gateways, str) else ','.join(active_gateways)
-            ICP.set_param('cloudrefit_invoicing.active_gateways', gateways_str)
+            # Save active_gateways if present in ping response
+            if active_gateways:
+                gateways_str = active_gateways if isinstance(active_gateways, str) else ','.join(active_gateways)
+                ICP.set_param('cloudrefit_invoicing.active_gateways', gateways_str)
             
             self._cr_set_param(biz_param, str(bid))
             ICP.set_param(biz_param, str(bid))
