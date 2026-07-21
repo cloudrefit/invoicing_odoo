@@ -162,8 +162,8 @@ class ZatcaApiClient(models.AbstractModel):
         """
         creds = move.with_company(move.company_id)._get_zatca_credentials()
         mode = 'live'  # Payment links always use live mode
-        business_id = creds.get(f'business_id_{mode}')
-        gateway_url = creds.get(f'gateway_url_{mode}')
+        business_id = creds.get('business_id')
+        gateway_url = creds.get('gateway_url')
         api_key = creds.get('api_key')
 
         if not business_id or not gateway_url or not api_key:
