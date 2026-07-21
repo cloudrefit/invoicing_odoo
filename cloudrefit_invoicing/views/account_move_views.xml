@@ -56,7 +56,7 @@
                         type="object"
                         class="btn-primary"
                         icon="fa-credit-card"
-                        invisible="state not in ('draft', 'posted')"/>
+                        invisible="state not in ('draft', 'posted') or not cloudrefit_active_gateways or cloudrefit_active_gateways == ''"/>
 
                 <!-- Pay by Tamara Button -->
                 <button name="action_pay_via_tamara"
@@ -65,7 +65,7 @@
                         class="btn-success"
                         icon="fa-credit-card"
                         translate="True"
-                        invisible="state not in ('draft', 'posted')"/>
+                        invisible="state not in ('draft', 'posted') or not cloudrefit_active_gateways or cloudrefit_active_gateways == ''"/>
 
                 <!-- Urgent Sandbox Test Button -->
                 <button name="action_push_to_sandbox_zatca"
