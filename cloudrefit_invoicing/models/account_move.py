@@ -114,12 +114,6 @@ class AccountMove(models.Model):
              'Leave checked to follow the business-level default.'
     )
 
-    cloudrefit_active_gateways = fields.Char(
-        string='Active Payment Gateways',
-        compute='_compute_cloudrefit_active_gateways',
-        help='Comma-separated list of active payment gateways from the platform, e.g. "streampay,tamara"'
-    )
-
     is_zatca_push_allowed = fields.Boolean(
         compute='_compute_is_zatca_push_allowed', string="Is ZATCA Push Allowed",
         help="Whether this invoice meets all conditions to be pushed to ZATCA"
@@ -270,13 +264,6 @@ class AccountMove(models.Model):
                 move.cloudrefit_payment_link_due_amount = 0.0
             else:
                 move.cloudrefit_payment_link_due_amount = move.amount_residual
-
-    def _compute_cloudrefit_active_gateways(self):
-        """Read active gateways from ir.config_parameter (populated from ping response)."""
-        ICP = self.env['ir.config_parameter'].sudo()
-        gateways = ICP.get_param('cloudrefit_invoicing.active_gateways', '')
-        for move in self:
-            move.cloudrefit_active_gateways = gateways
 
     # -----------------------------------------------------------
     #  SANDBOX ZATCA SUBMISSION
@@ -1072,37 +1059,6 @@ class AccountMove(models.Model):
             'url': payment_url,
             'target': 'new',
         }
-
-    # -----------------------------------------------------------
-    #  PAYMENT GATEWAY BUTTONS (V2)
-    # -----------------------------------------------------------
-    def action_pay_via_gateway(self, gateway='streampay'):
-        """Redirect to the Odoo controller that handles upsert + checkout + gateway redirect.
-
-        This is called by gateway-specific buttons in the invoice form toolbar.
-        Returns an action that opens the controller URL in a new tab.
-        """
-        self.ensure_one()
-
-        if self.state not in ('draft', 'posted'):
-            raise UserError(_('Payment links can only be generated for draft or posted invoices.'))
-
-        if not self.zatca_uuid:
-            raise UserError(_('This invoice does not have a ZATCA UUID yet.'))
-
-        return {
-            'type': 'ir.actions.act_url',
-            'url': f"/cloudrefit/pay/{self.zatca_uuid}?gateway={gateway}",
-            'target': 'new',
-        }
-
-    def action_pay_via_streampay(self):
-        """Wrapper button action — Pay via StreamPay."""
-        return self.action_pay_via_gateway('streampay')
-
-    def action_pay_via_tamara(self):
-        """Wrapper button action — Pay via Tamara."""
-        return self.action_pay_via_gateway('tamara')
 
     def action_zatca_refresh_status(self):
         """Manually poll the gateway for the status of a pending invoice job."""

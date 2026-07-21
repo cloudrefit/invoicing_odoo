@@ -7,9 +7,8 @@
             <!-- Fetch from context for sandbox, otherwise from invoice model -->
             <t t-set="render_qr" t-value="env.context.get('sandbox_qr_code') or o.zatca_qr_code"/>
             <t t-set="render_hash" t-value="env.context.get('sandbox_hash') or o.zatca_hash"/>
-            <t t-set="pay_url" t-value="o.zatca_uuid and ('/cloudrefit/pay/' + o.zatca_uuid + '?gateway=streampay') or o.cloudrefit_payment_link_url"/>
             
-            <div t-if="pay_url" class="row mt-4 pt-3" id="zatca_payment_link" style="border-top: 1px solid #eee;">
+            <div t-if="o.cloudrefit_payment_link_url" class="row mt-4 pt-3" id="zatca_payment_link" style="border-top: 1px solid #eee;">
                 <div class="col-3 text-center">
                     <t t-if="o.cloudrefit_payment_link_qr">
                         <img t-attf-src="data:image/png;base64,{{ o.cloudrefit_payment_link_qr }}" style="width: 100px; height: 100px;" alt="Payment QR Code"/>
@@ -17,13 +16,13 @@
                 </div>
                 <div class="col-9 pt-2">
                     <p class="mb-1" style="font-size: 13px; font-weight: bold; color: #28a745;">
-                        <i class="fa fa-credit-card"/> Pay Now
+                        <i class="fa fa-credit-card"/> Scan to View &amp; Pay
                     </p>
                     <p class="mb-1" style="font-size: 11px;">
-                        Scan the QR code or click to pay:
+                        Scan the QR code or visit:
                     </p>
                     <p style="font-size: 10px; word-break: break-all;">
-                        <a t-att-href="pay_url" target="_blank">Pay Invoice</a>
+                        <a t-att-href="o.cloudrefit_payment_link_url" target="_blank"><t t-esc="o.cloudrefit_payment_link_url"/></a>
                     </p>
                 </div>
             </div>
