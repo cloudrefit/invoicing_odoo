@@ -114,13 +114,6 @@ class AccountMove(models.Model):
              'Leave checked to follow the business-level default.'
     )
 
-    cloudrefit_checkout_upserted = fields.Boolean(
-        string='Checkout Upserted',
-        default=False,
-        copy=False,
-        help='Whether this invoice has been upserted to the platform for checkout/payment purposes'
-    )
-
     cloudrefit_active_gateways = fields.Char(
         string='Active Payment Gateways',
         compute='_compute_cloudrefit_active_gateways',
@@ -1039,17 +1032,18 @@ class AccountMove(models.Model):
         if not self.zatca_uuid:
             raise UserError('Invoice does not have a ZATCA UUID. Please post the invoice first.')
 
-        # If the invoice is in draft state, upsert it to the platform first so the
-        # print-invoice page has the latest data before the customer views it.
-        # The cloudrefit_checkout_upserted flag prevents re-calling upsert on
-        # repeated "Generate Payment Link" clicks for the same invoice.
-        if self.state != 'posted' and not self.cloudrefit_checkout_upserted:
-            api_client = self.env['cloudrefit.zatca.api.client']
+        if self.zatca_status not in ('reported', 'cleared'):
+            # Not yet successfully pushed to ZATCA — may not exist on the platform
+            # at all, or may have stale data. Always re-upsert to guarantee a
+            # valid, current record before building the link.
             try:
+                api_client = self.env['cloudrefit.zatca.api.client']
                 api_client.upsert_invoice_for_checkout(self)
-                self.cloudrefit_checkout_upserted = True
             except Exception:
-                pass  # Don't block link generation on upsert failure
+                raise UserError(_(
+                    'Failed to sync invoice data with the payment platform. '
+                    'Please check your CloudRefit connection in Settings and try again.'
+                ))
 
         # === Determine whether to show payment buttons ===
         # Layer 1: per-invoice field

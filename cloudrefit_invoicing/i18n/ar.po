@@ -960,3 +960,13 @@ msgstr "تحذير: يجب أن يكون رقم الهوية الوطنية 10 �
 #. module: cloudrefit_invoicing
 msgid "Warning: ZATCA VAT must be 15 digits starting and ending with 3."
 msgstr "تحذير: يجب أن يكون الرقم الضريبي لـ ZATCA مكوناً من 15 رقماً ويبدأ وينتهي بـ 3."
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_move_form_zatca
+msgid "Payment Link"
+msgstr "رابط الدفع"
+
+#. module: cloudrefit_invoicing
+#: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_move_form_zatca
+msgid "Copy Payment Link"
+msgstr "نسخ رابط الدفع"

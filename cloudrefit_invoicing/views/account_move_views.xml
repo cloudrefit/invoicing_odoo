@@ -49,9 +49,9 @@
                         icon="fa-flask"
                         invisible="not is_zatca_sandbox_allowed or move_type not in ('out_invoice', 'out_refund') or state != 'posted' or zatca_status in ('reported', 'cleared') or cloudrefit_push_blocked or cloudrefit_show_push_modal or not is_cloudrefit_sandbox_enabled_for_company"/>
                         
-                <!-- Share Invoice Button -->
+                <!-- Payment Link Button -->
                 <button name="%(action_cloudrefit_payment_link_wizard)d"
-                        string="Share Invoice"
+                        string="Payment Link"
                         type="action"
                         class="btn-secondary"
                         icon="fa-link"
@@ -184,7 +184,7 @@
                            options="{'size': [80, 80]}"
                            class="ml-auto border rounded p-1"/>
                     <button name="%(action_cloudrefit_payment_link_wizard_regenerate)d"
-                            string="Refresh Link"
+                            string="Copy Payment Link"
                             type="action"
                             class="btn btn-sm btn-outline-success ml-2"
                             icon="fa-refresh"
