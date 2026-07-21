@@ -114,6 +114,13 @@ class AccountMove(models.Model):
              'Leave checked to follow the business-level default.'
     )
 
+    cloudrefit_checkout_upserted = fields.Boolean(
+        string='Checkout Upserted',
+        default=False,
+        copy=False,
+        help='Whether this invoice has been upserted to the platform for checkout/payment purposes'
+    )
+
     is_zatca_push_allowed = fields.Boolean(
         compute='_compute_is_zatca_push_allowed', string="Is ZATCA Push Allowed",
         help="Whether this invoice meets all conditions to be pushed to ZATCA"
@@ -1022,9 +1029,15 @@ class AccountMove(models.Model):
 
         # If the invoice is in draft state, upsert it to the platform first so the
         # print-invoice page has the latest data before the customer views it.
-        if self.state != 'posted':
+        # The cloudrefit_checkout_upserted flag prevents re-calling upsert on
+        # repeated "Generate Payment Link" clicks for the same invoice.
+        if self.state != 'posted' and not self.cloudrefit_checkout_upserted:
             api_client = self.env['cloudrefit.zatca.api.client']
-            api_client.upsert_invoice_for_checkout(self)
+            try:
+                api_client.upsert_invoice_for_checkout(self)
+                self.cloudrefit_checkout_upserted = True
+            except Exception:
+                pass  # Don't block link generation on upsert failure
 
         # === Determine whether to show payment buttons ===
         # Layer 1: per-invoice field
