@@ -153,11 +153,12 @@ class ZatcaApiClient(models.AbstractModel):
         so the platform has the latest draft data before the customer views
         the print-invoice page.
 
-        Args:
-            move: An account.move record to upsert.
+        Raises:
+            UserError: If Gateway credentials are missing, the payload cannot
+                       be built, or the HTTP request fails.
 
         Returns:
-            bool: True if the upsert succeeded, False otherwise (non-blocking).
+            bool: True if the upsert succeeded.
         """
         creds = move.with_company(move.company_id)._get_zatca_credentials()
         mode = 'live'  # Payment links always use live mode
@@ -171,7 +172,11 @@ class ZatcaApiClient(models.AbstractModel):
                 "business_id=%s gateway_url=%s api_key=%s",
                 move.id, bool(business_id), bool(gateway_url), bool(api_key),
             )
-            return False
+            raise UserError(
+                'CloudRefit Gateway is not fully configured.\n\n'
+                'Please go to Settings → CloudRefit ZATCA and configure '
+                'Gateway URL, Business ID, and API Key.'
+            )
 
         # Build the payload — reuse _build_zatca_payload logic
         try:
@@ -181,7 +186,11 @@ class ZatcaApiClient(models.AbstractModel):
                 "action=upsert_invoice_for_checkout invoice_id=%s error=payload_build_failed reason=%s",
                 move.id, str(e),
             )
-            return False
+            raise UserError(
+                'Failed to build the invoice payload for CloudRefit Gateway.\n\n'
+                'Please check the invoice data and try again. If the problem '
+                'persists, contact CloudRefit support.'
+            ) from e
 
         odoo_url = self._get_base_url()
         headers = {
@@ -213,10 +222,17 @@ class ZatcaApiClient(models.AbstractModel):
                 "action=upsert_invoice_for_checkout invoice_id=%s error=http_request_failed reason=%s",
                 move.id, str(e),
             )
-            return False
+            raise UserError(
+                'Failed to send invoice to CloudRefit Gateway.\n\n'
+                f'Details: {e}'
+            ) from e
         except Exception as e:
             _logger.warning(
                 "action=upsert_invoice_for_checkout invoice_id=%s error=unexpected reason=%s",
                 move.id, str(e),
             )
-            return False
+            raise UserError(
+                'An unexpected error occurred while sending the invoice '
+                'to CloudRefit Gateway.\n\n'
+                f'Details: {e}'
+            ) from e
