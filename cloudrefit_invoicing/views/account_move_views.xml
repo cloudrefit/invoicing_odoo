@@ -21,6 +21,7 @@
                 <field name="cloudrefit_push_blocked" invisible="1"/>
                 <field name="is_cloudrefit_live_enabled_for_company" invisible="1"/>
                 <field name="is_cloudrefit_sandbox_enabled_for_company" invisible="1"/>
+                <field name="cloudrefit_active_gateways" invisible="1"/>
                 
                 <!-- Live Push Button -->
                 <button name="action_zatca_sign"
@@ -55,7 +56,7 @@
                         class="btn-secondary"
                         icon="fa-link"
                         context="{'action_type': 'generate'}"
-                        invisible="move_type not in ('out_invoice', 'out_refund') or state not in ('draft', 'posted') or payment_state in ('paid', 'in_payment', 'reversed') or cloudrefit_payment_link_url"/>
+                        invisible="move_type not in ('out_invoice', 'out_refund') or state not in ('draft', 'posted') or payment_state in ('paid', 'in_payment', 'reversed') or cloudrefit_payment_link_url or not cloudrefit_active_gateways"/>
 
                 <!-- Urgent Sandbox Test Button -->
                 <button name="action_push_to_sandbox_zatca"
@@ -188,7 +189,7 @@
                             class="btn btn-sm btn-outline-success ml-2"
                             icon="fa-refresh"
                             context="{'action_type': 'regenerate'}"
-                            invisible="move_type not in ('out_invoice', 'out_refund') or state not in ('draft', 'posted') or payment_state in ('paid', 'in_payment', 'reversed')"/>
+                            invisible="move_type not in ('out_invoice', 'out_refund') or state not in ('draft', 'posted') or payment_state in ('paid', 'in_payment', 'reversed') or not cloudrefit_active_gateways"/>
                 </div>
             </xpath>
         </field>

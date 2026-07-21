@@ -59,6 +59,10 @@
                             <div class="text-muted">Business Name auto-populated from gateway.</div>
                         </setting>
                         <setting>
+                            <field name="cloudrefit_active_gateways" readonly="1"/>
+                            <div class="text-muted">Active payment gateways synced from the platform.</div>
+                        </setting>
+                        <setting>
                             <button name="action_test_connection_all" type="object" string="Test Connection (All Modes)" class="btn btn-primary"/>
                             <div class="text-muted">Tests both Live and Sandbox connectivity using the credentials above.</div>
                         </setting>

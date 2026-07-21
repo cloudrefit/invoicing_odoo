@@ -121,6 +121,18 @@ class AccountMove(models.Model):
         help='Whether this invoice has been upserted to the platform for checkout/payment purposes'
     )
 
+    cloudrefit_active_gateways = fields.Char(
+        string='Active Payment Gateways',
+        compute='_compute_cloudrefit_active_gateways',
+        help='Comma-separated list of active payment gateways from the platform',
+    )
+
+    def _compute_cloudrefit_active_gateways(self):
+        ICP = self.env['ir.config_parameter'].sudo()
+        gateways = ICP.get_param('cloudrefit_invoicing.active_gateways', '')
+        for move in self:
+            move.cloudrefit_active_gateways = gateways
+
     is_zatca_push_allowed = fields.Boolean(
         compute='_compute_is_zatca_push_allowed', string="Is ZATCA Push Allowed",
         help="Whether this invoice meets all conditions to be pushed to ZATCA"

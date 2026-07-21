@@ -105,6 +105,19 @@ class ResConfigSettings(models.TransientModel):
         readonly=True,
     )
 
+    cloudrefit_active_gateways = fields.Char(
+        string='Active Payment Gateways',
+        compute='_compute_cloudrefit_active_gateways',
+        readonly=True,
+        help='Comma-separated list of active payment gateways from the platform, synced via ping',
+    )
+
+    def _compute_cloudrefit_active_gateways(self):
+        ICP = self.env['ir.config_parameter'].sudo()
+        gateways = ICP.get_param('cloudrefit_invoicing.active_gateways', '')
+        for record in self:
+            record.cloudrefit_active_gateways = gateways
+
     # === Toggle Enable Fields (readonly until credentials + connection complete) ===
     can_enable_live = fields.Boolean(
         compute='_compute_can_enable_live',
@@ -690,6 +703,12 @@ class ResConfigSettings(models.TransientModel):
             units_json = json.dumps(units)
             self._cr_set_param(units_key, units_json)
             ICP.set_param(units_key, units_json)
+            
+            # Save active_gateways if present in ping response
+            active_gateways = response_data.get('active_gateways', [])
+            if isinstance(active_gateways, list):
+                gateways_str = ','.join(active_gateways)
+                ICP.set_param('cloudrefit_invoicing.active_gateways', gateways_str)
             
             # Check if current selected unit is still valid
             current_unit = self._cr_get_param(f'cloudrefit_invoicing.unit_id_{mode}')
