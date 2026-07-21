@@ -181,6 +181,7 @@ class ZatcaApiClient(models.AbstractModel):
         # Build the payload — reuse _build_zatca_payload logic
         try:
             payload = move._build_zatca_payload()
+            payload['business_id'] = business_id
         except Exception as e:
             _logger.warning(
                 "action=upsert_invoice_for_checkout invoice_id=%s error=payload_build_failed reason=%s",
