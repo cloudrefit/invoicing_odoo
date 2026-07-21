@@ -50,12 +50,11 @@
                         invisible="not is_zatca_sandbox_allowed or move_type not in ('out_invoice', 'out_refund') or state != 'posted' or zatca_status in ('reported', 'cleared') or cloudrefit_push_blocked or cloudrefit_show_push_modal or not is_cloudrefit_sandbox_enabled_for_company"/>
                         
                 <!-- Payment Link Button -->
-                <button name="%(action_cloudrefit_payment_link_wizard)d"
+                <button name="action_generate_payment_link"
                         string="Payment Link"
-                        type="action"
+                        type="object"
                         class="btn-secondary"
                         icon="fa-link"
-                        context="{'action_type': 'generate'}"
                         invisible="move_type not in ('out_invoice', 'out_refund') or state not in ('draft', 'posted') or payment_state in ('paid', 'in_payment', 'reversed') or cloudrefit_payment_link_url or not cloudrefit_active_gateways"/>
 
                 <!-- Urgent Sandbox Test Button -->
@@ -183,12 +182,11 @@
                            invisible="not cloudrefit_payment_link_url"
                            options="{'size': [80, 80]}"
                            class="ml-auto border rounded p-1"/>
-                    <button name="%(action_cloudrefit_payment_link_wizard_regenerate)d"
+                    <button name="action_generate_payment_link"
                             string="Copy Payment Link"
-                            type="action"
+                            type="object"
                             class="btn btn-sm btn-outline-success ml-2"
                             icon="fa-refresh"
-                            context="{'action_type': 'regenerate'}"
                             invisible="move_type not in ('out_invoice', 'out_refund') or state not in ('draft', 'posted') or payment_state in ('paid', 'in_payment', 'reversed') or not cloudrefit_active_gateways"/>
                 </div>
             </xpath>

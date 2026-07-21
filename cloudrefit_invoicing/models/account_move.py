@@ -997,47 +997,14 @@ class AccountMove(models.Model):
             except Exception as e:
                 _logger.error("action=retry_poll_error invoice_id=%s error=%s", move.id, str(e))
 
-    def action_generate_payment_link(self, amount=None, include_payment_buttons=True):
-        """Generates an invoice share link — constructs the invoice page URL locally.
-
-        Instead of calling the Gateway API, this method deterministically constructs
-        the invoice page URL from the gateway base URL, locale, business ID, and ZATCA UUID.
-
-        Args:
-            amount: Optional payment amount (kept for wizard compatibility,
-                    no longer used in URL construction).
-            include_payment_buttons: When False, appends ?nopayment=1 to hide payment buttons.
-        """
+    def action_generate_payment_link(self):
+        """Generate payment link, show notification, and open in new tab."""
         self.ensure_one()
 
-        # Only allow draft or posted invoices for payment link generation
-        if self.state not in ('draft', 'posted'):
-            raise UserError(
-                _('Payment links can only be generated for draft or posted invoices.')
-            )
-
-        creds = self.with_company(self.company_id)._get_zatca_credentials()
-        exec_mode = 'live'  # Payment links always use live mode
-        business_id = creds.get(f'business_id_{exec_mode}')
-        gateway_url = creds.get(f'gateway_url_{exec_mode}')
-        dashboard_url = creds.get('dashboard_url')
-
-        if not business_id:
-            raise UserError(
-                'CloudRefit ZATCA Business ID is not configured for company '
-                '"%s". Please configure it in Settings \u2192 CloudRefit ZATCA.'
-                % creds['company_name']
-            )
-
-        if not self.zatca_uuid:
-            raise UserError('Invoice does not have a ZATCA UUID. Please post the invoice first.')
-
+        # Upsert if not yet on platform
         if self.zatca_status not in ('reported', 'cleared'):
-            # Not yet successfully pushed to ZATCA — may not exist on the platform
-            # at all, or may have stale data. Always re-upsert to guarantee a
-            # valid, current record before building the link.
+            api_client = self.env['cloudrefit.zatca.api.client']
             try:
-                api_client = self.env['cloudrefit.zatca.api.client']
                 api_client.upsert_invoice_for_checkout(self)
             except Exception:
                 raise UserError(_(
@@ -1045,37 +1012,37 @@ class AccountMove(models.Model):
                     'Please check your CloudRefit connection in Settings and try again.'
                 ))
 
-        # === Determine whether to show payment buttons ===
-        # Layer 1: per-invoice field
-        show_buttons = self.cloudrefit_show_payment_buttons
-        if show_buttons is None or show_buttons:  # default True
-            # Layer 2: business-level default from ir.config_parameter
-            auto_include = self.env['ir.config_parameter'].sudo().get_param(
-                'cloudrefit_invoicing.auto_include_payment_buttons', 'True'
-            )
-            show_buttons = auto_include != 'False'
+        # Build link
+        creds = self.with_company(self.company_id)._get_zatca_credentials()
+        dashboard_url = creds.get('dashboard_url', '')
+        if not dashboard_url:
+            raise UserError(_('Dashboard URL is not configured in CloudRefit settings.'))
 
-        # Get locale from config, default to 'en'
-        locale = self.env['ir.config_parameter'].sudo().get_param('cloudrefit_invoicing.locale', 'en')
+        business_id = creds.get('business_id', '')
+        if not business_id:
+            raise UserError(_('Business ID is not configured in CloudRefit settings.'))
 
-        # Construct the invoice page URL deterministically — no API call needed
-        # NOTE: Uses dashboard_url (not gateway_url) because the print-invoice page
-        # is served by the dashboard frontend, not the API gateway.
-        payment_url = f"{dashboard_url.rstrip('/')}/{locale}/print-invoice/{business_id}/{self.zatca_uuid}"
+        locale = self.env.context.get('lang', 'en_US')[:2]
+        link = f"{dashboard_url.rstrip('/')}/{locale}/print-invoice/{business_id}/{self.zatca_uuid}"
 
-        if not show_buttons:
-            payment_url += '?nopayment=1'
+        self.write({'cloudrefit_payment_link_url': link})
 
-        _logger.info(
-            "action=generate_payment_link invoice_id=%s business_id=%s url=%s include_payment_buttons=%s",
-            self.id, business_id, payment_url, show_buttons,
+        # Show success notification via bus
+        self.env['bus.bus']._sendone(
+            self.env.user.partner_id,
+            'simple_notification',
+            {
+                'type': 'success',
+                'title': _('Payment Link'),
+                'message': _('Payment link generated. Opening in new tab...'),
+                'sticky': False,
+            }
         )
 
-        self.write({'cloudrefit_payment_link_url': payment_url})
-
+        # Open link in new tab
         return {
             'type': 'ir.actions.act_url',
-            'url': payment_url,
+            'url': link,
             'target': 'new',
         }
 

@@ -970,3 +970,9 @@ msgstr "رابط الدفع"
 #: model:ir.ui.view,arch_db:cloudrefit_invoicing.view_move_form_zatca
 msgid "Copy Payment Link"
 msgstr "نسخ رابط الدفع"
+
+#. module: cloudrefit_invoicing
+#: code:addons/cloudrefit_invoicing/models/account_move.py:0
+#, python-format
+msgid "Payment link generated. Opening in new tab..."
+msgstr "تم إنشاء رابط الدفع. جاري الفتح في علامة تبويب جديدة..."
