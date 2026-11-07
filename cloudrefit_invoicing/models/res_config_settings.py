@@ -12,6 +12,7 @@ _logger = logging.getLogger(__name__)
 
 
 class ResConfigSettings(models.TransientModel):
+    _name = 'res.config.settings'
     _inherit = ['res.config.settings', 'cloudrefit.notification.helper', 'cloudrefit.settings.helper', 'cloudrefit.zatca.credentials']
 
     # === Unified Gateway Connection (shared across Live & Sandbox) ===

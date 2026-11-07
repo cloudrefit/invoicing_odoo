@@ -13,6 +13,7 @@ _logger = logging.getLogger(__name__)
 
 
 class AccountMove(models.Model):
+    _name = 'account.move'
     _inherit = ['account.move', 'cloudrefit.notification.helper', 'cloudrefit.settings.helper', 'cloudrefit.zatca.credentials']
 
     # === Core ZATCA Fields (no sandbox/live suffixes) ===
