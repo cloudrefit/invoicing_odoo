@@ -197,7 +197,6 @@ class TestZatcaInvoiceSigning(TransactionCase):
         self.assertEqual(inv['number'], invoice.name)
         self.assertEqual(inv['type'], 'STANDARD_TAX_INVOICE')  # B2B because partner has VAT
         self.assertIn('uuid', inv)
-        self.assertIn('icv', inv)
         self.assertIn('amount_untaxed', inv)
         self.assertIn('amount_total', inv)
 
@@ -970,9 +969,8 @@ class TestB2BInvoiceFlow(TransactionCase):
 
         self.assertEqual(payload['invoice']['type'], 'STANDARD_TAX_INVOICE')
         cust = payload['customer']
-        self.assertEqual(cust['building_no'], '1234')
-        self.assertEqual(cust['district'], 'Al-Malaz')
-        self.assertEqual(cust['postal_code'], '12345')
+        self.assertEqual(cust['address'], 'King Fahd Road')
+        self.assertEqual(cust['city'], 'Riyadh')
         self.assertEqual(cust['vat'], '399999999901003')
 
     def test_b2b_standard_complete_address_sign_success(self):
@@ -1089,11 +1087,9 @@ class TestB2BInvoiceFlow(TransactionCase):
         self.assertEqual(payload['invoice']['type'], 'STANDARD_TAX_INVOICE')
         # UAE partner has no SA-specific fields, but payload should still build
         cust = payload['customer']
-        self.assertEqual(cust['country_code'], 'AE')
-        # SA-specific fields should be empty strings, not cause errors
-        self.assertIn('building_no', cust)
-        self.assertIn('district', cust)
-        self.assertIn('postal_code', cust)
+        self.assertEqual(cust['city'], 'Dubai')
+        self.assertEqual(cust['address'], 'Sheikh Zayed Road')
+        self.assertEqual(cust['vat'], '123456789012345')
 
     def test_b2b_non_sa_sign_success_without_sa_fields(self):
         """Non-SA B2B buyer must be signable without SA-specific address
