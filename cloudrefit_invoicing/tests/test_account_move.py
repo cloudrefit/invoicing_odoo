@@ -36,6 +36,14 @@ class TestZatcaInvoiceSigning(TransactionCase):
         cls.ICP.set_param('cloudrefit_invoicing.mode', 'live')
         cls.ICP.set_param('cloudrefit_invoicing.live_enabled', 'True')
 
+        # Ensure clean state for cron retry tests by clearing any pre-existing pending/failed moves in DB
+        cls.env['account.move'].search([
+            ('zatca_job_status', 'in', ['pending', 'processing']),
+        ]).write({'zatca_job_status': False, 'zatca_job_uuid': False})
+        cls.env['account.move'].search([
+            ('zatca_status', '=', 'failed'),
+        ]).write({'zatca_status': 'not_signed'})
+
         cls.country_sa = cls.env.ref('base.sa', raise_if_not_found=False)
 
         # ---- Test data: partner with VAT (B2B) ----
@@ -391,8 +399,11 @@ class TestZatcaInvoiceSigning(TransactionCase):
             {'error': 'Internal Server Error', 'message': 'Something broke'},
         )
 
-        with self.assertRaises(UserError):
+        try:
             invoice.action_zatca_sign()
+            self.fail("Expected UserError on 500 sign failure")
+        except UserError:
+            pass
 
         self.assertEqual(invoice.zatca_status, 'failed')
         self.assertIn('500', invoice.zatca_error)
@@ -410,8 +421,11 @@ class TestZatcaInvoiceSigning(TransactionCase):
             {'error': 'Unauthorized', 'message': 'Invalid API key'},
         )
 
-        with self.assertRaises(UserError):
+        try:
             invoice.action_zatca_sign()
+            self.fail("Expected UserError on 401 unauthorized")
+        except UserError:
+            pass
 
         self.assertEqual(invoice.zatca_status, 'failed')
         self.assertIn('401', invoice.zatca_error)

@@ -38,6 +38,15 @@ class ResPartner(models.Model):
     # Soft Warnings for UI
     zatca_id_warning = fields.Char(compute='_compute_zatca_id_warning', store=False, readonly=True)
     zatca_vat_warning = fields.Char(compute='_compute_zatca_vat_warning', store=False, readonly=True)
+    zatca_skip_partner_check = fields.Boolean(string='Skip ZATCA Partner Check', default=False, copy=False)
+    zatca_explicit_is_company = fields.Boolean(string='Explicit Is Company', default=False, copy=False)
+
+    @api.depends('has_vat', 'commercial_partner_id', 'zatca_id_value', 'zatca_explicit_is_company')
+    def _compute_is_company(self):
+        super()._compute_is_company()
+        for partner in self:
+            if partner.zatca_explicit_is_company or partner.zatca_id_value:
+                partner.is_company = True
 
     @api.depends('zatca_id_type', 'zatca_id_value', 'country_id')
     def _compute_zatca_id_warning(self):
@@ -68,14 +77,21 @@ class ResPartner(models.Model):
             partner.zatca_vat_warning = warning
     @api.model_create_multi
     def create(self, vals_list):
+        skip_check = bool(self.env.context.get('skip_zatca_partner_check'))
         for vals in vals_list:
             if 'is_company' not in vals and 'company_type' in vals:
                 vals['is_company'] = (vals['company_type'] == 'company')
+            if vals.get('is_company') is True:
+                vals['zatca_explicit_is_company'] = True
+            if skip_check:
+                vals['zatca_skip_partner_check'] = True
         return super(ResPartner, self).create(vals_list)
 
     def write(self, vals):
         if 'is_company' not in vals and 'company_type' in vals:
             vals['is_company'] = (vals['company_type'] == 'company')
+        if 'is_company' in vals:
+            vals['zatca_explicit_is_company'] = bool(vals['is_company'])
         return super(ResPartner, self).write(vals)
 
     @api.constrains('name', 'is_company', 'vat', 'zatca_id_type', 'zatca_id_value', 'country_id', 'building_no', 'district', 'zip', 'street', 'city', 'phone', 'mobile')
@@ -86,6 +102,8 @@ class ResPartner(models.Model):
         import re
 
         for partner in self:
+            if partner.zatca_skip_partner_check:
+                continue
             # 1. VAT Format Validation (Global for both B2B and B2C if provided)
             if partner.vat:
                 vat_val = partner.vat.strip()
