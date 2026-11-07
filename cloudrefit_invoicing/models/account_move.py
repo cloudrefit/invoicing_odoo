@@ -969,7 +969,7 @@ class AccountMove(models.Model):
                 move_with_ctx = move.with_company(move.company_id)
                 creds = move_with_ctx._get_zatca_credentials()
                 exec_mode = move_with_ctx.zatca_exec_mode or move_with_ctx._resolve_mode()
-                business_id = creds.get(f'business_id_{exec_mode}')
+                business_id = creds.get(f'business_id_{exec_mode}') or creds.get('business_id') or creds.get('business_id')
                 if not business_id:
                     _logger.error("action=retry_poll invoice_id=%s company=%s mode=%s error=business_id_missing",
                                   move.id, creds['company_name'], exec_mode)
@@ -1050,7 +1050,7 @@ class AccountMove(models.Model):
         api_client = self.env['cloudrefit.zatca.api.client']
         creds = self._get_zatca_credentials()
         exec_mode = self.zatca_exec_mode or self._resolve_mode()
-        business_id = creds.get(f'business_id_{exec_mode}')
+        business_id = creds.get(f'business_id_{exec_mode}') or creds.get('business_id')
         
         reload_action = {'type': 'ir.actions.client', 'tag': 'reload'}
 
@@ -1124,7 +1124,7 @@ class AccountMove(models.Model):
                 move_with_ctx = move.with_company(move.company_id)
                 creds = move_with_ctx._get_zatca_credentials()
                 exec_mode = move_with_ctx.zatca_exec_mode or move_with_ctx._resolve_mode()
-                business_id = creds.get(f'business_id_{exec_mode}')
+                business_id = creds.get(f'business_id_{exec_mode}') or creds.get('business_id') or creds.get('business_id')
                 if not business_id:
                     continue
 
