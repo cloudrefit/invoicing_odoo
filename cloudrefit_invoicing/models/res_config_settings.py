@@ -599,7 +599,7 @@ class ResConfigSettings(models.TransientModel):
         biz_param = 'cloudrefit_invoicing.business_id'
         enable_param = f'cloudrefit_invoicing.{mode}_enabled'
         biz_field = 'cloudrefit_business_id'
-        enable_field = f'cloudrefit_{mode}_enabled'
+        enable_field = f'is_cloudrefit_{mode}_enabled'
         can_enable_field = f'can_enable_{mode}'
 
         ICP = self.env['ir.config_parameter'].sudo()

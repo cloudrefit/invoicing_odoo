@@ -3,3 +3,7 @@ BOM
 # Prevent accidental documentation commits — plans live in invoicing_platform
 docs/*
 plans/*
+
+__pycache__/
+*.pyc
+*.pyo
