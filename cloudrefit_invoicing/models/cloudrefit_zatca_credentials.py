@@ -68,6 +68,7 @@ _REQUIRED_BY_MODE = {
 
 class CloudrefitZatcaCredentials(models.AbstractModel):
     _name = 'cloudrefit.zatca.credentials'
+    _inherit = 'cloudrefit.settings.helper'
     _description = 'Centralized ZATCA Credential Resolution & Validation'
 
     # ------------------------------------------------------------------
