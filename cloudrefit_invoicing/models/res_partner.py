@@ -66,17 +66,13 @@ class ResPartner(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
-            if vals.get('company_type') == 'person':
-                vals['is_company'] = False
-            elif vals.get('company_type') == 'company':
-                vals['is_company'] = True
+            if 'is_company' not in vals and 'company_type' in vals:
+                vals['is_company'] = (vals['company_type'] == 'company')
         return super(ResPartner, self).create(vals_list)
 
     def write(self, vals):
-        if vals.get('company_type') == 'person':
-            vals['is_company'] = False
-        elif vals.get('company_type') == 'company':
-            vals['is_company'] = True
+        if 'is_company' not in vals and 'company_type' in vals:
+            vals['is_company'] = (vals['company_type'] == 'company')
         return super(ResPartner, self).write(vals)
 
     @api.constrains('vat', 'zatca_id_type', 'zatca_id_value', 'country_id', 'building_no', 'district', 'zip', 'street', 'city', 'phone')
@@ -93,7 +89,7 @@ class ResPartner(models.Model):
                         raise ValidationError("ZATCA VAT (Saudi Arabia) must be exactly 15 digits, starting and ending with '3'.")
 
             # 2. B2B Specific Validations
-            if partner.is_company and partner.company_type != 'person':
+            if partner.is_company:
                 has_vat = bool(partner.vat)
                 has_other_id = bool(partner.zatca_id_type and partner.zatca_id_value)
 
@@ -132,7 +128,7 @@ class ResPartner(models.Model):
                     )
 
             # 3. B2C (Person) Specific Validations
-            if not partner.is_company or partner.company_type == 'person':
+            if not partner.is_company:
                 has_mobile = hasattr(partner, 'mobile') and bool(partner.mobile)
                 has_phone = bool(partner.phone)
                 if not has_mobile and not has_phone:
