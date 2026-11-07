@@ -37,9 +37,14 @@ def migrate(cr, version):
 
     env = api.Environment(cr, SUPERUSER_ID, {})
 
-    from odoo.addons.cloudrefit_invoicing.data.migrate_legacy_credentials import (
-        run_migration,
-    )
+    try:
+        from odoo.addons.cloudrefit_invoicing.data.migrate_legacy_credentials import (
+            run_migration,
+        )
 
-    result = run_migration(env)
-    _logger.info("action=migration_complete result=%s", result)
+        result = run_migration(env)
+        _logger.info("action=migration_complete result=%s", result)
+    except (ImportError, ModuleNotFoundError):
+        _logger.info(
+            "action=migration_skipped reason=no_legacy_credentials_script"
+        )
