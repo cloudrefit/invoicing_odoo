@@ -22,7 +22,7 @@
                         Scan the QR code or visit:
                     </p>
                     <p style="font-size: 10px; word-break: break-all;">
-                        <a t-att-href="o.cloudrefit_payment_link_url" target="_blank"><t t-esc="o.cloudrefit_payment_link_url"/></a>
+                        <a t-att-href="o.cloudrefit_payment_link_url" target="_blank"><t t-out="o.cloudrefit_payment_link_url"/></a>
                     </p>
                 </div>
             </div>
@@ -40,7 +40,7 @@
                         </t>
                     </p>
                     <p class="small text-muted" style="font-size: 7px; word-break: break-all; opacity: 0.7;">
-                        <strong>Digital Hash:</strong> <t t-esc="render_hash"/>
+                        <strong>Digital Hash:</strong> <t t-out="render_hash"/>
                     </p>
                 </div>
             </div>
