@@ -1,6 +1,6 @@
-# CloudRefit ZATCA E-Invoicing Plugin for Odoo 19
+# CloudRefit ZATCA E-Invoicing Plugin for Odoo 20
 
-Automated ZATCA (Zakat, Tax and Customs Authority) e-invoicing compliance for Odoo 19 Community Edition.
+Automated ZATCA (Zakat, Tax and Customs Authority) e-invoicing compliance for Odoo 20 Community Edition.
 
 ## Features
 
@@ -17,7 +17,7 @@ Automated ZATCA (Zakat, Tax and Customs Authority) e-invoicing compliance for Od
 
 ## Prerequisites
 
-- Odoo 19 Community Edition
+- Odoo 20 Community Edition
 - Python 3.x
 - CloudRefit account with API keys (register at dashboard.cloudrefit.com)
 - Required Odoo modules: `account`, `base`
@@ -27,7 +27,7 @@ Automated ZATCA (Zakat, Tax and Customs Authority) e-invoicing compliance for Od
 ### Odoo.sh
 
 1. Connect this repository in your Odoo.sh dashboard
-2. Select the branch matching your Odoo version (e.g., `19.0`)
+2. Select the branch matching your Odoo version (e.g., `20.0`)
 3. Odoo.sh auto-detects and deploys the module
 
 ### Self-Hosted (Docker / Bare Metal)
@@ -36,7 +36,7 @@ Clone the repository and copy the module to your Odoo addons:
 
 ```bash
 # Clone the repo
-git clone -b 19.0 https://github.com/cloudrefit/invoicing_odoo.git /tmp/invoicing_odoo
+git clone -b 20.0 https://github.com/cloudrefit/invoicing_odoo.git /tmp/invoicing_odoo
 
 # Copy module to your Odoo addons
 sudo cp -r /tmp/invoicing_odoo/cloudrefit_invoicing /path/to/odoo/addons/
@@ -50,7 +50,7 @@ docker restart <container-name> # Docker
 Alternatively, clone directly into your addons path:
 
 ```bash
-git clone -b 19.0 https://github.com/cloudrefit/invoicing_odoo.git /path/to/odoo/addons/invoicing_odoo
+git clone -b 20.0 https://github.com/cloudrefit/invoicing_odoo.git /path/to/odoo/addons/invoicing_odoo
 ```
 
 Then in Odoo UI:
@@ -87,7 +87,7 @@ Then in Odoo UI:
 ### Self-Hosted
 ```bash
 cd /path/to/odoo/addons/cloudrefit_invoicing
-git pull origin 19.0
+git pull origin 20.0
 # Restart Odoo, then Apps → Upgrade module
 ```
 
@@ -96,7 +96,7 @@ Updates happen automatically on push to the branch.
 
 ## Versioning
 
-This module uses version format `19.0.{minor}.{commit_count}`. Run the build script to inject the git-derived commit count:
+This module uses version format `20.0.{minor}.{commit_count}`. Run the build script to inject the git-derived commit count:
 
 ```bash
 python scripts/build/build_plugin.py
@@ -108,6 +108,7 @@ python scripts/build/build_plugin.py
 - Email: support@cloudrefit.com
 
 ## Version History
+- **20.0.0.1** — Initial Odoo 20 compatibility release (jsonrpc routes, OWL 3 updates)
 - **19.0.1.0** — Git-based deployment; ZIP distribution deprecated
 - **19.0.1.2.0** — Major refactoring: security hardening, single-page activation, health indicator, sandbox testing module, 68 unit tests
 - **19.0.1.1.41** — Initial release with ZATCA compliance pipeline and setup wizard

@@ -8,7 +8,7 @@ _logger = logging.getLogger(__name__)
 
 class CloudRefitWebhookController(http.Controller):
 
-    @http.route('/cloudrefit/webhook', type='json', auth='none', methods=['POST'], csrf=False)
+    @http.route('/cloudrefit/webhook', type='jsonrpc', auth='none', methods=['POST'], csrf=False)
     def handle_webhook(self):
         """
         Receives webhook payloads from the CloudRefit Gateway.
@@ -89,7 +89,7 @@ class CloudRefitWebhookController(http.Controller):
             _logger.error("action=webhook_error error=update_failed business_id=%s invoice_id=%s error_msg=%s", business_id, move.id, str(e))
             return {'error': 'Internal server error processing payload'}
 
-    @http.route('/cloudrefit/api/invoice_status/<int:invoice_id>', type='json', auth='user')
+    @http.route('/cloudrefit/api/invoice_status/<int:invoice_id>', type='jsonrpc', auth='user')
     def get_invoice_status(self, invoice_id):
         """
         Internal API for the Javascript polling loop to fetch latest invoice status.

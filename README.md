@@ -3,7 +3,7 @@
 Seamlessly integrate Saudi Arabia's ZATCA e-invoicing compliance into your Odoo ERP.
 
 [![License: LGPL-3.0](https://img.shields.io/badge/License-LGPL--3.0-blue.svg)](LICENSE)
-[![Odoo Version](https://img.shields.io/badge/Odoo-19.0-8A2BE2)](https://www.odoo.com)
+[![Odoo Version](https://img.shields.io/badge/Odoo-20.0-8A2BE2)](https://www.odoo.com)
 
 ## Overview
 
@@ -25,7 +25,7 @@ This module connects your Odoo instance to the CloudRefit ZATCA Gateway, enablin
 
 ### Odoo.sh
 1. Connect this repository in your Odoo.sh dashboard
-2. Select the branch matching your Odoo version (e.g., `19.0`)
+2. Select the branch matching your Odoo version (e.g., `20.0`)
 3. Odoo.sh auto-detects and deploys the module
 
 ### Self-Hosted (Docker)
@@ -40,13 +40,13 @@ volumes:
 
 To install:
 ```bash
-git clone -b 19.0 https://github.com/cloudrefit/invoicing_odoo /path/to/invoicing_odoo
+git clone -b 20.0 https://github.com/cloudrefit/invoicing_odoo /path/to/invoicing_odoo
 docker compose restart odoo
 ```
 
 #### Alternative: Copy to Addons
 ```bash
-git clone -b 19.0 https://github.com/cloudrefit/invoicing_odoo /tmp/invoicing_odoo
+git clone -b 20.0 https://github.com/cloudrefit/invoicing_odoo /tmp/invoicing_odoo
 sudo cp -r /tmp/invoicing_odoo/cloudrefit_invoicing /data/odoo/addons/
 rm -rf /tmp/invoicing_odoo
 docker restart <your-odoo-container>
@@ -59,7 +59,7 @@ Then in Odoo UI:
 
 ### Self-Hosted (Bare Metal)
 ```bash
-git clone -b 19.0 https://github.com/cloudrefit/invoicing_odoo /path/to/odoo/addons/invoicing_odoo
+git clone -b 20.0 https://github.com/cloudrefit/invoicing_odoo /path/to/odoo/addons/invoicing_odoo
 # Restart your Odoo server
 ```
 
@@ -77,7 +77,7 @@ Get your API key at [https://invoicing.cloudrefit.com](https://invoicing.cloudre
 ```bash
 # Pull latest changes
 cd /path/to/invoicing_odoo
-git pull origin 19.0
+git pull origin 20.0
 
 # Option A: Restart Odoo container and upgrade via UI
 docker compose restart odoo
@@ -94,6 +94,7 @@ Odoo.sh updates automatically on push to the branch.
 
 | Branch | Odoo Version |
 |--------|-------------|
+| `20.0` | Odoo 20 (Current) |
 | `19.0` | Odoo 19 |
 | `17.0` | Odoo 17 (planned) |
 | `16.0` | Odoo 16 (planned) |

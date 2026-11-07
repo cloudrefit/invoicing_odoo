@@ -5,7 +5,7 @@ from odoo import models, fields, api
 
 _logger = logging.getLogger(__name__)
 
-RELEASE_JSON_URL = "https://raw.githubusercontent.com/cloudrefit/invoicing_odoo/19.0/RELEASE.json"
+RELEASE_JSON_URL = "https://raw.githubusercontent.com/cloudrefit/invoicing_odoo/20.0/RELEASE.json"
 SEVERITY_ORDER = ["info", "minor", "major", "critical", "urgent", "blocked"]
 
 class CloudRefitVersionChecker(models.TransientModel):
