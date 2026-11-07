@@ -2191,8 +2191,7 @@ class TestZatcaConcurrency(TransactionCase):
                 results.append(('error', str(e)))
 
         apply_update('completed')
-        with self.mute_logger('odoo.addons.cloudrefit_invoicing.models.account_move'):
-            apply_update('failed')
+        apply_update('failed')
 
         # At least one should have succeeded
         successes = [r for r in results if r[0] == 'success']
