@@ -237,7 +237,7 @@ class AccountMove(models.Model):
     def _compute_zatca_signed_xml_file(self):
         for move in self:
             if move.zatca_signed_xml:
-                move.zatca_signed_xml_file = base64.b64encode(move.zatca_signed_xml.encode('utf-8'))
+                move.zatca_signed_xml_file = base64.b64encode(move.zatca_signed_xml.encode('utf-8')).decode('ascii')
                 safe_name = (move.name or 'invoice').replace('/', '_')
                 move.zatca_signed_xml_filename = f"{safe_name}_ZATCA.xml"
             else:
@@ -262,7 +262,7 @@ class AccountMove(models.Model):
                     img = qr.make_image(fill_color='black', back_color='white')
                     buffer = io.BytesIO()
                     img.save(buffer, format='PNG')
-                    move.cloudrefit_payment_link_qr = base64.b64encode(buffer.getvalue())
+                    move.cloudrefit_payment_link_qr = base64.b64encode(buffer.getvalue()).decode('ascii')
                 except Exception as e:
                     _logger.warning('Could not generate payment link QR code: %s', str(e))
                     move.cloudrefit_payment_link_qr = False
