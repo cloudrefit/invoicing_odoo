@@ -37,13 +37,20 @@ class ResConfigSettings(models.TransientModel):
 
     # === Live Technical Unit ===
     def _get_live_units(self):
-        units_json = self.env['ir.config_parameter'].sudo().get_param('cloudrefit_invoicing.technical_units_live', '[]')
+        ICP = self.env['ir.config_parameter'].sudo()
+        units_json = ICP.get_param('cloudrefit_invoicing.technical_units_live', '[]')
+        result = []
         try:
-            units = json.loads(units_json)
+            units = json.loads(units_json) if units_json else []
             # Both LIVE and SANDBOX modes might return all units, but we filter for LIVE
-            return [(str(u['id']), f"[{u['id']}] {u['label']}") for u in units if str(u.get('mode', '')).upper() == 'LIVE']
+            result = [(str(u['id']), f"[{u['id']}] {u['label']}") for u in units if str(u.get('mode', '')).upper() == 'LIVE']
         except Exception:
-            return []
+            result = []
+        current_unit = ICP.get_param('cloudrefit_invoicing.unit_id_live', '')
+        existing_ids = {item[0] for item in result}
+        if current_unit and str(current_unit) not in existing_ids:
+            result.append((str(current_unit), f"[{current_unit}] Unit {current_unit}"))
+        return result
 
     cloudrefit_unit_id_live = fields.Selection(
         selection=_get_live_units,
@@ -69,13 +76,20 @@ class ResConfigSettings(models.TransientModel):
 
     # === Sandbox Technical Unit ===
     def _get_sandbox_units(self):
-        units_json = self.env['ir.config_parameter'].sudo().get_param('cloudrefit_invoicing.technical_units_sandbox', '[]')
+        ICP = self.env['ir.config_parameter'].sudo()
+        units_json = ICP.get_param('cloudrefit_invoicing.technical_units_sandbox', '[]')
+        result = []
         try:
-            units = json.loads(units_json)
+            units = json.loads(units_json) if units_json else []
             # Filter for SANDBOX
-            return [(str(u['id']), f"[{u['id']}] {u['label']}") for u in units if str(u.get('mode', '')).upper() == 'SANDBOX']
+            result = [(str(u['id']), f"[{u['id']}] {u['label']}") for u in units if str(u.get('mode', '')).upper() == 'SANDBOX']
         except Exception:
-            return []
+            result = []
+        current_unit = ICP.get_param('cloudrefit_invoicing.unit_id_sandbox', '')
+        existing_ids = {item[0] for item in result}
+        if current_unit and str(current_unit) not in existing_ids:
+            result.append((str(current_unit), f"[{current_unit}] Unit {current_unit}"))
+        return result
 
     cloudrefit_unit_id_sandbox = fields.Selection(
         selection=_get_sandbox_units,
@@ -310,6 +324,21 @@ class ResConfigSettings(models.TransientModel):
         readonly=True,
         store=False,
     )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        ICP = self.env['ir.config_parameter'].sudo()
+        for vals in vals_list:
+            for field_name, param_key in (
+                ('cloudrefit_unit_id_live', 'cloudrefit_invoicing.unit_id_live'),
+                ('cloudrefit_unit_id_sandbox', 'cloudrefit_invoicing.unit_id_sandbox'),
+            ):
+                if vals.get(field_name) not in (None, False, ''):
+                    vals[field_name] = str(vals[field_name])
+                    ICP.set_param(param_key, vals[field_name])
+            if 'cloudrefit_api_key' in vals and vals['cloudrefit_api_key'] is False:
+                ICP.set_param('cloudrefit_invoicing.api_key', '')
+        return super().create(vals_list)
 
     @api.model
     def get_values(self):
@@ -755,26 +784,16 @@ class ResConfigSettings(models.TransientModel):
             )
 
         try:
-            body = json.dumps({'action': 'ping'}, sort_keys=True, separators=(',', ':'), ensure_ascii=False)
-            signature = hmac.new(
-                signing_secret.encode(),
-                body.encode(),
-                hashlib.sha256,
-            ).hexdigest()
-
-            odoo_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
-            headers = {
-                'X-API-Key': api_key,
-                'X-Signature': signature,
-                'Content-Type': 'application/json',
-                'X-Integration-Url': odoo_url,
-                'X-Mode': 'LIVE',
-            }
-
             url = f"{gateway_url.rstrip('/')}/api/plugin/ping"
             _logger.info("Testing live gateway connectivity: %s", url)
 
-            response = requests.get(url, headers=headers, timeout=10)
+            api_client = self.env['cloudrefit.zatca.api.client']
+            response = api_client.call_gateway(
+                endpoint='/api/plugin/ping',
+                method='GET',
+                action='ping',
+                mode='live',
+            )
 
             if response.status_code == 200:
                 data = response.json()
@@ -868,26 +887,16 @@ class ResConfigSettings(models.TransientModel):
             )
 
         try:
-            body = json.dumps({'action': 'ping'}, sort_keys=True, separators=(',', ':'), ensure_ascii=False)
-            signature = hmac.new(
-                signing_secret.encode(),
-                body.encode(),
-                hashlib.sha256,
-            ).hexdigest()
-
-            odoo_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
-            headers = {
-                'X-API-Key': api_key,
-                'X-Signature': signature,
-                'Content-Type': 'application/json',
-                'X-Integration-Url': odoo_url,
-                'X-Mode': 'SANDBOX',
-            }
-
             url = f"{gateway_url.rstrip('/')}/api/plugin/ping"
             _logger.info("Testing sandbox gateway connectivity: %s", url)
 
-            response = requests.get(url, headers=headers, timeout=10)
+            api_client = self.env['cloudrefit.zatca.api.client']
+            response = api_client.call_gateway(
+                endpoint='/api/plugin/ping',
+                method='GET',
+                action='ping',
+                mode='sandbox',
+            )
 
             if response.status_code == 200:
                 data = response.json()
@@ -978,14 +987,13 @@ class ResConfigSettings(models.TransientModel):
 
         # Step 2: Run connection tests
         creds = self._get_zatca_credentials()
+        api_key = self.cloudrefit_api_key or creds.get('api_key')
 
-        # Test live if live credentials are configured
-        if creds.get('api_key_live'):
+        # Test live if credentials are configured
+        if api_key:
             self.action_test_connection_live()
-
-        # Test sandbox if sandbox credentials are configured
-        if creds.get('api_key_sandbox'):
-            self.action_test_connection_sandbox()
+            if self.is_cloudrefit_sandbox_enabled or self.cloudrefit_show_sandbox_settings_ui:
+                self.action_test_connection_sandbox()
 
         # Step 3: Return an action that reloads the settings page
         return {

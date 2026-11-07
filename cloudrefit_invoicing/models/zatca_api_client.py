@@ -27,7 +27,6 @@ class ZatcaApiClient(models.AbstractModel):
         Raises UserError if the secret is not configured for the requested mode.
         """
         creds = self._get_zatca_credentials()
-        self._assert_zatca_credentials(creds, mode=mode)
         secret = creds.get('signing_secret', '')
         if not secret:
             raise UserError(
@@ -61,7 +60,6 @@ class ZatcaApiClient(models.AbstractModel):
         Raises UserError if the API key is not configured for the requested mode.
         """
         creds = self._get_zatca_credentials()
-        self._assert_zatca_credentials(creds, mode=mode)
         api_key = creds.get('api_key', '')
         if not api_key:
             raise UserError(
@@ -92,6 +90,7 @@ class ZatcaApiClient(models.AbstractModel):
         creds = self._get_zatca_credentials()
         gateway_url = creds.get('gateway_url')
         api_key = creds.get('api_key')
+        signing_secret = creds.get('signing_secret') or ''
         if not api_key:
             raise UserError(
                 'API key (%s) is not configured for company "%s". '
@@ -107,8 +106,16 @@ class ZatcaApiClient(models.AbstractModel):
             'X-Mode': mode.upper(),
             'X-Connector-URL': odoo_url,
             'X-Integration-URL': odoo_url,
+            'X-Integration-Url': odoo_url,
             'Content-Type': 'application/json',
         }
+        if action == 'ping' and signing_secret:
+            body = json.dumps({'action': 'ping'}, sort_keys=True, separators=(',', ':'), ensure_ascii=False)
+            headers['X-Signature'] = hmac.new(
+                signing_secret.encode(),
+                body.encode(),
+                hashlib.sha256,
+            ).hexdigest()
 
         url = f"{gateway_url.rstrip('/')}{endpoint}"
 
@@ -210,7 +217,13 @@ class ZatcaApiClient(models.AbstractModel):
         )
 
         try:
-            response = requests.post(url, json=payload, headers=headers, timeout=30)
+            response = self.call_gateway(
+                endpoint='/api/v1/payments/invoices/upsert',
+                method='POST',
+                json_data=payload,
+                action='upsert',
+                mode=mode,
+            )
             response.raise_for_status()
             result = response.json()
             _logger.info(
@@ -218,6 +231,8 @@ class ZatcaApiClient(models.AbstractModel):
                 move.id, result.get('created'), result.get('uuid'),
             )
             return True
+        except UserError:
+            raise
         except requests.exceptions.RequestException as e:
             _logger.warning(
                 "action=upsert_invoice_for_checkout invoice_id=%s error=http_request_failed reason=%s",

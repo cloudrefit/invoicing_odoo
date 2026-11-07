@@ -19,6 +19,8 @@ class AccountMove(models.Model):
     # === Core ZATCA Fields (no sandbox/live suffixes) ===
     zatca_status = fields.Selection([
         ('not_signed', 'Not Signed'),
+        ('pending', 'Pending'),
+        ('processing', 'Processing'),
         ('signed', 'Signed'),
         ('reported', 'Reported'),
         ('cleared', 'Cleared'),
@@ -585,6 +587,7 @@ class AccountMove(models.Model):
                 'number': self.name,
                 'date': str(self.invoice_date) + ' 12:00:00',
                 'uuid': formatted_uuid,
+                'icv': self.id,
                 'type': zatca_type_code,
                 'amount_untaxed': float(self.amount_untaxed),
                 'tax_total': float(self.amount_tax),
@@ -596,6 +599,10 @@ class AccountMove(models.Model):
                 'vat': partner.vat or '300000000000003',
                 'address': partner.street or '',
                 'city': partner.city or 'Riyadh',
+                'building_no': partner.building_no or '',
+                'district': partner.district or '',
+                'postal_code': partner.zip or '',
+                'country_code': partner.country_id.code if partner.country_id else 'SA',
                 'id_type': partner.zatca_id_type or '',
                 'id_value': partner.zatca_id_value or '',
                 'phone': partner.phone or getattr(partner, 'mobile', '') or '',
@@ -687,9 +694,18 @@ class AccountMove(models.Model):
             json.dumps(payload, ensure_ascii=False) if payload else None
         )
 
+        endpoint = f"/api/v1/invoices/{business_id}/sign"
+        api_client = self.env['cloudrefit.zatca.api.client']
+
         for attempt in range(max_retries + 1):
             try:
-                response = requests.post(url, json=payload, headers=headers, timeout=30)
+                response = api_client.call_gateway(
+                    endpoint=endpoint,
+                    method='POST',
+                    json_data=payload,
+                    action='sign',
+                    mode=exec_mode,
+                )
             except requests.exceptions.ConnectionError:
                 if attempt < max_retries:
                     _logger.warning(
@@ -831,12 +847,16 @@ class AccountMove(models.Model):
         # 1. Row-level locking to prevent TOCTOU races
         self.env.cr.execute('SELECT id FROM account_move WHERE id = %s FOR UPDATE', [self.id])
         
-        if event_type == 'clearance':
+        if event_type in ('clearance', 'invoice.status_changed'):
             self._handle_clearance_update(payload)
-        elif event_type == 'payment':
-            self._handle_payment_update(payload)
+        elif event_type in ('payment', 'payment.status_changed'):
+            self._create_zatca_payment(payload)
         else:
             _logger.warning("action=apply_status_update error=unknown_event_type event_type=%s", event_type)
+
+    def _create_zatca_payment(self, payload):
+        """Alias used by webhook/payment tests to delegate to _handle_payment_update."""
+        return self._handle_payment_update(payload)
 
     def _handle_clearance_update(self, payload):
         status = payload.get('status')
@@ -857,6 +877,8 @@ class AccountMove(models.Model):
         if status == 'completed':
             invoice_type = self._resolve_invoice_type()
             new_status = 'cleared' if invoice_type == 'standard' else 'reported'
+        elif status in ('cleared', 'reported'):
+            new_status = status
         elif status == 'failed':
             new_status = 'failed'
         else:
@@ -869,19 +891,22 @@ class AccountMove(models.Model):
             if new_rank < current_rank:
                 _logger.info("action=apply_status_update invoice_id=%s msg=ignored_regression current=%s new=%s", self.id, self.zatca_status, new_status)
                 return
-            if new_rank == current_rank and new_status == self.zatca_status:
+            if new_rank == current_rank and new_status == self.zatca_status and self.zatca_hash:
                 _logger.debug("action=apply_status_update invoice_id=%s msg=idempotent_noop status=%s", self.id, new_status)
                 return
 
         # Safe to update
-        if status == 'completed':
-            signed_data = payload.get('signedData', {})
+        if status in ('completed', 'cleared', 'reported'):
+            signed_data = payload.get('signedData') or {}
+            zatca_hash = signed_data.get('hash') or payload.get('hash', '')
+            qr_code = signed_data.get('qrImage') or payload.get('qr_code', '')
+            signed_xml = signed_data.get('xml') or payload.get('xml', '')
             self._update_invoice_after_zatca_sign(
                 self,
                 status=new_status,
-                zatca_hash=signed_data.get('hash', ''),
-                qr_code=signed_data.get('qrImage', ''),
-                signed_xml=signed_data.get('xml', ''),
+                zatca_hash=zatca_hash,
+                qr_code=qr_code,
+                signed_xml=signed_xml,
                 error_msg=False,
                 invoice_type=self._resolve_invoice_type(),
                 exec_mode=self.zatca_exec_mode,
@@ -897,7 +922,13 @@ class AccountMove(models.Model):
             })
             _logger.error("action=status_update_applied invoice_id=%s type=clearance status=failed error=%s", self.id, error_detail)
         elif status in ('pending', 'processing'):
-            self.write({'zatca_job_status': 'processing'})
+            vals = {
+                'zatca_job_status': 'processing',
+                'zatca_status': status,
+            }
+            if payload.get('hash'):
+                vals['zatca_hash'] = payload['hash']
+            self.write(vals)
 
     def _handle_payment_update(self, payload):
         due_amount = payload.get('due_amount')
@@ -992,20 +1023,33 @@ class AccountMove(models.Model):
             except Exception as e:
                 _logger.error("action=retry_poll_error invoice_id=%s error=%s", move.id, str(e))
 
+        # --- Part 2: Retry failed invoices (existing logic) ---
+        failed_moves = self.search([
+            ('zatca_status', '=', 'failed'),
+            ('zatca_retry_count', '<', 3),
+            ('move_type', 'in', ['out_invoice', 'out_refund']),
+            ('state', '=', 'posted'),
+        ])
+        for move in failed_moves:
+            # Switch to the invoice's company context for per-company credential resolution
+            move_with_ctx = move.with_company(move.company_id)
+            # Exponential backoff: min(2^retry_count * 60, 3600) seconds since last attempt
+            backoff_seconds = min(2 ** move.zatca_retry_count * 60, 3600)
+            _logger.info("action=%s invoice_id=%s retry_count=%s backoff=%ss mode=%s",
+                         'retry_cron', move.id, move.zatca_retry_count, backoff_seconds, move_with_ctx._resolve_mode())
+            try:
+                move_with_ctx._zatca_sign_invoice()
+            except (requests.RequestException, ValueError, UserError) as e:
+                _logger.error("action=%s invoice_id=%s retry_count=%s mode=%s error=%s",
+                              'retry_cron', move.id, move.zatca_retry_count, move_with_ctx._resolve_mode(), str(e))
+                move.write({'zatca_error': str(e)})
+
     def action_generate_payment_link(self):
         """Generate payment link, show notification, and open in new tab."""
         self.ensure_one()
 
-        # Upsert if not yet on platform
-        if self.zatca_status not in ('reported', 'cleared'):
-            api_client = self.env['cloudrefit.zatca.api.client']
-            try:
-                api_client.upsert_invoice_for_checkout(self)
-            except Exception:
-                raise UserError(_(
-                    'Failed to sync invoice data with the payment platform. '
-                    'Please check your CloudRefit connection in Settings and try again.'
-                ))
+        if not self.zatca_uuid:
+            raise UserError(_('ZATCA UUID is missing for this invoice.'))
 
         # Build link
         creds = self.with_company(self.company_id)._get_zatca_credentials()
@@ -1018,7 +1062,18 @@ class AccountMove(models.Model):
         if not business_id:
             raise UserError(_('Business ID is not configured in CloudRefit settings.'))
 
-        locale = self.env.context.get('lang', 'en_US')[:2]
+        # Upsert if not yet on platform
+        if self.zatca_status not in ('reported', 'cleared'):
+            api_client = self.env['cloudrefit.zatca.api.client']
+            try:
+                api_client.upsert_invoice_for_checkout(self)
+            except Exception:
+                raise UserError(_(
+                    'Failed to sync invoice data with the payment platform. '
+                    'Please check your CloudRefit connection in Settings and try again.'
+                ))
+
+        locale = (self.env.context.get('lang') or 'en_US')[:2]
         link = f"{dashboard_url.rstrip('/')}/{locale}/pay/{business_id}/{self.zatca_uuid}"
 
         self.write({'cloudrefit_payment_link_url': link})
@@ -1085,27 +1140,6 @@ class AccountMove(models.Model):
                 return self.env['cloudrefit.notification.helper']._cr_notify('danger', f'Failed to fetch status: HTTP {poll_response.status_code}', next_action=reload_action)
         except Exception as e:
             return self.env['cloudrefit.notification.helper']._cr_notify('danger', f'Error fetching status: {str(e)}', next_action=reload_action)
-
-        # --- Part 2: Retry failed invoices (existing logic) ---
-        failed_moves = self.search([
-            ('zatca_status', '=', 'failed'),
-            ('zatca_retry_count', '<', 3),
-            ('move_type', 'in', ['out_invoice', 'out_refund']),
-            ('state', '=', 'posted'),
-        ])
-        for move in failed_moves:
-            # Switch to the invoice's company context for per-company credential resolution
-            move_with_ctx = move.with_company(move.company_id)
-            # Exponential backoff: min(2^retry_count * 60, 3600) seconds since last attempt
-            backoff_seconds = min(2 ** move.zatca_retry_count * 60, 3600)
-            _logger.info("action=%s invoice_id=%s retry_count=%s backoff=%ss mode=%s",
-                         'retry_cron', move.id, move.zatca_retry_count, backoff_seconds, move_with_ctx._resolve_mode())
-            try:
-                move_with_ctx._zatca_sign_invoice()
-            except (requests.RequestException, ValueError) as e:
-                _logger.error("action=%s invoice_id=%s retry_count=%s mode=%s error=%s",
-                              'retry_cron', move.id, move.zatca_retry_count, move_with_ctx._resolve_mode(), str(e))
-                move.write({'zatca_error': str(e)})
 
     @api.model
     def _zatca_sync_payments(self):

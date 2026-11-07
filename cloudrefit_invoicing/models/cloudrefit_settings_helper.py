@@ -38,15 +38,14 @@ class CloudrefitSettingsHelper(models.AbstractModel):
 
     @api.model
     def _cr_set_param(self, param_name, value):
-        """Write a config parameter for the current company only.
+        """Write a config parameter for the current company and base key.
 
-        Always writes to param_name_{company_id} when company context exists;
-        falls back to the base key only when there is no company.
+        Writes to both param_name_{company_id} and param_name when company
+        context exists so both _cr_get_param and ICP.get_param see consistent values.
         """
         ICP = self.env['ir.config_parameter'].sudo()
         company = self.env.company
+        ICP.set_param(param_name, value)
         if company:
             company_key = f'{param_name}_{company.id}'
             ICP.set_param(company_key, value)
-        else:
-            ICP.set_param(param_name, value)

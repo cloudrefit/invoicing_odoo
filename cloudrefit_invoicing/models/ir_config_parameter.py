@@ -19,6 +19,24 @@ class IrConfigParameter(models.Model):
     @api.model
     def set_param(self, key, value):
         """Odoo 20 compatibility shim for set_param."""
+        norm_val = '' if value in (False, None) else str(value)
         if hasattr(super(), 'set_param'):
-            return super().set_param(key, value)
-        return self.set_str(key, value)
+            res = super().set_param(key, value)
+        else:
+            res = self.set_str(key, norm_val)
+
+        # Keep company-suffixed key in sync when base cloudrefit_invoicing.<key> is set directly
+        company = self.env.company
+        if (
+            company
+            and isinstance(key, str)
+            and key.startswith('cloudrefit_invoicing.')
+            and not key.endswith(f'_{company.id}')
+        ):
+            comp_key = f'{key}_{company.id}'
+            if hasattr(super(), 'set_param'):
+                super().set_param(comp_key, norm_val)
+            else:
+                self.set_str(comp_key, norm_val)
+        return res
+

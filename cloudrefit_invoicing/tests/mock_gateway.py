@@ -95,8 +95,7 @@ class MockZatcaApiClient:
     # ------------------------------------------------------------------ #
     #  Drop-in replacement for ZatcaApiClient.call_gateway
     # ------------------------------------------------------------------ #
-    @classmethod
-    def call_gateway(cls, self, endpoint, method='POST', json_data=None,
+    def call_gateway(self, endpoint, method='POST', json_data=None,
                      params=None, action='verify', mode='live'):
         """Mock implementation — returns registered responses.
 
@@ -107,6 +106,7 @@ class MockZatcaApiClient:
             A fake ``requests.Response``-like object with ``.status_code``,
             ``.json()``, ``.text``, and ``.ok`` attributes.
         """
+        cls = MockZatcaApiClient
         # Record the call
         cls.call_history.append((method, endpoint, json_data))
 

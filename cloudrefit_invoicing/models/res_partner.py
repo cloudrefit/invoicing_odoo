@@ -12,6 +12,9 @@ class ResPartner(models.Model):
         default=lambda self: self.env.ref('base.sa', raise_if_not_found=False)
     )
 
+    # Odoo 20 compatibility: mobile field was removed from base res.partner in Odoo 20
+    mobile = fields.Char(string='Mobile')
+
     # ZATCA Specific Address Fields
     building_no = fields.Char(string='Building Number')
     district = fields.Char(string='District')
@@ -75,8 +78,10 @@ class ResPartner(models.Model):
             vals['is_company'] = (vals['company_type'] == 'company')
         return super(ResPartner, self).write(vals)
 
-    @api.constrains('vat', 'zatca_id_type', 'zatca_id_value', 'country_id', 'building_no', 'district', 'zip', 'street', 'city', 'phone')
+    @api.constrains('name', 'is_company', 'vat', 'zatca_id_type', 'zatca_id_value', 'country_id', 'building_no', 'district', 'zip', 'street', 'city', 'phone', 'mobile')
     def _check_zatca_identity_and_address(self):
+        if self.env.context.get('skip_zatca_partner_check'):
+            return
         from odoo.exceptions import ValidationError
         import re
 
