@@ -1078,9 +1078,9 @@ class AccountMove(models.Model):
 
         self.write({'cloudrefit_payment_link_url': link})
 
-        # Show success notification via bus
+        # Show success notification via bus (Odoo 20 expects res.users, not res.partner)
         self.env['bus.bus']._sendone(
-            self.env.user.partner_id,
+            self.env.user,
             'simple_notification',
             {
                 'type': 'success',

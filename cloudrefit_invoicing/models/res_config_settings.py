@@ -108,11 +108,13 @@ class ResConfigSettings(models.TransientModel):
     # === Business Identity (auto-populated from gateway ping) ===
     cloudrefit_business_id = fields.Char(
         string='Business ID',
+        company_dependent=True,
         readonly=True,
         help='Auto-populated from gateway after a successful connection test.',
     )
     cloudrefit_business_name = fields.Char(
         string='Business Name',
+        company_dependent=True,
         readonly=True,
     )
 
