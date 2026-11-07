@@ -2,6 +2,7 @@ import logging
 _logger = logging.getLogger(__name__)
 _logger.info('cloudrefit_invoicing: loading python models...')
 
+from . import ir_config_parameter
 from . import cloudrefit_settings_helper
 from . import cloudrefit_zatca_credentials
 from . import cloudrefit_notification_helper
