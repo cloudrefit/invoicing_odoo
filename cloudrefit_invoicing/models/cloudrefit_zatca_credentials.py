@@ -68,7 +68,6 @@ _REQUIRED_BY_MODE = {
 
 class CloudrefitZatcaCredentials(models.AbstractModel):
     _name = 'cloudrefit.zatca.credentials'
-    _inherit = 'cloudrefit.settings.helper'
     _description = 'Centralized ZATCA Credential Resolution & Validation'
 
     # ------------------------------------------------------------------
@@ -102,9 +101,8 @@ class CloudrefitZatcaCredentials(models.AbstractModel):
             }
         """
         target_company = company or self.env.company
-        # Build a temporary recordset in the target company's context
-        # so _cr_get_param resolves per-company keys correctly
-        resolver = self.with_company(target_company) if target_company else self
+        helper = self.env['cloudrefit.settings.helper']
+        resolver = helper.with_company(target_company) if target_company else helper
 
         creds = {
             'company_id': target_company.id if target_company else None,
