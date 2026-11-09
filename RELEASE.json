@@ -1,11 +1,11 @@
 {
-  "version": "19.0.0.144",
-  "release_date": "2026-07-16",
+  "version": "18.0.0.1",
+  "release_date": "2026-11-09",
   "severity": "minor",
-  "title": "Payment Link QR Code in Invoice Form & PDF",
-  "message": "Adds a computed QR code for payment links. Displays the QR in the invoice form (inline banner above invoice lines) and in the printed PDF report alongside the payment URL. Also shows the QR in the Other Info ZATCA tab.",
-  "latest_blocked_version": "19.0.0.81",
-  "latest_urgent_version": "19.0.0.76",
-  "latest_critical_version": "19.0.0.77",
-  "latest_major_version": "19.0.0.70"
+  "title": "Initial Release of CloudRefit Invoicing for Odoo 18",
+  "message": "Full ZATCA Phase 2 compliance module ported and verified for Odoo 18.0.",
+  "latest_blocked_version": "18.0.0.0",
+  "latest_urgent_version": "18.0.0.0",
+  "latest_critical_version": "18.0.0.0",
+  "latest_major_version": "18.0.0.0"
 }

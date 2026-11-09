@@ -1,10 +1,10 @@
 {
     'name': 'CloudRefit ZATCA Gateway',
-    'version': '19.0.0.183',
+    'version': '18.0.0.1',
     'category': 'Accounting',
     'summary': 'بوابة كلاود ريفيت ZATCA',
     'description': """
-CloudRefit ZATCA Gateway for Odoo 19.
+CloudRefit ZATCA Gateway for Odoo 18.
 Connects Odoo to the CloudRefit ZATCA Gateway for Phase 2 compliance.
 """,
     'author': 'CloudRefit',

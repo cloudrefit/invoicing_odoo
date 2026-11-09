@@ -3,7 +3,7 @@
 Seamlessly integrate Saudi Arabia's ZATCA e-invoicing compliance into your Odoo ERP.
 
 [![License: LGPL-3.0](https://img.shields.io/badge/License-LGPL--3.0-blue.svg)](LICENSE)
-[![Odoo Version](https://img.shields.io/badge/Odoo-19.0-8A2BE2)](https://www.odoo.com)
+[![Odoo Version](https://img.shields.io/badge/Odoo-18.0-8A2BE2)](https://www.odoo.com)
 
 ## Overview
 
@@ -25,7 +25,7 @@ This module connects your Odoo instance to the CloudRefit ZATCA Gateway, enablin
 
 ### Odoo.sh
 1. Connect this repository in your Odoo.sh dashboard
-2. Select the branch matching your Odoo version (e.g., `19.0`)
+2. Select the branch matching your Odoo version (e.g., `18.0`)
 3. Odoo.sh auto-detects and deploys the module
 
 ### Self-Hosted (Docker)
@@ -40,13 +40,13 @@ volumes:
 
 To install:
 ```bash
-git clone -b 19.0 https://github.com/cloudrefit/invoicing_odoo /path/to/invoicing_odoo
+git clone -b 18.0 https://github.com/cloudrefit/invoicing_odoo /path/to/invoicing_odoo
 docker compose restart odoo
 ```
 
 #### Alternative: Copy to Addons
 ```bash
-git clone -b 19.0 https://github.com/cloudrefit/invoicing_odoo /tmp/invoicing_odoo
+git clone -b 18.0 https://github.com/cloudrefit/invoicing_odoo /tmp/invoicing_odoo
 sudo cp -r /tmp/invoicing_odoo/cloudrefit_invoicing /data/odoo/addons/
 rm -rf /tmp/invoicing_odoo
 docker restart <your-odoo-container>
