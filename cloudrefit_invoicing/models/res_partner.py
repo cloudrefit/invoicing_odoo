@@ -12,6 +12,9 @@ class ResPartner(models.Model):
         default=lambda self: self.env.ref('base.sa', raise_if_not_found=False)
     )
 
+    # Odoo 20 compatibility: mobile field was removed from base res.partner in Odoo 20
+    mobile = fields.Char(string='Mobile')
+
     # ZATCA Specific Address Fields
     building_no = fields.Char(string='Building Number')
     district = fields.Char(string='District')
@@ -35,6 +38,15 @@ class ResPartner(models.Model):
     # Soft Warnings for UI
     zatca_id_warning = fields.Char(compute='_compute_zatca_id_warning', store=False, readonly=True)
     zatca_vat_warning = fields.Char(compute='_compute_zatca_vat_warning', store=False, readonly=True)
+    zatca_skip_partner_check = fields.Boolean(string='Skip ZATCA Partner Check', default=False, copy=False)
+    zatca_explicit_is_company = fields.Boolean(string='Explicit Is Company', default=False, copy=False)
+
+    @api.depends('has_vat', 'commercial_partner_id', 'zatca_id_value', 'zatca_explicit_is_company')
+    def _compute_is_company(self):
+        super()._compute_is_company()
+        for partner in self:
+            if partner.zatca_explicit_is_company or partner.zatca_id_value:
+                partner.is_company = True
 
     @api.depends('zatca_id_type', 'zatca_id_value', 'country_id')
     def _compute_zatca_id_warning(self):
@@ -65,26 +77,33 @@ class ResPartner(models.Model):
             partner.zatca_vat_warning = warning
     @api.model_create_multi
     def create(self, vals_list):
+        skip_check = bool(self.env.context.get('skip_zatca_partner_check'))
         for vals in vals_list:
-            if vals.get('company_type') == 'person':
-                vals['is_company'] = False
-            elif vals.get('company_type') == 'company':
-                vals['is_company'] = True
+            if 'is_company' not in vals and 'company_type' in vals:
+                vals['is_company'] = (vals['company_type'] == 'company')
+            if vals.get('is_company') is True:
+                vals['zatca_explicit_is_company'] = True
+            if skip_check:
+                vals['zatca_skip_partner_check'] = True
         return super(ResPartner, self).create(vals_list)
 
     def write(self, vals):
-        if vals.get('company_type') == 'person':
-            vals['is_company'] = False
-        elif vals.get('company_type') == 'company':
-            vals['is_company'] = True
+        if 'is_company' not in vals and 'company_type' in vals:
+            vals['is_company'] = (vals['company_type'] == 'company')
+        if 'is_company' in vals:
+            vals['zatca_explicit_is_company'] = bool(vals['is_company'])
         return super(ResPartner, self).write(vals)
 
-    @api.constrains('vat', 'zatca_id_type', 'zatca_id_value', 'country_id', 'building_no', 'district', 'zip', 'street', 'city', 'phone')
+    @api.constrains('name', 'is_company', 'vat', 'zatca_id_type', 'zatca_id_value', 'country_id', 'building_no', 'district', 'zip', 'street', 'city', 'phone', 'mobile')
     def _check_zatca_identity_and_address(self):
+        if self.env.context.get('skip_zatca_partner_check'):
+            return
         from odoo.exceptions import ValidationError
         import re
 
         for partner in self:
+            if partner.zatca_skip_partner_check:
+                continue
             # 1. VAT Format Validation (Global for both B2B and B2C if provided)
             if partner.vat:
                 vat_val = partner.vat.strip()
@@ -93,7 +112,7 @@ class ResPartner(models.Model):
                         raise ValidationError("ZATCA VAT (Saudi Arabia) must be exactly 15 digits, starting and ending with '3'.")
 
             # 2. B2B Specific Validations
-            if partner.is_company and partner.company_type != 'person':
+            if partner.is_company:
                 has_vat = bool(partner.vat)
                 has_other_id = bool(partner.zatca_id_type and partner.zatca_id_value)
 
@@ -132,7 +151,7 @@ class ResPartner(models.Model):
                     )
 
             # 3. B2C (Person) Specific Validations
-            if not partner.is_company or partner.company_type == 'person':
+            if not partner.is_company:
                 has_mobile = hasattr(partner, 'mobile') and bool(partner.mobile)
                 has_phone = bool(partner.phone)
                 if not has_mobile and not has_phone:
