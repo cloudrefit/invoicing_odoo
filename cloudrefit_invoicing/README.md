@@ -1,6 +1,6 @@
-# CloudRefit ZATCA E-Invoicing Plugin for Odoo 18
+# CloudRefit ZATCA E-Invoicing Plugin for Odoo 17
 
-Automated ZATCA (Zakat, Tax and Customs Authority) e-invoicing compliance for Odoo 18 Community and Enterprise Edition.
+Automated ZATCA (Zakat, Tax and Customs Authority) e-invoicing compliance for Odoo 17 Community and Enterprise Edition.
 
 ## Features
 
@@ -17,7 +17,7 @@ Automated ZATCA (Zakat, Tax and Customs Authority) e-invoicing compliance for Od
 
 ## Prerequisites
 
-- Odoo 19 Community Edition
+- Odoo 17 Community Edition
 - Python 3.x
 - CloudRefit account with API keys (register at dashboard.cloudrefit.com)
 - Required Odoo modules: `account`, `base`
@@ -27,7 +27,7 @@ Automated ZATCA (Zakat, Tax and Customs Authority) e-invoicing compliance for Od
 ### Odoo.sh
 
 1. Connect this repository in your Odoo.sh dashboard
-2. Select the branch matching your Odoo version (e.g., `19.0`)
+2. Select the branch matching your Odoo version (e.g., `17.0`)
 3. Odoo.sh auto-detects and deploys the module
 
 ### Self-Hosted (Docker / Bare Metal)
@@ -36,7 +36,7 @@ Clone the repository and copy the module to your Odoo addons:
 
 ```bash
 # Clone the repo
-git clone -b 18.0 https://github.com/cloudrefit/invoicing_odoo.git /tmp/invoicing_odoo
+git clone -b 17.0 https://github.com/cloudrefit/invoicing_odoo.git /tmp/invoicing_odoo
 
 # Copy module to your Odoo addons
 sudo cp -r /tmp/invoicing_odoo/cloudrefit_invoicing /path/to/odoo/addons/

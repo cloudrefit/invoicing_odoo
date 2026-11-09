@@ -1,11 +1,11 @@
 {
-  "version": "18.0.0.1",
+  "version": "17.0.0.1",
   "release_date": "2026-11-09",
   "severity": "minor",
-  "title": "Initial Release of CloudRefit Invoicing for Odoo 18",
-  "message": "Full ZATCA Phase 2 compliance module ported and verified for Odoo 18.0.",
-  "latest_blocked_version": "18.0.0.0",
-  "latest_urgent_version": "18.0.0.0",
-  "latest_critical_version": "18.0.0.0",
-  "latest_major_version": "18.0.0.0"
+  "title": "Initial Release of CloudRefit Invoicing for Odoo 17",
+  "message": "Full ZATCA Phase 2 compliance module ported and verified for Odoo 17.0.",
+  "latest_blocked_version": "17.0.0.0",
+  "latest_urgent_version": "17.0.0.0",
+  "latest_critical_version": "17.0.0.0",
+  "latest_major_version": "17.0.0.0"
 }
