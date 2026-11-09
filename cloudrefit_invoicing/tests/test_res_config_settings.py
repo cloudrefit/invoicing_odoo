@@ -1,3 +1,4 @@
+from unittest.mock import patch
 """Tests for the ZATCA configuration settings (res.config.settings).
 
 Covers health check indicators, save-and-connect, and test-connection

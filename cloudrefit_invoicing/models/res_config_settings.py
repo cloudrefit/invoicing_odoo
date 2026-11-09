@@ -581,6 +581,11 @@ class ResConfigSettings(models.TransientModel):
         self._cr_set_param(f'cloudrefit_invoicing.health_status_{mode}', status)
         self._cr_set_param(f'cloudrefit_invoicing.health_last_check_{mode}', datetime.datetime.now().isoformat())
         self._cr_set_param(f'cloudrefit_invoicing.health_last_message_{mode}', message)
+        # Mirror to base keys for global backward compatibility
+        ICP = self.env['ir.config_parameter'].sudo()
+        ICP.set_param(f'cloudrefit_invoicing.health_status_{mode}', status)
+        ICP.set_param(f'cloudrefit_invoicing.health_last_check_{mode}', datetime.datetime.now().isoformat())
+        ICP.set_param(f'cloudrefit_invoicing.health_last_message_{mode}', message)
 
     def _reset_mode_on_failure(self, mode='live', error_message=''):
         """On connection failure: conditionally clear business_id and disable mode.

@@ -1,3 +1,4 @@
+from unittest.mock import patch
 """Tests for the ZATCA API Client abstract model.
 
 Tests cover HMAC signature generation and gateway call behaviour.
