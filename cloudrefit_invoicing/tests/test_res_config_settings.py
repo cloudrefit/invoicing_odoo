@@ -35,12 +35,10 @@ class TestResConfigSettings(TransactionCase):
 
         # Patch gateway client
         cls.api_client = cls.env['cloudrefit.zatca.api.client']
-        cls._original_call = type(cls.api_client).call_gateway
-        type(cls.api_client).call_gateway = MockZatcaApiClient.call_gateway
+        cls.startClassPatcher(patch.object(type(cls.api_client), 'call_gateway', MockZatcaApiClient.call_gateway))
 
     @classmethod
     def tearDownClass(cls):
-        type(cls.api_client).call_gateway = cls._original_call
         MockZatcaApiClient.reset()
         super().tearDownClass()
 
